@@ -1,0 +1,1 @@
+# cloudone-filestorage-cloudformation-templates
