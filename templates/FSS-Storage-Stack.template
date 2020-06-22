@@ -1,0 +1,359 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Trend Micro File Storage Security storage stack
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "[ Customizable section ] You can modify the region from AWS navigation bar."
+        Parameters:
+          - NewS3BucketToScan
+      - Label:
+          default: "[ Scanner stack ]"
+        Parameters:
+          - ScannerAWSAccount
+          - ScannerSQSURL
+      - Label:
+          default: "[ Warning: Do not modify the fields below. Modifications may cause your deployment to fail. ]"
+        Parameters:
+          - FSSBucketName
+          - FSSKeyPrefix
+          - TrendMicroManagementAccount
+          - CloudOneRegion
+
+    ParameterLabels:
+      NewS3BucketToScan:
+        default: NewS3BucketToScan
+      ScannerAWSAccount:
+        default: ScannerAWSAccount
+      ScannerSQSURL:
+        default: ScannerSQSURL
+      FSSBucketName:
+        default: Stack package location
+      FSSKeyPrefix:
+        default: Version
+      TrendMicroManagementAccount:
+        default: File Storage Security management account
+      CloudOneRegion:
+        default: Trend Micro Cloud One region
+
+Parameters:
+  ScannerAWSAccount:
+    Description: ""
+    Type: List<Number>
+  NewS3BucketToScan:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    ConstraintDescription: S3 bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Description: The S3 bucket to scan. It will be created when you launch this stack.
+    Type: String
+  ScannerSQSURL:
+    Description: ""
+    Type: String
+  FSSBucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    ConstraintDescription:
+      File Storage Security bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Default: file-storage-security
+    Description: ""
+    Type: String
+  FSSKeyPrefix:
+    AllowedPattern: ^[0-9a-zA-Z-/]*$
+    ConstraintDescription:
+      File Storage Security key prefix can include numbers, lowercase letters,
+      uppercase letters, hyphens (-), and forward slash (/).
+    Default: latest/
+    Description: ""
+    Type: String
+  CloudOneRegion:
+    Description: The region of the Trend Micro Cloud One services. This region may be different from your stack's region.
+    Type: String
+    Default: us-east-1
+    AllowedValues:
+      - us-east-1
+  TrendMicroManagementAccount:
+    AllowedPattern: ^[0-9]*$
+    ConstraintDescription: AWS account ID.
+    Default: 160260375861
+    Description: This account will be given permission to modify the stacks for upgrades and troubleshooting purposes.
+    Type: String
+
+Resources:
+  CopyZipsDestBucket:
+    Type: AWS::S3::Bucket
+  CopyZips:
+    Type: Custom::CopyZips
+    Properties:
+      ServiceToken: !GetAtt CopyZipsLambda.Arn
+      DestBucket: !Ref CopyZipsDestBucket
+      SourceBucket: !Ref FSSBucketName
+      Prefix: !Ref FSSKeyPrefix
+      Objects:
+        - lambda/bucket-listener.zip
+        - lambda/post-scan-action-tag.zip
+  CopyZipsLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Copies objects from a source S3 bucket to a destination
+      Handler: index.handler
+      Runtime: python3.7
+      Role: !GetAtt CopyZipsExecutionRole.Arn
+      Timeout: 900
+      Code:
+        ZipFile: |
+          import cfnresponse
+          import boto3
+          import traceback
+          def copy_objects(source_bucket, dest_bucket, prefix, objects):
+              s3 = boto3.client('s3')
+              for o in objects:
+                  key = prefix + o
+                  copy_source = {'Bucket': source_bucket, 'Key': key}
+                  print(f'copy_source: {copy_source}\ndest_bucket: {dest_bucket}\nkey: {key}')
+                  s3.copy_object(CopySource=copy_source, Bucket=dest_bucket, Key=key)
+          def delete_objects(bucket, prefix, objects):
+              s3 = boto3.client('s3')
+              objects = {'Objects': [{'Key': prefix + o} for o in objects]}
+              s3.delete_objects(Bucket=bucket, Delete=objects)
+          def handler(event, context):
+              print(event)
+              status = cfnresponse.SUCCESS
+              try:
+                  if event['RequestType'] == 'Delete':
+                      delete_objects(event['ResourceProperties']['DestBucket'], event['ResourceProperties']['Prefix'],
+                                    event['ResourceProperties']['Objects'])
+                  else:
+                      copy_objects(event['ResourceProperties']['SourceBucket'], event['ResourceProperties']['DestBucket'],
+                                  event['ResourceProperties']['Prefix'], event['ResourceProperties']['Objects'])
+              except Exception as ex:
+                  print('Unhandled exception: '+ str(ex))
+                  traceback.print_exc()
+                  status = cfnresponse.FAILED
+              finally:
+                  cfnresponse.send(event, context, status, {}, None)
+  CopyZipsExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: lambda-copier
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub arn:aws:s3:::${FSSBucketName}/*
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub arn:aws:s3:::${CopyZipsDestBucket}/*
+
+  ScanningBucket:
+    Type: AWS::S3::Bucket
+    DependsOn: BucketListenerInvokePermissionOfScanningBucket
+    Properties:
+      BucketName: !Ref NewS3BucketToScan
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt BucketListenerLambda.Arn
+
+  ScanResultTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: S3 Scanning Results
+      Subscription:
+        - Endpoint: !GetAtt PostScanActionTagLambda.Arn
+          Protocol: lambda
+  ScanResultTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref ScanResultTopic
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: sns:Publish
+            Resource: !Ref ScanResultTopic
+            Principal:
+              AWS: !Ref ScannerAWSAccount
+
+  BucketListenerLambda:
+    Type: AWS::Lambda::Function
+    DependsOn: CopyZips
+    Properties:
+      Code:
+        S3Bucket: !Ref CopyZipsDestBucket
+        S3Key: !Sub ${FSSKeyPrefix}lambda/bucket-listener.zip
+      Handler: handler.lambda_handler
+      Environment:
+        Variables:
+          SQSUrl: !Ref ScannerSQSURL
+          SNSArn: !Ref ScanResultTopic
+      MemorySize: 128
+      Role: !GetAtt BucketListenerExecutionRole.Arn
+      Runtime: python3.7
+      Timeout: 15
+  BucketListenerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObjectTagging
+                Resource: !Sub arn:aws:s3:::${NewS3BucketToScan}/*
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                  - sqs:GetQueueUrl
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: arn:aws:logs:*:*:*
+  BucketListenerInvokePermissionOfScanningBucket:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt BucketListenerLambda.Arn
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub arn:aws:s3:::${NewS3BucketToScan}
+  BucketListenerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join [/, [/aws/lambda, !Ref BucketListenerLambda]]
+      RetentionInDays: 90
+
+  PostScanActionTagLambda:
+    Type: AWS::Lambda::Function
+    DependsOn: CopyZips
+    Properties:
+      Code:
+        S3Bucket: !Ref CopyZipsDestBucket
+        S3Key: !Sub ${FSSKeyPrefix}lambda/post-scan-action-tag.zip
+      Handler: handler.lambda_handler
+      MemorySize: 128
+      Role: !GetAtt PostScanActionTagExecutionRole.Arn
+      Runtime: python3.7
+      Timeout: 15
+  PostScanActionTagExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObjectTagging
+                Resource: !Sub arn:aws:s3:::${NewS3BucketToScan}/*
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: arn:aws:logs:*:*:*
+  PostScanActionTagInvokePermissionOfScanResultTopic:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt PostScanActionTagLambda.Arn
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref ScanResultTopic
+  PostScanActionTagLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join [/, [/aws/lambda, !Ref PostScanActionTagLambda]]
+      RetentionInDays: 90
+
+  ManagementRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref TrendMicroManagementAccount
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: stack-management
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:*
+                Resource: !Ref AWS::StackId
+        - PolicyName: fss-lambda-management-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:*
+                Resource:
+                  - !GetAtt BucketListenerLambda.Arn
+                  - !GetAtt PostScanActionTagLambda.Arn
+  ManagementRoleGetRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: role-management
+      Roles:
+        - !Ref ManagementRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - iam:GetRolePolicy
+            Resource: !GetAtt ManagementRole.Arn
+
+Outputs:
+  ScanningBucket:
+    Value: !Ref ScanningBucket
+  BucketListenerRoleARN:
+    Value: !GetAtt BucketListenerExecutionRole.Arn
+  StorageStackManagementRoleARN:
+    Value: !GetAtt ManagementRole.Arn
+    Description: The ARN of the IAM role for File Storage Security backend services to manage the deployed resources.

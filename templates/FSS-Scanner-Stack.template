@@ -1,0 +1,397 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Trend Micro File Storage Security scanner stack
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "[ Warning: Do not modify the fields below. Modifications may cause your deployment to fail. ]"
+        Parameters:
+          - FSSBucketName
+          - FSSKeyPrefix
+          - TrendMicroManagementAccount
+          - CloudOneRegion
+          - LicenseLayer
+          - BucketListenerRoleARNs
+
+    ParameterLabels:
+      FSSBucketName:
+        default: Stack package location
+      FSSKeyPrefix:
+        default: Version
+      TrendMicroManagementAccount:
+        default: File Storage Security management account
+      CloudOneRegion:
+        default: Trend Micro Cloud One region
+      LicenseLayer:
+        default: License Lambda layer
+
+Parameters:
+  BucketListenerRoleARNs:
+    Description: The ARNs of the roles that are allowed to send scan requests. Multiple values can be separated by commas.
+    Type: CommaDelimitedList
+    Default: ""
+  FSSBucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    ConstraintDescription:
+      File Storage Security bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Default: file-storage-security
+    Description: ""
+    Type: String
+  FSSKeyPrefix:
+    AllowedPattern: ^[0-9a-zA-Z-/]*$
+    ConstraintDescription:
+      File Storage Security key prefix can include numbers, lowercase letters,
+      uppercase letters, hyphens (-), and forward slash (/).
+    Default: latest/
+    Description: ""
+    Type: String
+  CloudOneRegion:
+    Description: The region of the Trend Micro Cloud One services. This region may be different from your stack's region.
+    Type: String
+    Default: us-east-1
+    AllowedValues:
+      - us-east-1
+  TrendMicroManagementAccount:
+    AllowedPattern: ^[0-9]*$
+    ConstraintDescription: AWS account ID.
+    Default: 160260375861
+    Description: This account will be given permission to modify the stacks for upgrades and troubleshooting purposes.
+    Type: String
+  LicenseLayer:
+    Default: ""
+    Description: ""
+    Type: String
+
+Conditions:
+  HasBucketListenerRoleARNs:
+    Fn::Not:
+      - Fn::Equals:
+          - Fn::Join:
+              - ""
+              - Ref: BucketListenerRoleARNs
+          - ""
+  NotHaveLicenseLayer:
+    Fn::Equals:
+      - Ref: LicenseLayer
+      - ""
+
+Resources:
+  CopyZipsDestBucket:
+    Type: AWS::S3::Bucket
+  CopyZips:
+    Type: Custom::CopyZips
+    Properties:
+      ServiceToken: !GetAtt CopyZipsLambda.Arn
+      DestBucket: !Ref CopyZipsDestBucket
+      SourceBucket: !Ref FSSBucketName
+      Prefix: !Ref FSSKeyPrefix
+      Objects:
+        - lambda/scanner-lambda-python.zip
+        - lambda/scanner-dlq-lambda-python.zip
+        - lib/scanner-lambda-python-lib.zip
+        - patterns/pattern-icrc-269.zip
+        - !If [
+            NotHaveLicenseLayer,
+            "license/scanner-lambda-python-license.zip",
+            !Ref "AWS::NoValue",
+          ]
+  CopyZipsLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Copies objects from a source S3 bucket to a destination
+      Handler: index.handler
+      Runtime: python3.7
+      Role: !GetAtt CopyZipsExecutionRole.Arn
+      Timeout: 900
+      Code:
+        ZipFile: |
+          import cfnresponse
+          import boto3
+          import traceback
+          def copy_objects(source_bucket, dest_bucket, prefix, objects):
+              s3 = boto3.client('s3')
+              for o in objects:
+                  key = prefix + o
+                  copy_source = {'Bucket': source_bucket, 'Key': key}
+                  print(f'copy_source: {copy_source}\ndest_bucket: {dest_bucket}\nkey: {key}')
+                  s3.copy_object(CopySource=copy_source, Bucket=dest_bucket, Key=key)
+          def delete_objects(bucket, prefix, objects):
+              s3 = boto3.client('s3')
+              objects = {'Objects': [{'Key': prefix + o} for o in objects]}
+              s3.delete_objects(Bucket=bucket, Delete=objects)
+          def handler(event, context):
+              print(event)
+              status = cfnresponse.SUCCESS
+              try:
+                  if event['RequestType'] == 'Delete':
+                      delete_objects(event['ResourceProperties']['DestBucket'], event['ResourceProperties']['Prefix'],
+                                    event['ResourceProperties']['Objects'])
+                  else:
+                      copy_objects(event['ResourceProperties']['SourceBucket'], event['ResourceProperties']['DestBucket'],
+                                  event['ResourceProperties']['Prefix'], event['ResourceProperties']['Objects'])
+              except Exception as ex:
+                  print('Unhandled exception: ' + str(ex))
+                  traceback.print_exc()
+                  status = cfnresponse.FAILED
+              finally:
+                  cfnresponse.send(event, context, status, {}, None)
+  CopyZipsExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: lambda-copier
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub arn:aws:s3:::${FSSBucketName}/*
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub arn:aws:s3:::${CopyZipsDestBucket}/*
+
+  ScannerQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      DelaySeconds: 0
+      MaximumMessageSize: 262144
+      MessageRetentionPeriod: 345600
+      ReceiveMessageWaitTimeSeconds: 0
+      VisibilityTimeout: 720
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt [ScannerDLQ, Arn]
+        maxReceiveCount: 2
+  ScannerQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: send_message_from_accounts
+            Effect: Allow
+            Principal:
+              !If [
+                HasBucketListenerRoleARNs,
+                { AWS: !Ref BucketListenerRoleARNs },
+                !Ref "AWS::NoValue",
+              ]
+            Action:
+              - sqs:SendMessage
+            Resource: !GetAtt [ScannerQueue, Arn]
+      Queues:
+        - !Ref ScannerQueue
+  ScannerDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      DelaySeconds: 0
+      MaximumMessageSize: 262144
+      MessageRetentionPeriod: 345600
+      ReceiveMessageWaitTimeSeconds: 0
+      VisibilityTimeout: 720
+
+  ScannerLambda:
+    Type: AWS::Lambda::Function
+    DependsOn: CopyZips
+    Properties:
+      Code:
+        S3Bucket: !Ref CopyZipsDestBucket
+        S3Key: !Sub ${FSSKeyPrefix}lambda/scanner-lambda-python.zip
+      Handler: lambdas.handler.lambda_handler
+      Environment:
+        Variables:
+          metrics: "True"
+          queueURL: !Ref ScannerQueue
+          telemetry_sns_arn: !Sub arn:aws:sns:${CloudOneRegion}:${TrendMicroManagementAccount}:fss-telemetry-topic
+      MemorySize: 512
+      Role: !GetAtt ScannerExecutionRole.Arn
+      Runtime: python3.6
+      Timeout: 120
+      Layers:
+        - !Ref ScannerLibLambdaLayer
+        - !Ref ScannerPatternLambdaLayer
+        - !If [
+            NotHaveLicenseLayer,
+            !Ref ScannerLicenseLambdaLayer,
+            !Ref LicenseLayer,
+          ]
+  ScannerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join [/, [/aws/lambda, !Ref ScannerLambda]]
+      RetentionInDays: 90
+  ScannerLibLambdaLayer:
+    Type: AWS::Lambda::LayerVersion
+    DependsOn: CopyZips
+    Properties:
+      Content:
+        S3Bucket: !Ref CopyZipsDestBucket
+        S3Key: !Sub ${FSSKeyPrefix}lib/scanner-lambda-python-lib.zip
+      Description: Anti-Malware lib layer for scanner lambda function.
+  ScannerLicenseLambdaLayer:
+    Type: AWS::Lambda::LayerVersion
+    Condition: "NotHaveLicenseLayer"
+    DependsOn: CopyZips
+    Properties:
+      Content:
+        S3Bucket: !Ref CopyZipsDestBucket
+        S3Key: !Sub ${FSSKeyPrefix}license/scanner-lambda-python-license.zip
+      Description: License layer for scanner lambda function.
+  ScannerPatternLambdaLayer:
+    Type: AWS::Lambda::LayerVersion
+    DependsOn: CopyZips
+    Properties:
+      Content:
+        S3Bucket: !Ref CopyZipsDestBucket
+        S3Key: !Sub ${FSSKeyPrefix}patterns/pattern-icrc-269.zip
+      Description: Anti-Malware pattern layer for scanner lambda function.
+  ScannerEventSourceFromScannerQueue:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 1
+      Enabled: true
+      EventSourceArn: !GetAtt ScannerQueue.Arn
+      FunctionName: !GetAtt ScannerLambda.Arn
+
+  ScannerDeadLetterLambda:
+    Type: AWS::Lambda::Function
+    DependsOn: CopyZips
+    Properties:
+      Code:
+        S3Bucket: !Ref CopyZipsDestBucket
+        S3Key: !Sub ${FSSKeyPrefix}lambda/scanner-dlq-lambda-python.zip
+      Handler: lambdas.scanner_dlq_handler.lambda_handler
+      MemorySize: 128
+      Role: !GetAtt ScannerExecutionRole.Arn
+      Runtime: python3.6
+      Timeout: 60
+  ScannerDeadLetterLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join [/, [/aws/lambda, !Ref ScannerDeadLetterLambda]]
+      RetentionInDays: 90
+  ScannerDeadLetterEventSourceFromDLQ:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 1
+      Enabled: true
+      EventSourceArn: !GetAtt ScannerDLQ.Arn
+      FunctionName: !GetAtt ScannerDeadLetterLambda.Arn
+
+  ScannerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                  - sqs:ChangeMessageVisibility
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: arn:aws:logs:*:*:*
+
+  ManagementRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref TrendMicroManagementAccount
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: stack-management
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:*
+                Resource: !Ref AWS::StackId
+        - PolicyName: queue-management
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:*
+                Resource:
+                  - !GetAtt [ScannerQueue, Arn]
+                  - !GetAtt [ScannerDLQ, Arn]
+        - PolicyName: lambda-scanner-management
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:*
+                Resource:
+                  - !GetAtt ScannerLambda.Arn
+                  - !GetAtt ScannerDeadLetterLambda.Arn
+              - Effect: Allow
+                Action:
+                  - lambda:GetLayerVersion
+                Resource: !Sub arn:aws:lambda:*:${TrendMicroManagementAccount}:layer:*:*
+  ManagementRoleGetRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: role-management
+      Roles:
+        - !Ref ManagementRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - iam:GetRolePolicy
+            Resource: !GetAtt ManagementRole.Arn
+
+Outputs:
+  ScannerQueueURL:
+    Value: !Ref ScannerQueue
+    Description: The SQS URL for storage stacks to publish events to.
+  ScannerStackManagementRoleARN:
+    Value: !GetAtt ManagementRole.Arn
+    Description: The ARN of the IAM role for File Storage Security backend services to manage the deployed resources.
