@@ -12,6 +12,7 @@ Metadata:
           - FSSKeyPrefix
           - TrendMicroManagementAccount
           - CloudOneRegion
+          - ExternalID
           - LicenseLayer
           - BucketListenerRoleARNs
 
@@ -24,6 +25,8 @@ Metadata:
         default: File Storage Security management account
       CloudOneRegion:
         default: Trend Micro Cloud One region
+      ExternalID:
+        default: ExternalID
       LicenseLayer:
         default: License Lambda layer
 
@@ -58,8 +61,11 @@ Parameters:
   TrendMicroManagementAccount:
     AllowedPattern: ^[0-9]*$
     ConstraintDescription: AWS account ID.
-    Default: 160260375861
+    Default: 415485722356
     Description: This account will be given permission to modify the stacks for upgrades and troubleshooting purposes.
+    Type: String
+  ExternalID:
+    Description: "The primary function of the External ID is to address and prevent the 'confused deputy' problem."
     Type: String
   LicenseLayer:
     Default: ""
@@ -118,7 +124,7 @@ Resources:
                   key = prefix + o
                   copy_source = {'Bucket': source_bucket, 'Key': key}
                   print(f'copy_source: {copy_source}\ndest_bucket: {dest_bucket}\nkey: {key}')
-                  s3.copy_object(CopySource=copy_source, Bucket=dest_bucket, Key=key)
+                  s3.copy_object(CopySource=copy_source, Bucket=dest_bucket, Key=key, TaggingDirective='REPLACE')
           def delete_objects(bucket, prefix, objects):
               s3 = boto3.client('s3')
               objects = {'Objects': [{'Key': prefix + o} for o in objects]}
@@ -170,7 +176,7 @@ Resources:
     Properties:
       DelaySeconds: 0
       MaximumMessageSize: 262144
-      MessageRetentionPeriod: 345600
+      MessageRetentionPeriod: 3600
       ReceiveMessageWaitTimeSeconds: 0
       VisibilityTimeout: 720
       RedrivePolicy:
@@ -200,7 +206,7 @@ Resources:
     Properties:
       DelaySeconds: 0
       MaximumMessageSize: 262144
-      MessageRetentionPeriod: 345600
+      MessageRetentionPeriod: 3600
       ReceiveMessageWaitTimeSeconds: 0
       VisibilityTimeout: 720
 
@@ -217,6 +223,7 @@ Resources:
           metrics: "True"
           queueURL: !Ref ScannerQueue
           telemetry_sns_arn: !Sub arn:aws:sns:${CloudOneRegion}:${TrendMicroManagementAccount}:fss-telemetry-topic
+          stackARN: !Ref AWS::StackId
       MemorySize: 512
       Role: !GetAtt ScannerExecutionRole.Arn
       Runtime: python3.6
@@ -275,6 +282,9 @@ Resources:
         S3Bucket: !Ref CopyZipsDestBucket
         S3Key: !Sub ${FSSKeyPrefix}lambda/scanner-dlq-lambda-python.zip
       Handler: lambdas.scanner_dlq_handler.lambda_handler
+      Environment:
+        Variables:
+          stackARN: !Ref AWS::StackId
       MemorySize: 128
       Role: !GetAtt ScannerExecutionRole.Arn
       Runtime: python3.6
@@ -341,6 +351,9 @@ Resources:
             Principal:
               AWS: !Ref TrendMicroManagementAccount
             Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                sts:ExternalId: !Ref ExternalID
       Policies:
         - PolicyName: stack-management
           PolicyDocument:
@@ -374,6 +387,21 @@ Resources:
                 Action:
                   - lambda:GetLayerVersion
                 Resource: !Sub arn:aws:lambda:*:${TrendMicroManagementAccount}:layer:*:*
+        - PolicyName: lambda-logs-access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:DescribeLogStreams
+                  - logs:GetLogEvents
+                  - logs:StartQuery
+                  - logs:StopQuery
+                  - logs:GetQueryResults
+                  - logs:FilterLogEvents
+                Resource:
+                  - !GetAtt ScannerLogGroup.Arn
+                  - !GetAtt ScannerDeadLetterLogGroup.Arn
   ManagementRoleGetRolePolicy:
     Type: AWS::IAM::Policy
     Properties:
