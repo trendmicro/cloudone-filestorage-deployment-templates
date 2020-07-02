@@ -16,6 +16,7 @@ Metadata:
           - FSSKeyPrefix
           - TrendMicroManagementAccount
           - CloudOneRegion
+          - ExternalID
           - LicenseLayer
 
     ParameterLabels:
@@ -29,6 +30,8 @@ Metadata:
         default: File Storage Security management account
       CloudOneRegion:
         default: Trend Micro Cloud One region
+      ExternalID:
+        default: ExternalID
       LicenseLayer:
         default: License Lambda layer
 
@@ -70,8 +73,11 @@ Parameters:
   TrendMicroManagementAccount:
     AllowedPattern: ^[0-9]*$
     ConstraintDescription: AWS account ID.
-    Default: 160260375861
+    Default: 415485722356
     Description: This account will be given permission to modify the stacks for upgrades and troubleshooting purposes.
+    Type: String
+  ExternalID:
+    Description: "The primary function of the External ID is to address and prevent the 'confused deputy' problem."
     Type: String
 
 Resources:
@@ -86,6 +92,7 @@ Resources:
         FSSKeyPrefix: !Ref FSSKeyPrefix
         CloudOneRegion: !Ref CloudOneRegion
         TrendMicroManagementAccount: !Ref TrendMicroManagementAccount
+        ExternalID: !Ref ExternalID
       Tags:
         - Key: Name
           Value: FSS-Storage-Stack
@@ -102,6 +109,7 @@ Resources:
         FSSKeyPrefix: !Ref FSSKeyPrefix
         CloudOneRegion: !Ref CloudOneRegion
         TrendMicroManagementAccount: !Ref TrendMicroManagementAccount
+        ExternalID: !Ref ExternalID
         LicenseLayer: !Ref LicenseLayer
       Tags:
         - Key: Name
