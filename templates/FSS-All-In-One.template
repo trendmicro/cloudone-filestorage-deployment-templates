@@ -8,7 +8,7 @@ Metadata:
       - Label:
           default: "[ Customizable section ] You can modify the region from AWS navigation bar."
         Parameters:
-          - NewS3BucketToScan
+          - S3BucketToScan
       - Label:
           default: "[ Warning: Do not modify the fields below. Modifications may cause your deployment to fail. ]"
         Parameters:
@@ -20,8 +20,8 @@ Metadata:
           - LicenseLayer
 
     ParameterLabels:
-      NewS3BucketToScan:
-        default: NewS3BucketToScan
+      S3BucketToScan:
+        default: S3BucketToScan
       FSSBucketName:
         default: Stack package location
       FSSKeyPrefix:
@@ -36,12 +36,12 @@ Metadata:
         default: License Lambda layer
 
 Parameters:
-  NewS3BucketToScan:
+  S3BucketToScan:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     ConstraintDescription: S3 bucket name can include numbers, lowercase
       letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
       (-).
-    Description: The S3 bucket to scan. It will be created when you launch this stack.
+    Description: The S3 bucket to scan. Specify an existing S3 bucket.
     Type: String
   FSSBucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
@@ -85,7 +85,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
-        NewS3BucketToScan: !Ref NewS3BucketToScan
+        S3BucketToScan: !Ref S3BucketToScan
         ScannerAWSAccount: !Ref AWS::AccountId
         ScannerSQSURL: !GetAtt ScannerStack.Outputs.ScannerQueueURL
         FSSBucketName: !Ref FSSBucketName
@@ -157,23 +157,22 @@ Resources:
                   SQSName = os.environ['SQSUrl']
                   lambdaRoleARN = os.environ['LambdaRoleARN']
                   client = boto3.client('sqs')
-              
-                  policy = {
-                        "Version": "2012-10-17",
-                        "Statement": [
-                          {
-                            "Sid":"Queue_SendMessage_from_accounts",
-                            "Effect": "Allow",
-                            "Principal":{
-                                  "AWS": lambdaRoleARN
-                                },
-                            "Action": "sqs:SendMessage",
-                          }]
-                      }
+
+                  queue_attributes = client.get_queue_attributes(
+                      QueueUrl=SQSName,
+                      AttributeNames=['Policy'])
+
+                  queue_policy = json.loads(queue_attributes['Attributes']['Policy'])
+
+                  new_principal = {
+                      "AWS": [ lambdaRoleARN ]
+                  }
+                  queue_policy['Statement'][0]['Principal'] = new_principal
+
                   client.set_queue_attributes(
                       QueueUrl=SQSName,
                       Attributes={
-                          'Policy':json.dumps(policy)
+                          'Policy':json.dumps(queue_policy)
                       })
               except Exception:
                               logging.error('Unhandled exception', exc_info=True)
@@ -200,6 +199,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
+                  - sqs:GetQueueAttributes
                   - sqs:SetQueueAttributes
                 Resource: arn:aws:sqs:*:*:*
 
