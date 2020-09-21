@@ -8,7 +8,7 @@ Metadata:
       - Label:
           default: "[ Customizable section ] You can modify the region from AWS navigation bar."
         Parameters:
-          - NewS3BucketToScan
+          - S3BucketToScan
       - Label:
           default: "[ Scanner stack ]"
         Parameters:
@@ -24,8 +24,8 @@ Metadata:
           - ExternalID
 
     ParameterLabels:
-      NewS3BucketToScan:
-        default: NewS3BucketToScan
+      S3BucketToScan:
+        default: S3BucketToScan
       ScannerAWSAccount:
         default: ScannerAWSAccount
       ScannerSQSURL:
@@ -45,12 +45,12 @@ Parameters:
   ScannerAWSAccount:
     Description: ""
     Type: List<Number>
-  NewS3BucketToScan:
+  S3BucketToScan:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     ConstraintDescription: S3 bucket name can include numbers, lowercase
       letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
       (-).
-    Description: The S3 bucket to scan. It will be created when you launch this stack.
+    Description: The S3 bucket to scan. Specify an existing S3 bucket.
     Type: String
   ScannerSQSURL:
     Description: ""
@@ -91,6 +91,11 @@ Parameters:
 Resources:
   CopyZipsDestBucket:
     Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
   CopyZips:
     Type: Custom::CopyZips
     Properties:
@@ -101,6 +106,7 @@ Resources:
       Objects:
         - lambda/bucket-listener.zip
         - lambda/post-scan-action-tag.zip
+        - lambda/handle-scanningbucket-lambda-python.zip
   CopyZipsLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -167,16 +173,6 @@ Resources:
                   - s3:DeleteObject
                 Resource: !Sub arn:aws:s3:::${CopyZipsDestBucket}/*
 
-  ScanningBucket:
-    Type: AWS::S3::Bucket
-    DependsOn: BucketListenerInvokePermissionOfScanningBucket
-    Properties:
-      BucketName: !Ref NewS3BucketToScan
-      NotificationConfiguration:
-        LambdaConfigurations:
-          - Event: s3:ObjectCreated:*
-            Function: !GetAtt BucketListenerLambda.Arn
-
   ScanResultTopic:
     Type: AWS::SNS::Topic
     Properties:
@@ -237,7 +233,7 @@ Resources:
                 Action:
                   - s3:GetObject
                   - s3:PutObjectTagging
-                Resource: !Sub arn:aws:s3:::${NewS3BucketToScan}/*
+                Resource: !Sub arn:aws:s3:::${S3BucketToScan}/*
               - Effect: Allow
                 Action:
                   - sqs:SendMessage
@@ -253,7 +249,7 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt BucketListenerLambda.Arn
       Principal: s3.amazonaws.com
-      SourceArn: !Sub arn:aws:s3:::${NewS3BucketToScan}
+      SourceArn: !Sub arn:aws:s3:::${S3BucketToScan}
   BucketListenerLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -296,8 +292,9 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:GetObject
+                  - s3:GetObjectTagging
                   - s3:PutObjectTagging
-                Resource: !Sub arn:aws:s3:::${NewS3BucketToScan}/*
+                Resource: !Sub arn:aws:s3:::${S3BucketToScan}/*
               - Effect: Allow
                 Action:
                   - logs:*
@@ -377,11 +374,68 @@ Resources:
               - iam:GetRolePolicy
             Resource: !GetAtt ManagementRole.Arn
 
+  SetupBucketNotification:
+    Type: Custom::SetupBucketNotificationLambda
+    DependsOn: BucketListenerInvokePermissionOfScanningBucket
+    Properties:
+      ServiceToken: !GetAtt SetupBucketNotificationLambda.Arn
+      Bucket: !Ref S3BucketToScan
+  SetupBucketNotificationLambda:
+    Type: AWS::Lambda::Function
+    DependsOn: CopyZips
+    Properties:
+      Environment:
+        Variables:
+          AWSRegion: !Ref AWS::Region
+          LambdaArn: !GetAtt BucketListenerLambda.Arn
+      Handler: lambdas.handle_scanningbucket.lambda_handler
+      Role: !GetAtt SetupBucketNotificationExecutionRole.Arn
+      Runtime: python3.8
+      Timeout: 50
+      Code:
+        S3Bucket: !Ref CopyZipsDestBucket
+        S3Key: !Sub ${FSSKeyPrefix}lambda/handle-scanningbucket-lambda-python.zip
+  SetupBucketNotificationExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetBucketNotification
+                  - s3:PutBucketNotification
+                  - s3:CreateBucket
+                  - s3:ListBucket
+                Resource: arn:aws:s3:::*
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+
 Outputs:
   ScanningBucket:
-    Value: !Ref ScanningBucket
+    Value: !Ref S3BucketToScan
   BucketListenerRoleARN:
     Value: !GetAtt BucketListenerExecutionRole.Arn
   StorageStackManagementRoleARN:
     Value: !GetAtt ManagementRole.Arn
     Description: The ARN of the IAM role for File Storage Security backend services to manage the deployed resources.
+  BucketListenerLambdaARN:
+    Value: !GetAtt BucketListenerLambda.Arn
+  PostScanActionTagLambdaARN:
+    Value: !GetAtt PostScanActionTagLambda.Arn

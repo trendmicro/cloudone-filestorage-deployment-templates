@@ -88,6 +88,11 @@ Conditions:
 Resources:
   CopyZipsDestBucket:
     Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
   CopyZips:
     Type: Custom::CopyZips
     Properties:
@@ -423,3 +428,5 @@ Outputs:
   ScannerStackManagementRoleARN:
     Value: !GetAtt ManagementRole.Arn
     Description: The ARN of the IAM role for File Storage Security backend services to manage the deployed resources.
+  ScannerLambdaARN:
+    Value: !GetAtt ScannerLambda.Arn
