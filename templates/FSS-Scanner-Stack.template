@@ -13,7 +13,6 @@ Metadata:
           - TrendMicroManagementAccount
           - CloudOneRegion
           - ExternalID
-          - LicenseLayer
           - BucketListenerRoleARNs
 
     ParameterLabels:
@@ -27,8 +26,6 @@ Metadata:
         default: Trend Micro Cloud One region
       ExternalID:
         default: ExternalID
-      LicenseLayer:
-        default: License Lambda layer
 
 Parameters:
   BucketListenerRoleARNs:
@@ -67,10 +64,6 @@ Parameters:
   ExternalID:
     Description: "The primary function of the External ID is to address and prevent the 'confused deputy' problem."
     Type: String
-  LicenseLayer:
-    Default: ""
-    Description: ""
-    Type: String
 
 Conditions:
   HasBucketListenerRoleARNs:
@@ -80,10 +73,6 @@ Conditions:
               - ""
               - Ref: BucketListenerRoleARNs
           - ""
-  NotHaveLicenseLayer:
-    Fn::Equals:
-      - Ref: LicenseLayer
-      - ""
 
 Resources:
   CopyZipsDestBucket:
@@ -105,11 +94,6 @@ Resources:
         - lambda/scanner-dlq-lambda-python.zip
         - lib/scanner-lambda-python-lib.zip
         - patterns/pattern-icrc-269.zip
-        - !If [
-            NotHaveLicenseLayer,
-            "license/scanner-lambda-python-license.zip",
-            !Ref "AWS::NoValue",
-          ]
   CopyZipsLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -161,7 +145,7 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: lambda-copier
           PolicyDocument:
@@ -169,12 +153,12 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: s3:GetObject
-                Resource: !Sub arn:aws:s3:::${FSSBucketName}/*
+                Resource: !Sub arn:${AWS::Partition}:s3:::${FSSBucketName}/*
               - Effect: Allow
                 Action:
                   - s3:PutObject
                   - s3:DeleteObject
-                Resource: !Sub arn:aws:s3:::${CopyZipsDestBucket}/*
+                Resource: !Sub arn:${AWS::Partition}:s3:::${CopyZipsDestBucket}/*
 
   ScannerQueue:
     Type: AWS::SQS::Queue
@@ -227,7 +211,7 @@ Resources:
         Variables:
           metrics: "True"
           queueURL: !Ref ScannerQueue
-          telemetry_sns_arn: !Sub arn:aws:sns:${CloudOneRegion}:${TrendMicroManagementAccount}:fss-telemetry-topic
+          telemetry_sns_arn: !Sub arn:${AWS::Partition}:sns:${CloudOneRegion}:${TrendMicroManagementAccount}:fss-telemetry-topic
           stackARN: !Ref AWS::StackId
       MemorySize: 512
       Role: !GetAtt ScannerExecutionRole.Arn
@@ -236,11 +220,6 @@ Resources:
       Layers:
         - !Ref ScannerLibLambdaLayer
         - !Ref ScannerPatternLambdaLayer
-        - !If [
-            NotHaveLicenseLayer,
-            !Ref ScannerLicenseLambdaLayer,
-            !Ref LicenseLayer,
-          ]
   ScannerLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -254,15 +233,6 @@ Resources:
         S3Bucket: !Ref CopyZipsDestBucket
         S3Key: !Sub ${FSSKeyPrefix}lib/scanner-lambda-python-lib.zip
       Description: Anti-Malware lib layer for scanner lambda function.
-  ScannerLicenseLambdaLayer:
-    Type: AWS::Lambda::LayerVersion
-    Condition: "NotHaveLicenseLayer"
-    DependsOn: CopyZips
-    Properties:
-      Content:
-        S3Bucket: !Ref CopyZipsDestBucket
-        S3Key: !Sub ${FSSKeyPrefix}license/scanner-lambda-python-license.zip
-      Description: License layer for scanner lambda function.
   ScannerPatternLambdaLayer:
     Type: AWS::Lambda::LayerVersion
     DependsOn: CopyZips
@@ -339,11 +309,13 @@ Resources:
               - Effect: Allow
                 Action:
                   - sns:Publish
-                Resource: "*"
+                Resource:
+                  - !Sub arn:${AWS::Partition}:sns:${CloudOneRegion}:${TrendMicroManagementAccount}:fss-telemetry-topic
+                  - !Sub arn:${AWS::Partition}:sns:*:*:*-ScanResultTopic-*
               - Effect: Allow
                 Action:
                   - logs:*
-                Resource: arn:aws:logs:*:*:*
+                Resource: !Sub arn:${AWS::Partition}:logs:*:*:*
 
   ManagementRole:
     Type: AWS::IAM::Role
@@ -391,7 +363,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - lambda:GetLayerVersion
-                Resource: !Sub arn:aws:lambda:*:${TrendMicroManagementAccount}:layer:*:*
+                Resource: !Sub arn:${AWS::Partition}:lambda:*:${TrendMicroManagementAccount}:layer:*:*
         - PolicyName: lambda-logs-access
           PolicyDocument:
             Version: 2012-10-17

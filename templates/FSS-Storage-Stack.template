@@ -158,7 +158,7 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: lambda-copier
           PolicyDocument:
@@ -166,12 +166,12 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: s3:GetObject
-                Resource: !Sub arn:aws:s3:::${FSSBucketName}/*
+                Resource: !Sub arn:${AWS::Partition}:s3:::${FSSBucketName}/*
               - Effect: Allow
                 Action:
                   - s3:PutObject
                   - s3:DeleteObject
-                Resource: !Sub arn:aws:s3:::${CopyZipsDestBucket}/*
+                Resource: !Sub arn:${AWS::Partition}:s3:::${CopyZipsDestBucket}/*
 
   ScanResultTopic:
     Type: AWS::SNS::Topic
@@ -233,7 +233,7 @@ Resources:
                 Action:
                   - s3:GetObject
                   - s3:PutObjectTagging
-                Resource: !Sub arn:aws:s3:::${S3BucketToScan}/*
+                Resource: !Sub arn:${AWS::Partition}:s3:::${S3BucketToScan}/*
               - Effect: Allow
                 Action:
                   - sqs:SendMessage
@@ -242,14 +242,14 @@ Resources:
               - Effect: Allow
                 Action:
                   - logs:*
-                Resource: arn:aws:logs:*:*:*
+                Resource: !Sub arn:${AWS::Partition}:logs:*:*:*
   BucketListenerInvokePermissionOfScanningBucket:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt BucketListenerLambda.Arn
       Principal: s3.amazonaws.com
-      SourceArn: !Sub arn:aws:s3:::${S3BucketToScan}
+      SourceArn: !Sub arn:${AWS::Partition}:s3:::${S3BucketToScan}
   BucketListenerLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -294,11 +294,11 @@ Resources:
                   - s3:GetObject
                   - s3:GetObjectTagging
                   - s3:PutObjectTagging
-                Resource: !Sub arn:aws:s3:::${S3BucketToScan}/*
+                Resource: !Sub arn:${AWS::Partition}:s3:::${S3BucketToScan}/*
               - Effect: Allow
                 Action:
                   - logs:*
-                Resource: arn:aws:logs:*:*:*
+                Resource: !Sub arn:${AWS::Partition}:logs:*:*:*
   PostScanActionTagInvokePermissionOfScanResultTopic:
     Type: AWS::Lambda::Permission
     Properties:
@@ -419,13 +419,13 @@ Resources:
                   - s3:PutBucketNotification
                   - s3:CreateBucket
                   - s3:ListBucket
-                Resource: arn:aws:s3:::*
+                Resource: !Sub arn:${AWS::Partition}:s3:::*
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-                Resource: arn:aws:logs:*:*:*
+                Resource: !Sub arn:${AWS::Partition}:logs:*:*:*
 
 Outputs:
   ScanningBucket:
