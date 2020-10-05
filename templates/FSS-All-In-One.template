@@ -17,7 +17,6 @@ Metadata:
           - TrendMicroManagementAccount
           - CloudOneRegion
           - ExternalID
-          - LicenseLayer
 
     ParameterLabels:
       S3BucketToScan:
@@ -32,8 +31,6 @@ Metadata:
         default: Trend Micro Cloud One region
       ExternalID:
         default: ExternalID
-      LicenseLayer:
-        default: License Lambda layer
 
 Parameters:
   S3BucketToScan:
@@ -58,10 +55,6 @@ Parameters:
       File Storage Security key prefix can include numbers, lowercase letters,
       uppercase letters, hyphens (-), and forward slash (/).
     Default: latest/
-    Description: ""
-    Type: String
-  LicenseLayer:
-    Default: ""
     Description: ""
     Type: String
   CloudOneRegion:
@@ -110,7 +103,6 @@ Resources:
         CloudOneRegion: !Ref CloudOneRegion
         TrendMicroManagementAccount: !Ref TrendMicroManagementAccount
         ExternalID: !Ref ExternalID
-        LicenseLayer: !Ref LicenseLayer
       Tags:
         - Key: Name
           Value: FSS-Scanner-Stack
@@ -191,7 +183,7 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: SetupSQSRights
           PolicyDocument:
@@ -201,7 +193,7 @@ Resources:
                 Action:
                   - sqs:GetQueueAttributes
                   - sqs:SetQueueAttributes
-                Resource: arn:aws:sqs:*:*:*
+                Resource: !Sub arn:${AWS::Partition}:sqs:*:*:*
 
 Outputs:
   ScanningBucket:
