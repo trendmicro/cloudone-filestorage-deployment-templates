@@ -166,12 +166,12 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: s3:GetObject
-                Resource: !Sub arn:${AWS::Partition}:s3:::${FSSBucketName}/*
+                Resource: !Sub arn:${AWS::Partition}:s3:::${FSSBucketName}/${FSSKeyPrefix}*
               - Effect: Allow
                 Action:
                   - s3:PutObject
                   - s3:DeleteObject
-                Resource: !Sub arn:${AWS::Partition}:s3:::${CopyZipsDestBucket}/*
+                Resource: !Sub arn:${AWS::Partition}:s3:::${CopyZipsDestBucket}/${FSSKeyPrefix}*
 
   ScanResultTopic:
     Type: AWS::SNS::Topic
@@ -224,6 +224,8 @@ Resources:
             Action:
               - sts:AssumeRole
       Path: /
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: root
           PolicyDocument:
@@ -237,12 +239,17 @@ Resources:
               - Effect: Allow
                 Action:
                   - sqs:SendMessage
-                  - sqs:GetQueueUrl
-                Resource: "*"
-              - Effect: Allow
-                Action:
-                  - logs:*
-                Resource: !Sub arn:${AWS::Partition}:logs:*:*:*
+                Resource: !Join
+                  - ':'
+                  - - !Sub arn:${AWS::Partition}:sqs
+                    # convert SQS URL (https://sqs.<REGION>.amazonaws.com/<ACCOUNT_ID>/<QUEUE_NAME>) to ARN
+                    - !Select # region
+                      - 1
+                      - !Split
+                        - .
+                        - !Select [2, !Split [/, !Ref ScannerSQSURL]] # hostname sqs.<REGION>.amazonaws.com
+                    - !Select [3, !Split [/, !Ref ScannerSQSURL]] # account ID
+                    - !Select [4, !Split [/, !Ref ScannerSQSURL]] # queue name
   BucketListenerInvokePermissionOfScanningBucket:
     Type: AWS::Lambda::Permission
     Properties:
@@ -284,6 +291,8 @@ Resources:
             Action:
               - sts:AssumeRole
       Path: /
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: root
           PolicyDocument:
@@ -295,10 +304,6 @@ Resources:
                   - s3:GetObjectTagging
                   - s3:PutObjectTagging
                 Resource: !Sub arn:${AWS::Partition}:s3:::${S3BucketToScan}/*
-              - Effect: Allow
-                Action:
-                  - logs:*
-                Resource: !Sub arn:${AWS::Partition}:logs:*:*:*
   PostScanActionTagInvokePermissionOfScanResultTopic:
     Type: AWS::Lambda::Permission
     Properties:
@@ -333,15 +338,38 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - cloudformation:*
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:ListStackResources
+                  - cloudformation:DescribeStacks
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:DescribeStackResources
+                  - cloudformation:DescribeStackResource
+                  - cloudformation:DetectStackDrift
+                  - cloudformation:DetectStackResourceDrift
+                  - cloudformation:DescribeStackResourceDrifts
+                  - cloudformation:GetStackPolicy
+                  - cloudformation:GetTemplate
                 Resource: !Ref AWS::StackId
-        - PolicyName: fss-lambda-management-policy
+        - PolicyName: lambda-management
           PolicyDocument:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
                 Action:
-                  - lambda:*
+                  - lambda:UpdateFunctionCode
+                  - lambda:UpdateFunctionConfiguration
+                  - lambda:GetFunctionConfiguration
+                  - lambda:PublishVersion
+                  - lambda:ListVersionsByFunction
+                  - lambda:CreateAlias
+                  - lambda:UpdateAlias
+                  - lambda:DeleteAlias
+                  - lambda:ListAliases
+                  - lambda:GetAlias
+                  - lambda:GetFunction
+                  - lambda:ListProvisionedConcurrencyConfigs
+                  - lambda:GetProvisionedConcurrencyConfig
+                  - lambda:GetFunctionConcurrency
                 Resource:
                   - !GetAtt BucketListenerLambda.Arn
                   - !GetAtt PostScanActionTagLambda.Arn
@@ -408,6 +436,8 @@ Resources:
             Action:
               - sts:AssumeRole
       Path: /
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: root
           PolicyDocument:
@@ -419,13 +449,7 @@ Resources:
                   - s3:PutBucketNotification
                   - s3:CreateBucket
                   - s3:ListBucket
-                Resource: !Sub arn:${AWS::Partition}:s3:::*
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource: !Sub arn:${AWS::Partition}:logs:*:*:*
+                Resource: !Sub arn:${AWS::Partition}:s3:::${S3BucketToScan}
 
 Outputs:
   ScanningBucket:
