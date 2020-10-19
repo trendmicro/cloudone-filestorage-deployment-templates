@@ -153,12 +153,12 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: s3:GetObject
-                Resource: !Sub arn:${AWS::Partition}:s3:::${FSSBucketName}/*
+                Resource: !Sub arn:${AWS::Partition}:s3:::${FSSBucketName}/${FSSKeyPrefix}*
               - Effect: Allow
                 Action:
                   - s3:PutObject
                   - s3:DeleteObject
-                Resource: !Sub arn:${AWS::Partition}:s3:::${CopyZipsDestBucket}/*
+                Resource: !Sub arn:${AWS::Partition}:s3:::${CopyZipsDestBucket}/${FSSKeyPrefix}*
 
   ScannerQueue:
     Type: AWS::SQS::Queue
@@ -169,7 +169,7 @@ Resources:
       ReceiveMessageWaitTimeSeconds: 0
       VisibilityTimeout: 720
       RedrivePolicy:
-        deadLetterTargetArn: !GetAtt [ScannerDLQ, Arn]
+        deadLetterTargetArn: !GetAtt ScannerDLQ.Arn
         maxReceiveCount: 2
   ScannerQueuePolicy:
     Type: AWS::SQS::QueuePolicy
@@ -187,7 +187,7 @@ Resources:
               ]
             Action:
               - sqs:SendMessage
-            Resource: !GetAtt [ScannerQueue, Arn]
+            Resource: !GetAtt ScannerQueue.Arn
       Queues:
         - !Ref ScannerQueue
   ScannerDLQ:
@@ -209,7 +209,6 @@ Resources:
       Handler: lambdas.handler.lambda_handler
       Environment:
         Variables:
-          metrics: "True"
           queueURL: !Ref ScannerQueue
           telemetry_sns_arn: !Sub arn:${AWS::Partition}:sns:${CloudOneRegion}:${TrendMicroManagementAccount}:fss-telemetry-topic
           stackARN: !Ref AWS::StackId
@@ -261,7 +260,7 @@ Resources:
         Variables:
           stackARN: !Ref AWS::StackId
       MemorySize: 128
-      Role: !GetAtt ScannerExecutionRole.Arn
+      Role: !GetAtt ScannerDeadLetterExecutionRole.Arn
       Runtime: python3.6
       Timeout: 60
   ScannerDeadLetterLogGroup:
@@ -290,6 +289,8 @@ Resources:
             Action:
               - sts:AssumeRole
       Path: /
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: root
           PolicyDocument:
@@ -297,25 +298,50 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - cloudwatch:PutMetricData
-                Resource: "*"
-              - Effect: Allow
-                Action:
                   - sqs:ReceiveMessage
                   - sqs:DeleteMessage
                   - sqs:GetQueueAttributes
                   - sqs:ChangeMessageVisibility
-                Resource: "*"
+                Resource: !GetAtt ScannerQueue.Arn
               - Effect: Allow
                 Action:
                   - sns:Publish
                 Resource:
                   - !Sub arn:${AWS::Partition}:sns:${CloudOneRegion}:${TrendMicroManagementAccount}:fss-telemetry-topic
                   - !Sub arn:${AWS::Partition}:sns:*:*:*-ScanResultTopic-*
+
+  ScannerDeadLetterExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
               - Effect: Allow
                 Action:
-                  - logs:*
-                Resource: !Sub arn:${AWS::Partition}:logs:*:*:*
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                Resource: !GetAtt ScannerDLQ.Arn
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource:
+                  - !Sub arn:${AWS::Partition}:sns:${CloudOneRegion}:${TrendMicroManagementAccount}:fss-telemetry-topic
+                  - !Sub arn:${AWS::Partition}:sns:*:*:*-ScanResultTopic-*
 
   ManagementRole:
     Type: AWS::IAM::Role
@@ -338,7 +364,17 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - cloudformation:*
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:ListStackResources
+                  - cloudformation:DescribeStacks
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:DescribeStackResources
+                  - cloudformation:DescribeStackResource
+                  - cloudformation:DetectStackDrift
+                  - cloudformation:DetectStackResourceDrift
+                  - cloudformation:DescribeStackResourceDrifts
+                  - cloudformation:GetStackPolicy
+                  - cloudformation:GetTemplate
                 Resource: !Ref AWS::StackId
         - PolicyName: queue-management
           PolicyDocument:
@@ -346,24 +382,51 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - sqs:*
+                  - sqs:SetQueueAttributes
+                  - sqs:GetQueueAttributes
+                  - sqs:ListDeadLetterSourceQueues
                 Resource:
-                  - !GetAtt [ScannerQueue, Arn]
-                  - !GetAtt [ScannerDLQ, Arn]
-        - PolicyName: lambda-scanner-management
+                  - !GetAtt ScannerQueue.Arn
+                  - !GetAtt ScannerDLQ.Arn
+        - PolicyName: lambda-management
           PolicyDocument:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
                 Action:
-                  - lambda:*
+                  - lambda:UpdateFunctionCode
+                  - lambda:UpdateFunctionConfiguration
+                  - lambda:GetFunctionConfiguration
+                  - lambda:PublishVersion
+                  - lambda:ListVersionsByFunction
+                  - lambda:CreateAlias
+                  - lambda:UpdateAlias
+                  - lambda:DeleteAlias
+                  - lambda:ListAliases
+                  - lambda:GetAlias
+                  - lambda:GetFunction
+                  - lambda:ListProvisionedConcurrencyConfigs
+                  - lambda:GetProvisionedConcurrencyConfig
+                  - lambda:GetFunctionConcurrency
                 Resource:
                   - !GetAtt ScannerLambda.Arn
                   - !GetAtt ScannerDeadLetterLambda.Arn
               - Effect: Allow
                 Action:
+                  - lambda:GetEventSourceMapping
+                Resource:
+                  - !Sub
+                    - arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:event-source-mapping:${MappingID}
+                    - MappingID: !Ref ScannerEventSourceFromScannerQueue
+                  - !Sub
+                    - arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:event-source-mapping:${MappingID}
+                    - MappingID: !Ref ScannerDeadLetterEventSourceFromDLQ
+              - Effect: Allow
+                Action:
                   - lambda:GetLayerVersion
-                Resource: !Sub arn:${AWS::Partition}:lambda:*:${TrendMicroManagementAccount}:layer:*:*
+                Resource:
+                  - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${TrendMicroManagementAccount}:layer:Scanner*LambdaLayer*:*
+                  - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:Scanner*LambdaLayer:*
         - PolicyName: lambda-logs-access
           PolicyDocument:
             Version: 2012-10-17
