@@ -13,7 +13,6 @@ Metadata:
           - TrendMicroManagementAccount
           - CloudOneRegion
           - ExternalID
-          - BucketListenerRoleARNs
 
     ParameterLabels:
       FSSBucketName:
@@ -28,10 +27,6 @@ Metadata:
         default: ExternalID
 
 Parameters:
-  BucketListenerRoleARNs:
-    Description: The ARNs of the roles that are allowed to send scan requests. Multiple values can be separated by commas.
-    Type: CommaDelimitedList
-    Default: ""
   FSSBucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     ConstraintDescription:
@@ -64,15 +59,6 @@ Parameters:
   ExternalID:
     Description: "The primary function of the External ID is to address and prevent the 'confused deputy' problem."
     Type: String
-
-Conditions:
-  HasBucketListenerRoleARNs:
-    Fn::Not:
-      - Fn::Equals:
-          - Fn::Join:
-              - ""
-              - Ref: BucketListenerRoleARNs
-          - ""
 
 Resources:
   CopyZipsDestBucket:
@@ -179,12 +165,7 @@ Resources:
         Statement:
           - Sid: send_message_from_accounts
             Effect: Allow
-            Principal:
-              !If [
-                HasBucketListenerRoleARNs,
-                { AWS: !Ref BucketListenerRoleARNs },
-                !Ref "AWS::NoValue",
-              ]
+            Principal: !Ref AWS::NoValue
             Action:
               - sqs:SendMessage
             Resource: !GetAtt ScannerQueue.Arn
