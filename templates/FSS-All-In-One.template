@@ -97,7 +97,6 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
-        BucketListenerRoleARNs: ""
         FSSBucketName: !Ref FSSBucketName
         FSSKeyPrefix: !Ref FSSKeyPrefix
         CloudOneRegion: !Ref CloudOneRegion
@@ -109,91 +108,6 @@ Resources:
       TemplateURL:
         Fn::Sub: https://${FSSBucketName}.s3.amazonaws.com/${FSSKeyPrefix}templates/FSS-Scanner-Stack.template
       TimeoutInMinutes: 30
-
-  SetupSQSRights:
-    Type: Custom::SetupSQSRightsLambda
-    Properties:
-      ServiceToken: !GetAtt SetupSQSRightsLambda.Arn
-
-  SetupSQSRightsLambda:
-    Type: AWS::Lambda::Function
-    Properties:
-      Description: Sets rights for the lambda to push items into the queue
-      Environment:
-        Variables:
-          LambdaRoleARN: !GetAtt StorageStack.Outputs.BucketListenerRoleARN
-          SQSUrl: !GetAtt ScannerStack.Outputs.ScannerQueueURL
-      Handler: index.lambda_handler
-      Runtime: python3.7
-      Role: !GetAtt SetupSQSRightsExecutionRole.Arn
-      Timeout: 900
-      Code:
-        ZipFile: |
-          import json
-          import os
-          import base64
-          from botocore.vendored import requests
-          import logging
-          from datetime import datetime
-          import boto3
-          import cfnresponse
-          import logging
-          logger = logging.getLogger(__name__)
-          def lambda_handler(event, context):
-              logger.debug(event)
-              status = cfnresponse.SUCCESS
-              try:
-                  if event['RequestType'] == 'Delete':
-                      cfnresponse.send(event, context, status, {}, None)
-                      return
-                  SQSName = os.environ['SQSUrl']
-                  lambdaRoleARN = os.environ['LambdaRoleARN']
-                  client = boto3.client('sqs')
-
-                  queue_attributes = client.get_queue_attributes(
-                      QueueUrl=SQSName,
-                      AttributeNames=['Policy'])
-
-                  queue_policy = json.loads(queue_attributes['Attributes']['Policy'])
-
-                  new_principal = {
-                      "AWS": [ lambdaRoleARN ]
-                  }
-                  queue_policy['Statement'][0]['Principal'] = new_principal
-
-                  client.set_queue_attributes(
-                      QueueUrl=SQSName,
-                      Attributes={
-                          'Policy':json.dumps(queue_policy)
-                      })
-              except Exception:
-                              logging.error('Unhandled exception', exc_info=True)
-                              status = cfnresponse.FAILED
-              finally:
-                              cfnresponse.send(event, context, status, {}, None)
-
-  SetupSQSRightsExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-      Policies:
-        - PolicyName: SetupSQSRights
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - sqs:GetQueueAttributes
-                  - sqs:SetQueueAttributes
-                Resource: !Sub arn:${AWS::Partition}:sqs:*:*:*
 
 Outputs:
   ScanningBucket:
