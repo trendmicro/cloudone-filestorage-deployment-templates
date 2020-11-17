@@ -463,3 +463,5 @@ Outputs:
     Value: !GetAtt BucketListenerLambda.Arn
   PostScanActionTagLambdaARN:
     Value: !GetAtt PostScanActionTagLambda.Arn
+  ScanResultTopicARN:
+    Value: !Ref ScanResultTopic

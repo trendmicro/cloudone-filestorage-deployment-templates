@@ -125,3 +125,6 @@ Outputs:
   StorageStackManagementRoleARN:
     Value: !GetAtt StorageStack.Outputs.StorageStackManagementRoleARN
     Description: The ARN of the IAM role for File Storage Security backend services to manage the deployed resources.
+  ScanResultTopicARN:
+    Value: !GetAtt StorageStack.Outputs.ScanResultTopicARN
+    Description: The ARN of the scan result SNS topic in storage stack.
