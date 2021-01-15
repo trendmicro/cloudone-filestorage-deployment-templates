@@ -9,6 +9,7 @@ Metadata:
           default: "[ Customizable section ] You can modify the region from AWS navigation bar."
         Parameters:
           - S3BucketToScan
+          - KMSKeyARNForBucketSSE
       - Label:
           default: "[ Scanner stack ]"
         Parameters:
@@ -34,6 +35,8 @@ Metadata:
     ParameterLabels:
       S3BucketToScan:
         default: S3BucketToScan
+      KMSKeyARNForBucketSSE:
+        default: KMSKeyARNForBucketSSE
       ScannerAWSAccount:
         default: ScannerAWSAccount
       ScannerSQSURL:
@@ -69,6 +72,10 @@ Parameters:
       letters, and hyphens (-). It cannot start or end with a hyphen
       (-).
     Description: The S3 bucket to scan. Specify an existing S3 bucket.
+    Type: String
+  KMSKeyARNForBucketSSE:
+    Default: ''
+    Description: The ARN for the KMS master key used to encrypt S3 bucket objects. Leave it blank if you haven't enabled SSE-KMS for the bucket.
     Type: String
   ScannerSQSURL:
     Description: ""
@@ -152,6 +159,8 @@ Conditions:
     !Not [!Equals ['', !Ref LambdaFunctionPrefix]]
   HasSNSTopicPrefix:
     !Not [!Equals ['', !Ref SNSTopicPrefix]]
+  IsBucketSSEKMSEnabled:
+    !Not [!Equals ['', !Ref KMSKeyARNForBucketSSE]]
 
 Resources:
   CopyZipsDestBucket:
@@ -339,6 +348,20 @@ Resources:
                         - !Select [2, !Split [/, !Ref ScannerSQSURL]] # hostname sqs.<REGION>.amazonaws.com
                     - !Select [3, !Split [/, !Ref ScannerSQSURL]] # account ID
                     - !Select [4, !Split [/, !Ref ScannerSQSURL]] # queue name
+  BucketListenerExecutionRoleKMSDecryptPolicy:
+    Type: AWS::IAM::Policy
+    Condition: IsBucketSSEKMSEnabled
+    Properties:
+      PolicyName: kms-permission
+      Roles:
+        - !Ref BucketListenerExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kms:Decrypt
+            Resource: !Ref KMSKeyARNForBucketSSE
   BucketListenerInvokePermissionOfScanningBucket:
     Type: AWS::Lambda::Permission
     Properties:

@@ -9,6 +9,7 @@ Metadata:
           default: "[ Customizable section ] You can modify the region from AWS navigation bar."
         Parameters:
           - S3BucketToScan
+          - KMSKeyARNForBucketSSE
       - Label:
           default: "[ Optional: resource prefixes ] Warning: Do not modify these fields when you update the stack. This may cause management problems. The maximum prefix length is 50 characters."
         Parameters:
@@ -31,6 +32,8 @@ Metadata:
     ParameterLabels:
       S3BucketToScan:
         default: S3BucketToScan
+      KMSKeyARNForBucketSSE:
+        default: KMSKeyARNForBucketSSE
       FSSBucketName:
         default: Stack package location
       FSSKeyPrefix:
@@ -63,6 +66,10 @@ Parameters:
       letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
       (-).
     Description: The S3 bucket to scan. Specify an existing S3 bucket.
+    Type: String
+  KMSKeyARNForBucketSSE:
+    Default: ''
+    Description: The ARN for the KMS master key used to encrypt S3 bucket objects. Leave it blank if you haven't enabled SSE-KMS for the bucket.
     Type: String
   FSSBucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
@@ -152,6 +159,7 @@ Resources:
     Properties:
       Parameters:
         S3BucketToScan: !Ref S3BucketToScan
+        KMSKeyARNForBucketSSE: !Ref KMSKeyARNForBucketSSE
         ScannerAWSAccount: !Ref AWS::AccountId
         ScannerSQSURL: !GetAtt ScannerStack.Outputs.ScannerQueueURL
         FSSBucketName: !Ref FSSBucketName
