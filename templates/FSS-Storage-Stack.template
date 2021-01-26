@@ -352,7 +352,10 @@ Resources:
     Type: AWS::IAM::Policy
     Condition: IsBucketSSEKMSEnabled
     Properties:
-      PolicyName: kms-permission
+      PolicyName: !If
+        - HasIAMPolicyPrefix
+        - !Join ['', [!Ref IAMPolicyPrefix, 'kms-permission']]
+        - 'kms-permission'
       Roles:
         - !Ref BucketListenerExecutionRole
       PolicyDocument:
