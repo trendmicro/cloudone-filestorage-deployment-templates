@@ -170,7 +170,7 @@ Resources:
         - !Ref AWS::NoValue
       Description: Copies objects from a source S3 bucket to a destination
       Handler: index.handler
-      Runtime: python3.7
+      Runtime: python3.8
       Role: !GetAtt CopyZipsExecutionRole.Arn
       Timeout: 900
       Code:
@@ -355,7 +355,7 @@ Resources:
           stackARN: !Ref AWS::StackId
       MemorySize: 128
       Role: !GetAtt ScannerDeadLetterExecutionRole.Arn
-      Runtime: python3.6
+      Runtime: python3.8
       Timeout: 60
   ScannerDeadLetterLogGroup:
     Type: AWS::Logs::LogGroup
