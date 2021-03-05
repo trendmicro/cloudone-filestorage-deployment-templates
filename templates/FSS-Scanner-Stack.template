@@ -159,7 +159,6 @@ Resources:
       Objects:
         - lambda/scanner-lambda-python.zip
         - lambda/scanner-dlq-lambda-python.zip
-        - lib/scanner-lambda-python-lib.zip
         - patterns/pattern-icrc-269.zip
   CopyZipsLambda:
     Type: AWS::Lambda::Function
@@ -299,25 +298,12 @@ Resources:
       Runtime: python3.6
       Timeout: 120
       Layers:
-        - !Ref ScannerLibLambdaLayer
         - !Ref ScannerPatternLambdaLayer
   ScannerLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Join [/, [/aws/lambda, !Ref ScannerLambda]]
       RetentionInDays: 90
-  ScannerLibLambdaLayer:
-    Type: AWS::Lambda::LayerVersion
-    DependsOn: CopyZips
-    Properties:
-      LayerName: !If
-        - HasLambdaLayerPrefix
-        - !Join ['', [!Ref LambdaLayerPrefix, 'ScannerEngine']]
-        - !Ref AWS::NoValue
-      Content:
-        S3Bucket: !Ref CopyZipsDestBucket
-        S3Key: !Sub ${FSSKeyPrefix}lib/scanner-lambda-python-lib.zip
-      Description: Anti-Malware lib layer for scanner lambda function.
   ScannerPatternLambdaLayer:
     Type: AWS::Lambda::LayerVersion
     DependsOn: CopyZips
