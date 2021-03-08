@@ -6,6 +6,10 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
+          default: "[ Customizable section ] You can modify the region from AWS navigation bar."
+        Parameters:
+          - KMSKeyARNForQueueSSE
+      - Label:
           default: "[ Optional: resource prefixes ] Warning: Do not modify these fields when you update the stack. This may cause management problems. The maximum prefix length is 50 characters."
         Parameters:
           - IAMRolePrefix
@@ -24,6 +28,8 @@ Metadata:
           - ExternalID
 
     ParameterLabels:
+      KMSKeyARNForQueueSSE:
+        default: KMSKeyARNForQueueSSE
       FSSBucketName:
         default: Stack package location
       FSSKeyPrefix:
@@ -48,6 +54,10 @@ Metadata:
         default: Prefix for SQS queue name
 
 Parameters:
+  KMSKeyARNForQueueSSE:
+    Default: ''
+    Description: The ARN for the KMS master key used to encrypt messages in SQS. Leave it blank if you haven't used your own CMK for SQS server-side encryption.
+    Type: String
   FSSBucketName:
     AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
     ConstraintDescription:
@@ -136,6 +146,8 @@ Conditions:
     !Not [!Equals ['', !Ref LambdaLayerPrefix]]
   HasSQSQueuePrefix:
     !Not [!Equals ['', !Ref SQSQueuePrefix]]
+  IsQueueSSEKMSEnabled:
+    !Not [!Equals ['', !Ref KMSKeyARNForQueueSSE]]
 
 Resources:
   CopyZipsDestBucket:
@@ -249,6 +261,14 @@ Resources:
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt ScannerDLQ.Arn
         maxReceiveCount: 2
+      KmsDataKeyReusePeriodSeconds: !If
+        - IsQueueSSEKMSEnabled
+        - 86400
+        - !Ref AWS::NoValue
+      KmsMasterKeyId: !If
+        - IsQueueSSEKMSEnabled
+        - !Ref KMSKeyARNForQueueSSE
+        - !Ref AWS::NoValue
   ScannerQueuePolicy:
     Type: AWS::SQS::QueuePolicy
     Properties:
@@ -275,6 +295,14 @@ Resources:
       MessageRetentionPeriod: 3600
       ReceiveMessageWaitTimeSeconds: 0
       VisibilityTimeout: 720
+      KmsDataKeyReusePeriodSeconds: !If
+        - IsQueueSSEKMSEnabled
+        - 86400
+        - !Ref AWS::NoValue
+      KmsMasterKeyId: !If
+        - IsQueueSSEKMSEnabled
+        - !Ref KMSKeyARNForQueueSSE
+        - !Ref AWS::NoValue
 
   ScannerLambda:
     Type: AWS::Lambda::Function
@@ -393,6 +421,23 @@ Resources:
                 Resource:
                   - !Sub arn:${AWS::Partition}:sns:${CloudOneRegion}:${TrendMicroManagementAccount}:fss-telemetry-topic
                   - !Sub arn:${AWS::Partition}:sns:*:*:*-ScanResultTopic-*
+  ScannerExecutionRoleKMSDecryptPolicyForSQS:
+    Type: AWS::IAM::Policy
+    Condition: IsQueueSSEKMSEnabled
+    Properties:
+      PolicyName: !If
+        - HasIAMPolicyPrefix
+        - !Join ['', [!Ref IAMPolicyPrefix, 'kms-permission-for-sqs']]
+        - 'kms-permission-for-sqs'
+      Roles:
+        - !Ref ScannerExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kms:Decrypt
+            Resource: !Ref KMSKeyARNForQueueSSE
 
   ScannerDeadLetterExecutionRole:
     Type: AWS::IAM::Role
@@ -430,6 +475,23 @@ Resources:
                 Resource:
                   - !Sub arn:${AWS::Partition}:sns:${CloudOneRegion}:${TrendMicroManagementAccount}:fss-telemetry-topic
                   - !Sub arn:${AWS::Partition}:sns:*:*:*-ScanResultTopic-*
+  ScannerDeadLetterExecutionRoleKMSDecryptPolicyForSQS:
+    Type: AWS::IAM::Policy
+    Condition: IsQueueSSEKMSEnabled
+    Properties:
+      PolicyName: !If
+        - HasIAMPolicyPrefix
+        - !Join ['', [!Ref IAMPolicyPrefix, 'kms-permission-for-sqs']]
+        - 'kms-permission-for-sqs'
+      Roles:
+        - !Ref ScannerDeadLetterExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kms:Decrypt
+            Resource: !Ref KMSKeyARNForQueueSSE
 
   ManagementRole:
     Type: AWS::IAM::Role
