@@ -10,6 +10,7 @@ Metadata:
         Parameters:
           - S3BucketToScan
           - KMSKeyARNForBucketSSE
+          - KMSKeyARNForQueueSSE
       - Label:
           default: "[ Optional: resource prefixes ] Warning: Do not modify these fields when you update the stack. This may cause management problems. The maximum prefix length is 50 characters."
         Parameters:
@@ -34,6 +35,8 @@ Metadata:
         default: S3BucketToScan
       KMSKeyARNForBucketSSE:
         default: KMSKeyARNForBucketSSE
+      KMSKeyARNForQueueSSE:
+        default: KMSKeyARNForQueueSSE
       FSSBucketName:
         default: Stack package location
       FSSKeyPrefix:
@@ -70,6 +73,10 @@ Parameters:
   KMSKeyARNForBucketSSE:
     Default: ''
     Description: The ARN for the KMS master key used to encrypt S3 bucket objects. Leave it blank if you haven't enabled SSE-KMS for the bucket.
+    Type: String
+  KMSKeyARNForQueueSSE:
+    Default: ''
+    Description: The ARN for the KMS master key used to encrypt messages in SQS. Leave it blank if you haven't used your own CMK for SQS server-side encryption.
     Type: String
   FSSBucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
@@ -160,6 +167,7 @@ Resources:
       Parameters:
         S3BucketToScan: !Ref S3BucketToScan
         KMSKeyARNForBucketSSE: !Ref KMSKeyARNForBucketSSE
+        KMSKeyARNForQueueSSE: !Ref KMSKeyARNForQueueSSE
         ScannerAWSAccount: !Ref AWS::AccountId
         ScannerSQSURL: !GetAtt ScannerStack.Outputs.ScannerQueueURL
         FSSBucketName: !Ref FSSBucketName
@@ -183,6 +191,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
+        KMSKeyARNForQueueSSE: !Ref KMSKeyARNForQueueSSE
         FSSBucketName: !Ref FSSBucketName
         FSSKeyPrefix: !Ref FSSKeyPrefix
         CloudOneRegion: !Ref CloudOneRegion

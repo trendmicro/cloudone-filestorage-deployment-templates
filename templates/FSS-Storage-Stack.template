@@ -15,6 +15,7 @@ Metadata:
         Parameters:
           - ScannerAWSAccount
           - ScannerSQSURL
+          - KMSKeyARNForQueueSSE
       - Label:
           default: "[ Optional: resource prefixes ] Warning: Do not modify these fields when you update the stack. This may cause management problems. The maximum prefix length is 50 characters."
         Parameters:
@@ -41,6 +42,8 @@ Metadata:
         default: ScannerAWSAccount
       ScannerSQSURL:
         default: ScannerSQSURL
+      KMSKeyARNForQueueSSE:
+        default: KMSKeyARNForQueueSSE
       FSSBucketName:
         default: Stack package location
       FSSKeyPrefix:
@@ -79,6 +82,10 @@ Parameters:
     Type: String
   ScannerSQSURL:
     Description: ""
+    Type: String
+  KMSKeyARNForQueueSSE:
+    Default: ''
+    Description: The ARN for the KMS master key used to encrypt messages in SQS. Leave it blank if you haven't used your own CMK for SQS server-side encryption.
     Type: String
   FSSBucketName:
     AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
@@ -161,6 +168,8 @@ Conditions:
     !Not [!Equals ['', !Ref SNSTopicPrefix]]
   IsBucketSSEKMSEnabled:
     !Not [!Equals ['', !Ref KMSKeyARNForBucketSSE]]
+  IsQueueSSEKMSEnabled:
+    !Not [!Equals ['', !Ref KMSKeyARNForQueueSSE]]
 
 Resources:
   CopyZipsDestBucket:
@@ -365,6 +374,24 @@ Resources:
             Action:
               - kms:Decrypt
             Resource: !Ref KMSKeyARNForBucketSSE
+  BucketListenerExecutionRoleKMSDecryptPolicyForSQS:
+    Type: AWS::IAM::Policy
+    Condition: IsQueueSSEKMSEnabled
+    Properties:
+      PolicyName: !If
+        - HasIAMPolicyPrefix
+        - !Join ['', [!Ref IAMPolicyPrefix, 'kms-permission-for-sqs']]
+        - 'kms-permission-for-sqs'
+      Roles:
+        - !Ref BucketListenerExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kms:GenerateDataKey
+              - kms:Decrypt
+            Resource: !Ref KMSKeyARNForQueueSSE
   BucketListenerInvokePermissionOfScanningBucket:
     Type: AWS::Lambda::Permission
     Properties:
