@@ -612,9 +612,8 @@ Resources:
                 Action:
                   - s3:GetBucketNotification
                   - s3:PutBucketNotification
-                  - s3:CreateBucket
                   - s3:ListBucket
-                Resource: !Sub arn:${AWS::Partition}:s3:::${S3BucketToScan}
+                Resource: !Sub arn:${AWS::Partition}:s3:::*
 
 Outputs:
   ScanningBucket:
