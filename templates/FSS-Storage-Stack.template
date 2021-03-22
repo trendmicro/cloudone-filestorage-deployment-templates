@@ -6,10 +6,11 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "[ Customizable section ] You can modify the region from AWS navigation bar."
+          default: "[ Customizable section ]"
         Parameters:
           - S3BucketToScan
           - KMSKeyARNForBucketSSE
+          - TriggerWithObjectCreatedEvent
       - Label:
           default: "[ Scanner stack ]"
         Parameters:
@@ -38,6 +39,8 @@ Metadata:
         default: S3BucketToScan
       KMSKeyARNForBucketSSE:
         default: KMSKeyARNForBucketSSE
+      TriggerWithObjectCreatedEvent:
+        default: TriggerWithObjectCreatedEvent
       ScannerAWSAccount:
         default: ScannerAWSAccount
       ScannerSQSURL:
@@ -79,6 +82,13 @@ Parameters:
   KMSKeyARNForBucketSSE:
     Default: ''
     Description: The ARN for the KMS master key used to encrypt S3 bucket objects. Leave it blank if you haven't enabled SSE-KMS for the bucket.
+    Type: String
+  TriggerWithObjectCreatedEvent:
+    Default: 'true'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: If the s3:ObjectCreated:* event of the S3BucketToScan is in use, set this option to false and trigger the scans by invoking the deployed BucketListenerLambda.
     Type: String
   ScannerSQSURL:
     Description: ""
@@ -170,6 +180,8 @@ Conditions:
     !Not [!Equals ['', !Ref KMSKeyARNForBucketSSE]]
   IsQueueSSEKMSEnabled:
     !Not [!Equals ['', !Ref KMSKeyARNForQueueSSE]]
+  IsTriggeredWithObjectCreatedEvent:
+    !Equals ['true', !Ref TriggerWithObjectCreatedEvent]
 
 Resources:
   CopyZipsDestBucket:
@@ -561,12 +573,14 @@ Resources:
 
   SetupBucketNotification:
     Type: Custom::SetupBucketNotificationLambda
+    Condition: IsTriggeredWithObjectCreatedEvent
     DependsOn: BucketListenerInvokePermissionOfScanningBucket
     Properties:
       ServiceToken: !GetAtt SetupBucketNotificationLambda.Arn
       Bucket: !Ref S3BucketToScan
   SetupBucketNotificationLambda:
     Type: AWS::Lambda::Function
+    Condition: IsTriggeredWithObjectCreatedEvent
     DependsOn: CopyZips
     Properties:
       FunctionName: !If
@@ -586,6 +600,7 @@ Resources:
         S3Key: !Sub ${FSSKeyPrefix}lambda/handle-scanningbucket-lambda-python.zip
   SetupBucketNotificationExecutionRole:
     Type: AWS::IAM::Role
+    Condition: IsTriggeredWithObjectCreatedEvent
     Properties:
       RoleName: !If
         - HasIAMRolePrefix
