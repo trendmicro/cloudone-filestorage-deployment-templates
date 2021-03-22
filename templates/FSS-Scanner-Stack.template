@@ -6,7 +6,7 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "[ Customizable section ] You can modify the region from AWS navigation bar."
+          default: "[ Customizable section ]"
         Parameters:
           - KMSKeyARNForQueueSSE
       - Label:
