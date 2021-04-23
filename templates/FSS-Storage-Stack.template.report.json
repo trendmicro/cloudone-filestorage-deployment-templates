@@ -1,0 +1,2421 @@
+{
+  "data": [
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-001:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "VERY_HIGH",
+        "pretty-risk-level": "Very High",
+        "message": "Bucket CopyZipsDestBucket does not allow public 'READ' access",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Bucket Public 'READ' Access",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/s3-bucket-public-read-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-001"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-002:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "VERY_HIGH",
+        "pretty-risk-level": "Very High",
+        "message": "Bucket CopyZipsDestBucket does not allow public 'READ_ACP' access",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Bucket Public 'READ_ACP' Access",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/s3-bucket-public-read-acp-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-002"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-003:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "VERY_HIGH",
+        "pretty-risk-level": "Very High",
+        "message": "Bucket CopyZipsDestBucket does not allow public 'WRITE' access",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Bucket Public 'WRITE' Access",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/s3-bucket-public-write-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-003"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-004:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "VERY_HIGH",
+        "pretty-risk-level": "Very High",
+        "message": "Bucket CopyZipsDestBucket does not allow public 'WRITE ACP' access",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Bucket Public 'WRITE_ACP' Access",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/s3-bucket-public-write-acp-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-004"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-005:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "VERY_HIGH",
+        "pretty-risk-level": "Very High",
+        "message": "Bucket CopyZipsDestBucket does not allow public 'FULL_CONTROL' access",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Bucket Public 'FULL_CONTROL' Access",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/s3-bucket-public-full-control-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-005"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-006:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "VERY_HIGH",
+        "pretty-risk-level": "Very High",
+        "message": "Bucket CopyZipsDestBucket does not allow authenticated users 'READ' access",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Bucket Authenticated Users 'READ' Access",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/s3-bucket-authenticated-users-read-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-006"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-007:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "VERY_HIGH",
+        "pretty-risk-level": "Very High",
+        "message": "Bucket CopyZipsDestBucket does not allow authenticated users 'READ_ACP' access",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Bucket Authenticated Users 'READ_ACP' Access",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/s3-bucket-authenticated-users-read-acp-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-007"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-008:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "VERY_HIGH",
+        "pretty-risk-level": "Very High",
+        "message": "Bucket CopyZipsDestBucket does not allow authenticated users 'WRITE' access",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Bucket Authenticated Users 'WRITE' Access",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/s3-bucket-authenticated-users-write-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-008"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-009:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "VERY_HIGH",
+        "pretty-risk-level": "Very High",
+        "message": "Bucket CopyZipsDestBucket does not allow authenticated users 'WRITE_ACP' access",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Bucket Authenticated Users 'WRITE_ACP' Access",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/s3-bucket-authenticated-users-write-acp-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-009"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-010:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "VERY_HIGH",
+        "pretty-risk-level": "Very High",
+        "message": "Bucket CopyZipsDestBucket does not allow authenticated users 'FULL_CONTROL' access",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Bucket Authenticated Users 'FULL_CONTROL' Access",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/s3-bucket-authenticated-users-full-control-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-010"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-011:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Bucket CopyZipsDestBucket doesn't have access logging enabled",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Bucket Logging Enabled",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/s3-bucket-logging-enabled.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-011"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-012:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "LOW",
+        "pretty-risk-level": "Low",
+        "message": "Bucket CopyZipsDestBucket does not have versioning enabled",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "reliability"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Bucket Versioning Enabled",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/s3-bucket-versioning-enabled.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-012"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-013:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "LOW",
+        "pretty-risk-level": "Low",
+        "message": "Bucket CopyZipsDestBucket configuration is MFA-Delete disabled",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Bucket MFA Delete Enabled",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/s3-bucket-mfa-delete-enabled.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-013"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-016:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "HIGH",
+        "pretty-risk-level": "High",
+        "message": "Bucket CopyZipsDestBucket enforces Server-Side Encryption",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Server Side Encryption",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/server-side-encryption.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-016"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-017:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Bucket CopyZipsDestBucket does not enforce SSL to secure data in transit",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Secure Transport",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/secure-transport.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-017"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-018:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "LOW",
+        "pretty-risk-level": "Low",
+        "message": "Bucket CopyZipsDestBucket is using a DNS-compliant name",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "performance-efficiency"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "DNS Compliant S3 Bucket Names",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/dns-compliant-buckets-names.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-018"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-020:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "LOW",
+        "pretty-risk-level": "Low",
+        "message": "Bucket CopyZipsDestBucket does not utilize lifecycle configurations",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security",
+          "cost-optimisation"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Buckets Lifecycle Configuration",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/lifecycle-configuration.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-020"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-021:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "HIGH",
+        "pretty-risk-level": "High",
+        "message": "Bucket CopyZipsDestBucket has encryption enabled",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Bucket Default Encryption",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/bucket-default-encryption.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-021"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-023:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "LOW",
+        "pretty-risk-level": "Low",
+        "message": "Object Lock is not enabled for CopyZipsDestBucket",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Object Lock",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/object-lock.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-023"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-024:S3:us-east-1:CopyZipsDestBucket",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "LOW",
+        "pretty-risk-level": "Low",
+        "message": "Transfer Acceleration is not enabled for CopyZipsDestBucket",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "performance-efficiency"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "S3 Transfer Acceleration",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/transfer-acceleration.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-024"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:S3-026:S3:global:CopyZipsDestBucket",
+      "attributes": {
+        "region": "global",
+        "status": "FAILURE",
+        "risk-level": "VERY_HIGH",
+        "pretty-risk-level": "Very High",
+        "message": "s3-bucket CopyZipsDestBucket does not have S3 Block Public Access feature enabled.",
+        "resource": "CopyZipsDestBucket",
+        "descriptorType": "s3-bucket",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "extradata": [],
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Enable S3 Block Public Access for S3 Buckets",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/S3/bucket-public-access-block.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "S3-026"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:IAM-049:IAM:global:{{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "global",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "IAM Role [{{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }}] is not too permissive",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "iam-role",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "IAM Role Policy Too Permissive",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/IAM/iam-role-policy-too-permissive.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "IAM-049"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:IAM-049:IAM:global:{{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "global",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "IAM Role [{{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }}] is not too permissive",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "iam-role",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "IAM Role Policy Too Permissive",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/IAM/iam-role-policy-too-permissive.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "IAM-049"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:IAM-049:IAM:global:{{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "global",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "IAM Role [{{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}] is not too permissive",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "iam-role",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "IAM Role Policy Too Permissive",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/IAM/iam-role-policy-too-permissive.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "IAM-049"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:IAM-049:IAM:global:{{ UNRESOLVED-INTRINSIC }}Mgmt-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "global",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "IAM Role [{{ UNRESOLVED-INTRINSIC }}Mgmt-{{ UNRESOLVED-INTRINSIC }}] is not too permissive",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}Mgmt-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "iam-role",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "IAM Role Policy Too Permissive",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/IAM/iam-role-policy-too-permissive.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "IAM-049"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:IAM-049:IAM:global:{{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "global",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "IAM Role [{{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }}] is not too permissive",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "iam-role",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "IAM Role Policy Too Permissive",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/IAM/iam-role-policy-too-permissive.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "IAM-049"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:IAM-057:IAM:us-east-1:{{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "IAM role {{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }} does not allow unknown cross account access",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "iam-role",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Check for Untrusted Cross-Account IAM Roles",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/IAM/role-cross-account-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "IAM-057"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:IAM-057:IAM:us-east-1:{{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "IAM role {{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }} does not allow unknown cross account access",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "iam-role",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Check for Untrusted Cross-Account IAM Roles",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/IAM/role-cross-account-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "IAM-057"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:IAM-057:IAM:us-east-1:{{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "IAM role {{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }} does not allow unknown cross account access",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "iam-role",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Check for Untrusted Cross-Account IAM Roles",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/IAM/role-cross-account-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "IAM-057"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:IAM-057:IAM:us-east-1:{{ UNRESOLVED-INTRINSIC }}Mgmt-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "IAM role {{ UNRESOLVED-INTRINSIC }}Mgmt-{{ UNRESOLVED-INTRINSIC }} does not allow unknown cross account access",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}Mgmt-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "iam-role",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Check for Untrusted Cross-Account IAM Roles",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/IAM/role-cross-account-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "IAM-057"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:IAM-057:IAM:us-east-1:{{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "IAM role {{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }} does not allow unknown cross account access",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "iam-role",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Check for Untrusted Cross-Account IAM Roles",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/IAM/role-cross-account-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "IAM-057"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:SNS-001:SNS:us-east-1:arn:aws:sns:us-east-1:123456789012:ScanResultTopic",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "HIGH",
+        "pretty-risk-level": "High",
+        "message": "arn:aws:sns:us-east-1:123456789012:ScanResultTopic topic is not exposed to everyone",
+        "resource": "arn:aws:sns:us-east-1:123456789012:ScanResultTopic",
+        "descriptorType": "sns-topic",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "SNS Topic Exposed",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/SNS/sns-topic-exposed.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "SNS-001"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:SNS-002:SNS:us-east-1:arn:aws:sns:us-east-1:123456789012:ScanResultTopic",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "HIGH",
+        "pretty-risk-level": "High",
+        "message": "Topic arn:aws:sns:us-east-1:123456789012:ScanResultTopic does not allow unknown cross account access",
+        "resource": "arn:aws:sns:us-east-1:123456789012:ScanResultTopic",
+        "descriptorType": "sns-topic",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "SNS Cross Account Access",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/SNS/sns-cross-account-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "SNS-002"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:SNS-003:SNS:us-east-1:arn:aws:sns:us-east-1:123456789012:ScanResultTopic-af70d0ab-db82-4722-b17c-e4ccfe0a1f5e",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Review arn:aws:sns:us-east-1:123456789012:ScanResultTopic subscriber: af70d0ab-db82-4722-b17c-e4ccfe0a1f5e",
+        "resource": "arn:aws:sns:us-east-1:123456789012:ScanResultTopic-af70d0ab-db82-4722-b17c-e4ccfe0a1f5e",
+        "descriptorType": "sns-topic",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "extradata": [
+          {
+            "name": "Topic",
+            "label": "Topic",
+            "value": "arn:aws:sns:us-east-1:123456789012:ScanResultTopic",
+            "type": "META"
+          },
+          {
+            "name": "TopicArn",
+            "label": "TopicArn",
+            "value": "arn:aws:sns:us-east-1:123456789012:ScanResultTopic",
+            "type": "META"
+          },
+          {
+            "name": "Subscription",
+            "label": "Subscription",
+            "value": "af70d0ab-db82-4722-b17c-e4ccfe0a1f5e",
+            "type": "META"
+          },
+          {
+            "name": "SubscriptionArn",
+            "label": "SubscriptionArn",
+            "value": "arn:aws:sns:us-east-1:123456789012:ScanResultTopic:af70d0ab-db82-4722-b17c-e4ccfe0a1f5e",
+            "type": "META"
+          },
+          {
+            "name": "Owner",
+            "label": "Owner",
+            "value": "123456789012",
+            "type": "META"
+          },
+          {
+            "name": "Protocol",
+            "label": "Protocol",
+            "value": "lambda",
+            "type": "META"
+          },
+          {
+            "name": "Endpoint",
+            "label": "Endpoint",
+            "value": "arn:aws:lambda:us-east-1:123456789012:{{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}",
+            "type": "META"
+          }
+        ],
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": true,
+        "ignored": false,
+        "rule-title": "AWS SNS Appropriate Subscribers",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/SNS/appropriate-subscribers.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "SNS-003"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:SNS-004:SNS:us-east-1:arn:aws:sns:us-east-1:123456789012:ScanResultTopic",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Topic [arn:aws:sns:us-east-1:123456789012:ScanResultTopic] doesn't allows 'Everyone' to publish",
+        "resource": "arn:aws:sns:us-east-1:123456789012:ScanResultTopic",
+        "descriptorType": "sns-topic",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "SNS Topic Accessible For Publishing",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/SNS/topics-everyone-publish.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "SNS-004"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:SNS-005:SNS:us-east-1:arn:aws:sns:us-east-1:123456789012:ScanResultTopic",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Topic [arn:aws:sns:us-east-1:123456789012:ScanResultTopic] doesn't allow 'Everyone' to subscribe",
+        "resource": "arn:aws:sns:us-east-1:123456789012:ScanResultTopic",
+        "descriptorType": "sns-topic",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "SNS Topic Accessible For Subscription",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/SNS/topics-everyone-subscribe.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "SNS-005"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:SNS-006:SNS:us-east-1:arn:aws:sns:us-east-1:123456789012:ScanResultTopic",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "HIGH",
+        "pretty-risk-level": "High",
+        "message": "Topic [arn:aws:sns:us-east-1:123456789012:ScanResultTopic] is not encrypted",
+        "resource": "arn:aws:sns:us-east-1:123456789012:ScanResultTopic",
+        "descriptorType": "sns-topic",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "SNS Topic Encrypted",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/SNS/server-side-encryption.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "SNS-006"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-001:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Function {{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }} is using the latest runtime environment",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "security",
+          "reliability"
+        ],
+        "last-updated-date": null,
+        "extradata": [
+          {
+            "name": "Runtime",
+            "label": "Runtime",
+            "value": "python3.8",
+            "type": "META"
+          },
+          {
+            "name": "Version",
+            "label": "Version",
+            "value": "1",
+            "type": "META"
+          },
+          {
+            "name": "MemorySize",
+            "label": "Memory Size",
+            "value": 128,
+            "type": "META"
+          },
+          {
+            "name": "Timeout",
+            "label": "Timeout",
+            "value": 900,
+            "type": "META"
+          },
+          {
+            "name": "LastModified",
+            "label": "LastModified",
+            "value": "2021-04-23T09:31:56.579Z",
+            "type": "META"
+          }
+        ],
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Lambda Runtime Environment Version",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/runtime-environment.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-001"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-001:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Function {{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }} is using the latest runtime environment",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "security",
+          "reliability"
+        ],
+        "last-updated-date": null,
+        "extradata": [
+          {
+            "name": "Runtime",
+            "label": "Runtime",
+            "value": "python3.8",
+            "type": "META"
+          },
+          {
+            "name": "Version",
+            "label": "Version",
+            "value": "1",
+            "type": "META"
+          },
+          {
+            "name": "MemorySize",
+            "label": "Memory Size",
+            "value": 128,
+            "type": "META"
+          },
+          {
+            "name": "Timeout",
+            "label": "Timeout",
+            "value": 15,
+            "type": "META"
+          },
+          {
+            "name": "LastModified",
+            "label": "LastModified",
+            "value": "2021-04-23T09:31:56.580Z",
+            "type": "META"
+          }
+        ],
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Lambda Runtime Environment Version",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/runtime-environment.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-001"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-001:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Function {{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }} is using the latest runtime environment",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "security",
+          "reliability"
+        ],
+        "last-updated-date": null,
+        "extradata": [
+          {
+            "name": "Runtime",
+            "label": "Runtime",
+            "value": "python3.8",
+            "type": "META"
+          },
+          {
+            "name": "Version",
+            "label": "Version",
+            "value": "1",
+            "type": "META"
+          },
+          {
+            "name": "MemorySize",
+            "label": "Memory Size",
+            "value": 128,
+            "type": "META"
+          },
+          {
+            "name": "Timeout",
+            "label": "Timeout",
+            "value": 15,
+            "type": "META"
+          },
+          {
+            "name": "LastModified",
+            "label": "LastModified",
+            "value": "2021-04-23T09:31:56.581Z",
+            "type": "META"
+          }
+        ],
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Lambda Runtime Environment Version",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/runtime-environment.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-001"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-001:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Function {{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }} is using the latest runtime environment",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "security",
+          "reliability"
+        ],
+        "last-updated-date": null,
+        "extradata": [
+          {
+            "name": "Runtime",
+            "label": "Runtime",
+            "value": "python3.8",
+            "type": "META"
+          },
+          {
+            "name": "Version",
+            "label": "Version",
+            "value": "1",
+            "type": "META"
+          },
+          {
+            "name": "MemorySize",
+            "label": "Memory Size",
+            "value": 128,
+            "type": "META"
+          },
+          {
+            "name": "Timeout",
+            "label": "Timeout",
+            "value": 50,
+            "type": "META"
+          },
+          {
+            "name": "LastModified",
+            "label": "LastModified",
+            "value": "2021-04-23T09:31:56.581Z",
+            "type": "META"
+          }
+        ],
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Lambda Runtime Environment Version",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/runtime-environment.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-001"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-002:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Function {{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }} does not allow unknown cross account access",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Lambda Cross Account Access",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/lambda-cross-account-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-002"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-002:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Function {{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }} does not allow unknown cross account access",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Lambda Cross Account Access",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/lambda-cross-account-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-002"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-002:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Function {{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }} does not allow unknown cross account access",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Lambda Cross Account Access",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/lambda-cross-account-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-002"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-002:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Function {{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }} does not allow unknown cross account access",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Lambda Cross Account Access",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/lambda-cross-account-access.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-002"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-003:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Tracing mode is not enabled for Lambda Function {{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }}",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "operational-excellence"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Tracing Enabled",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/tracing.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-003"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-003:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Tracing mode is not enabled for Lambda Function {{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }}",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "operational-excellence"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Tracing Enabled",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/tracing.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-003"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-003:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Tracing mode is not enabled for Lambda Function {{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "operational-excellence"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Tracing Enabled",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/tracing.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-003"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-003:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Tracing mode is not enabled for Lambda Function {{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }}",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "operational-excellence"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Tracing Enabled",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/tracing.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-003"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-004:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "HIGH",
+        "pretty-risk-level": "High",
+        "message": "Lambda Function {{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }} is not exposed to everyone",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Function Exposed",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/function-exposed.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-004"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-004:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "HIGH",
+        "pretty-risk-level": "High",
+        "message": "Lambda Function {{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }} is not exposed to everyone",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Function Exposed",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/function-exposed.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-004"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-004:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "HIGH",
+        "pretty-risk-level": "High",
+        "message": "Lambda Function {{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }} is not exposed to everyone",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Function Exposed",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/function-exposed.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-004"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-004:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "HIGH",
+        "pretty-risk-level": "High",
+        "message": "Lambda Function {{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }} is not exposed to everyone",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Function Exposed",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/function-exposed.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-004"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-007:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Lambda Function {{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }} does not have VPC Access",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}CP-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "VPC Access for AWS Lambda Functions",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/function-in-vpc.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-007"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-007:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Lambda Function {{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }} does not have VPC Access",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}BL-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "VPC Access for AWS Lambda Functions",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/function-in-vpc.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-007"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-007:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Lambda Function {{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }} does not have VPC Access",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}Tag-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "VPC Access for AWS Lambda Functions",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/function-in-vpc.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-007"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:Lambda-007:Lambda:us-east-1:{{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }}",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Lambda Function {{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }} does not have VPC Access",
+        "resource": "{{ UNRESOLVED-INTRINSIC }}Setup-{{ UNRESOLVED-INTRINSIC }}",
+        "descriptorType": "lambda-function",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "VPC Access for AWS Lambda Functions",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/Lambda/function-in-vpc.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "Lambda-007"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    }
+  ],
+  "meta": {
+    "missingParameters": [
+      "ScannerAWSAccount",
+      "S3BucketToScan",
+      "KMSKeyARNForBucketSSE",
+      "ScannerSQSURL",
+      "KMSKeyARNForQueueSSE",
+      "ExternalID",
+      "IAMRolePrefix",
+      "IAMPolicyPrefix",
+      "S3BucketPrefix",
+      "LambdaFunctionPrefix",
+      "SNSTopicPrefix"
+    ],
+    "errors": []
+  }
+}

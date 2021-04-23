@@ -1,0 +1,266 @@
+{
+  "data": [
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:CFM-001:CloudFormation:us-east-1:storagestack-dgz6cbm611jl",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Stack storagestack-dgz6cbm611jl doesn't have SNS notification enabled",
+        "resource": "storagestack-dgz6cbm611jl",
+        "descriptorType": "cfm-stack",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [
+          "Name::FSS-Storage-Stack"
+        ],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "CloudFormation Stack Notification",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/CloudFormation/cloudformation-stack-notification.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "CFM-001"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:CFM-001:CloudFormation:us-east-1:scannerstack-s0uwk4op5yig",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Stack scannerstack-s0uwk4op5yig doesn't have SNS notification enabled",
+        "resource": "scannerstack-s0uwk4op5yig",
+        "descriptorType": "cfm-stack",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [
+          "Name::FSS-Scanner-Stack"
+        ],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "CloudFormation Stack Notification",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/CloudFormation/cloudformation-stack-notification.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "CFM-001"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:CFM-004:CloudFormation:us-east-1:storagestack-dgz6cbm611jl",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Stack storagestack-dgz6cbm611jl is not in Failed mode for more than 6 hours",
+        "resource": "storagestack-dgz6cbm611jl",
+        "descriptorType": "cfm-stack",
+        "categories": [
+          "operational-excellence"
+        ],
+        "last-updated-date": null,
+        "tags": [
+          "Name::FSS-Storage-Stack"
+        ],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Stack Failed Status",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/CloudFormation/stack-failed-status.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "CFM-004"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:CFM-004:CloudFormation:us-east-1:scannerstack-s0uwk4op5yig",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "SUCCESS",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Stack scannerstack-s0uwk4op5yig is not in Failed mode for more than 6 hours",
+        "resource": "scannerstack-s0uwk4op5yig",
+        "descriptorType": "cfm-stack",
+        "categories": [
+          "operational-excellence"
+        ],
+        "last-updated-date": null,
+        "tags": [
+          "Name::FSS-Scanner-Stack"
+        ],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "Stack Failed Status",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/CloudFormation/stack-failed-status.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "CFM-004"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:CFM-005:CloudFormation:us-east-1:storagestack-dgz6cbm611jl",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Stack storagestack-dgz6cbm611jl doesn't have Termination Protection enabled",
+        "resource": "storagestack-dgz6cbm611jl",
+        "descriptorType": "cfm-stack",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [
+          "Name::FSS-Storage-Stack"
+        ],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "CloudFormation Stack Termination Protection",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/CloudFormation/stack-termination-protection.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "CFM-005"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    },
+    {
+      "type": "checks",
+      "id": "ccc:AccountId:CFM-005:CloudFormation:us-east-1:scannerstack-s0uwk4op5yig",
+      "attributes": {
+        "region": "us-east-1",
+        "status": "FAILURE",
+        "risk-level": "MEDIUM",
+        "pretty-risk-level": "Medium",
+        "message": "Stack scannerstack-s0uwk4op5yig doesn't have Termination Protection enabled",
+        "resource": "scannerstack-s0uwk4op5yig",
+        "descriptorType": "cfm-stack",
+        "categories": [
+          "security"
+        ],
+        "last-updated-date": null,
+        "tags": [
+          "Name::FSS-Scanner-Stack"
+        ],
+        "cost": 0,
+        "waste": 0,
+        "not-scored": false,
+        "ignored": false,
+        "rule-title": "CloudFormation Stack Termination Protection",
+        "provider": "aws",
+        "resolution-page-url": "https://www.cloudconformity.com/knowledge-base/aws/CloudFormation/stack-termination-protection.html"
+      },
+      "relationships": {
+        "rule": {
+          "data": {
+            "type": "rules",
+            "id": "CFM-005"
+          }
+        },
+        "account": {
+          "data": {
+            "type": "accounts",
+            "id": "AccountId"
+          }
+        }
+      }
+    }
+  ],
+  "meta": {
+    "missingParameters": [
+      "S3BucketToScan",
+      "KMSKeyARNForBucketSSE",
+      "KMSKeyARNForQueueSSE",
+      "ExternalID",
+      "IAMRolePrefix",
+      "IAMPolicyPrefix",
+      "S3BucketPrefix",
+      "LambdaFunctionPrefix",
+      "LambdaLayerPrefix",
+      "SQSQueuePrefix",
+      "SNSTopicPrefix"
+    ],
+    "errors": []
+  }
+}
