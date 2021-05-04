@@ -205,7 +205,6 @@ Resources:
       Objects:
         - lambda/bucket-listener.zip
         - lambda/post-scan-action-tag.zip
-        - lambda/handle-scanningbucket-lambda-python.zip
   CopyZipsLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -280,6 +279,76 @@ Resources:
                   - s3:DeleteObject
                 Resource: !Sub arn:${AWS::Partition}:s3:::${CopyZipsDestBucket}/${FSSKeyPrefix}*
 
+  CreateLambdaAliasLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !If
+        - HasLambdaFunctionPrefix
+        - !Join ['', [!Ref LambdaFunctionPrefix, 'alias-', !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
+        - !Ref AWS::NoValue
+      Description: Create Lambda alias on Lambda function
+      Handler: index.handler
+      Runtime: python3.8
+      Role: !GetAtt CreateLambdaAliasExecutionRole.Arn
+      Timeout: 120
+      Code:
+        ZipFile: |
+          import cfnresponse
+          import boto3
+          import traceback
+          def create_alias(function, name):
+              client = boto3.client('lambda')
+              version_result = client.publish_version(FunctionName=function)
+              return client.create_alias(FunctionName=function, Name=name, FunctionVersion=version_result['Version'])
+          def delete_alias(function, name):
+              client = boto3.client('lambda')
+              client.delete_alias(FunctionName=function, Name=name)
+          def handler(event, context):
+              print(event)
+              status = cfnresponse.SUCCESS
+              response_data = {}
+              try:
+                  if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
+                      alias_result = create_alias(event['ResourceProperties']['FunctionName'], event['ResourceProperties']['Name'])
+                      if event['RequestType'] == 'Update':
+                          delete_alias(event['OldResourceProperties']['FunctionName'], event['OldResourceProperties']['Name'])
+                      response_data = {'Arn': alias_result['AliasArn']}
+              except Exception as ex:
+                  print('Unhandled exception: ' + str(ex))
+                  traceback.print_exc()
+                  status = cfnresponse.FAILED
+              finally:
+                  cfnresponse.send(event, context, status, response_data, None)
+  CreateLambdaAliasExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !If
+        - HasIAMRolePrefix
+        - !Join ['', [!Ref IAMRolePrefix, 'Ver-', !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
+        - !Ref AWS::NoValue
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: create-lambda-function-version-alias
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:PublishVersion
+                  - lambda:CreateAlias
+                  - lambda:DeleteAlias
+                Resource:
+                  - !GetAtt BucketListenerLambda.Arn
+                  - !GetAtt PostScanActionTagLambda.Arn
+
   ScanResultTopic:
     Type: AWS::SNS::Topic
     Properties:
@@ -288,9 +357,12 @@ Resources:
         - !Join ['', [!Ref SNSTopicPrefix, 'ScanResultTopic-', !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
         - !Ref AWS::NoValue
       DisplayName: S3 Scanning Results
-      Subscription:
-        - Endpoint: !GetAtt PostScanActionTagLambda.Arn
-          Protocol: lambda
+  ScanResultTopicSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: lambda
+      Endpoint: !GetAtt PostScanActionTagLambdaAlias.Arn
+      TopicArn: !Ref ScanResultTopic
   ScanResultTopicPolicy:
     Type: AWS::SNS::TopicPolicy
     Properties:
@@ -326,6 +398,12 @@ Resources:
       Role: !GetAtt BucketListenerExecutionRole.Arn
       Runtime: python3.8
       Timeout: 15
+  BucketListenerLambdaAlias:
+    Type: Custom::BucketListenerLambdaAlias
+    Properties:
+      ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
+      FunctionName: !GetAtt BucketListenerLambda.Arn
+      Name: TM-FSS-MANAGED
   BucketListenerExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -408,7 +486,7 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !GetAtt BucketListenerLambda.Arn
+      FunctionName: !GetAtt BucketListenerLambdaAlias.Arn
       Principal: s3.amazonaws.com
       SourceArn: !Sub arn:${AWS::Partition}:s3:::${S3BucketToScan}
   BucketListenerLogGroup:
@@ -436,6 +514,12 @@ Resources:
       Role: !GetAtt PostScanActionTagExecutionRole.Arn
       Runtime: python3.8
       Timeout: 15
+  PostScanActionTagLambdaAlias:
+    Type: Custom::PostScanActionTagLambdaAlias
+    Properties:
+      ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
+      FunctionName: !GetAtt PostScanActionTagLambda.Arn
+      Name: TM-FSS-MANAGED
   PostScanActionTagExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -470,7 +554,7 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !GetAtt PostScanActionTagLambda.Arn
+      FunctionName: !GetAtt PostScanActionTagLambdaAlias.Arn
       Principal: sns.amazonaws.com
       SourceArn: !Ref ScanResultTopic
   PostScanActionTagLogGroup:
@@ -539,6 +623,8 @@ Resources:
                 Resource:
                   - !GetAtt BucketListenerLambda.Arn
                   - !GetAtt PostScanActionTagLambda.Arn
+                  - !Sub ${BucketListenerLambda.Arn}:*
+                  - !Sub ${PostScanActionTagLambda.Arn}:*
         - PolicyName: lambda-logs-access
           PolicyDocument:
             Version: 2012-10-17
@@ -578,10 +664,10 @@ Resources:
     Properties:
       ServiceToken: !GetAtt SetupBucketNotificationLambda.Arn
       Bucket: !Ref S3BucketToScan
+      LambdaArn: !GetAtt BucketListenerLambdaAlias.Arn
   SetupBucketNotificationLambda:
     Type: AWS::Lambda::Function
     Condition: IsTriggeredWithObjectCreatedEvent
-    DependsOn: CopyZips
     Properties:
       FunctionName: !If
         - HasLambdaFunctionPrefix
@@ -590,14 +676,77 @@ Resources:
       Environment:
         Variables:
           AWSRegion: !Ref AWS::Region
-          LambdaArn: !GetAtt BucketListenerLambda.Arn
-      Handler: lambdas.handle_scanningbucket.lambda_handler
+          LambdaArn: !GetAtt BucketListenerLambda.Arn # deprecated, for handling the old custom resource input
+      Handler: index.handler
       Role: !GetAtt SetupBucketNotificationExecutionRole.Arn
       Runtime: python3.8
       Timeout: 50
       Code:
-        S3Bucket: !Ref CopyZipsDestBucket
-        S3Key: !Sub ${FSSKeyPrefix}lambda/handle-scanningbucket-lambda-python.zip
+        ZipFile: |
+          import os
+          import traceback
+          import cfnresponse
+          import boto3
+          from botocore.config import Config
+          LAMBDA_CFG = 'LambdaFunctionConfigurations'
+          LAMBDA_ARN = 'LambdaFunctionArn'
+          s3 = boto3.client('s3', config=Config(region_name=os.environ.get('AWSRegion', 'us-east-1')))
+          class BucketNotFound(Exception): pass
+          class ObjectCreatedOccupiedException(Exception): pass
+          def is_bucket_existing(bucket):
+            try:
+              s3.head_bucket(Bucket=bucket)
+              return True
+            except Exception as ex:
+              print('head_bucket exception: ' + str(ex))
+              if ex.response['Error']['Code'] == '404': return False
+              else: raise ex
+          def remove_configs_arn(bucket, arn):
+            if is_bucket_existing(bucket):
+              configs = get_configs(bucket)
+              delete_arn(configs, arn)
+              put_configs(bucket, configs)
+          def get_configs(bucket):
+            configs = s3.get_bucket_notification_configuration(Bucket=bucket)
+            configs.pop('ResponseMetadata', None)
+            print(f'get {bucket} config: {configs}')
+            return configs
+          def put_configs(bucket, configs):
+            print(f'put {bucket} config: {configs}')
+            s3.put_bucket_notification_configuration(Bucket=bucket, NotificationConfiguration=configs)
+          def put_arn(configs, arn, old_arn):
+            created = []
+            for key in configs: created += [entry for entry in configs[key] if len([event for event in entry['Events'] if 's3:ObjectCreated' in event]) != 0]
+            if len(created) == 0:
+              entry = { LAMBDA_ARN: arn, 'Events': ['s3:ObjectCreated:*'] }
+              if LAMBDA_CFG in configs: configs[LAMBDA_CFG].append(entry)
+              else: configs[LAMBDA_CFG] = [entry]
+            else:
+              old_entries = [entry for entry in created if LAMBDA_ARN in entry and entry[LAMBDA_ARN] == old_arn]
+              if len(old_entries) != 0:
+                for entry in old_entries: entry[LAMBDA_ARN] = arn
+              else: raise ObjectCreatedOccupiedException('s3:ObjectCreated occupied')
+          def delete_arn(configs, arn):
+              if LAMBDA_CFG in configs: configs[LAMBDA_CFG] = [config for config in configs[LAMBDA_CFG] if config[LAMBDA_ARN] != arn]
+          def handler(event, context):
+              print(event)
+              status = cfnresponse.SUCCESS
+              try:
+                bucket = event['ResourceProperties']['Bucket']
+                arn = event['ResourceProperties'].get('LambdaArn', os.environ['LambdaArn'])
+                old_arn = event['OldResourceProperties'].get('LambdaArn', os.environ['LambdaArn']) if event['RequestType'] =='Update' else ''
+                if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
+                  if not is_bucket_existing(bucket): raise BucketNotFound('Bucket not found')
+                  configs = get_configs(bucket)
+                  put_arn(configs, arn, old_arn)
+                  put_configs(bucket, configs)
+                  if event['RequestType'] == 'Update': remove_configs_arn(event['OldResourceProperties']['Bucket'], old_arn)
+                elif event['RequestType'] == 'Delete': remove_configs_arn(bucket, arn)
+              except Exception as ex:
+                print('Unhandled exception: ' + str(ex))
+                traceback.print_exc()
+                status = cfnresponse.FAILED
+              cfnresponse.send(event, context, status, {})
   SetupBucketNotificationExecutionRole:
     Type: AWS::IAM::Role
     Condition: IsTriggeredWithObjectCreatedEvent
@@ -640,7 +789,11 @@ Outputs:
     Description: The ARN of the IAM role for File Storage Security backend services to manage the deployed resources.
   BucketListenerLambdaARN:
     Value: !GetAtt BucketListenerLambda.Arn
+  BucketListenerLambdaAliasARN:
+    Value: !GetAtt BucketListenerLambdaAlias.Arn
   PostScanActionTagLambdaARN:
     Value: !GetAtt PostScanActionTagLambda.Arn
+  PostScanActionTagLambdaAliasARN:
+    Value: !GetAtt PostScanActionTagLambdaAlias.Arn
   ScanResultTopicARN:
     Value: !Ref ScanResultTopic
