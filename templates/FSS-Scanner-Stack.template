@@ -246,6 +246,76 @@ Resources:
                   - s3:DeleteObject
                 Resource: !Sub arn:${AWS::Partition}:s3:::${CopyZipsDestBucket}/${FSSKeyPrefix}*
 
+  CreateLambdaAliasLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !If
+        - HasLambdaFunctionPrefix
+        - !Join ['', [!Ref LambdaFunctionPrefix, 'alias-', !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
+        - !Ref AWS::NoValue
+      Description: Create Lambda alias on Lambda function
+      Handler: index.handler
+      Runtime: python3.8
+      Role: !GetAtt CreateLambdaAliasExecutionRole.Arn
+      Timeout: 120
+      Code:
+        ZipFile: |
+          import cfnresponse
+          import boto3
+          import traceback
+          def create_alias(function, name):
+              client = boto3.client('lambda')
+              version_result = client.publish_version(FunctionName=function)
+              return client.create_alias(FunctionName=function, Name=name, FunctionVersion=version_result['Version'])
+          def delete_alias(function, name):
+              client = boto3.client('lambda')
+              client.delete_alias(FunctionName=function, Name=name)
+          def handler(event, context):
+              print(event)
+              status = cfnresponse.SUCCESS
+              response_data = {}
+              try:
+                  if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
+                      alias_result = create_alias(event['ResourceProperties']['FunctionName'], event['ResourceProperties']['Name'])
+                      if event['RequestType'] == 'Update':
+                        delete_alias(event['OldResourceProperties']['FunctionName'], event['OldResourceProperties']['Name'])
+                      response_data = {'Arn': alias_result['AliasArn']}
+              except Exception as ex:
+                  print('Unhandled exception: ' + str(ex))
+                  traceback.print_exc()
+                  status = cfnresponse.FAILED
+              finally:
+                  cfnresponse.send(event, context, status, response_data, None)
+  CreateLambdaAliasExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !If
+        - HasIAMRolePrefix
+        - !Join ['', [!Ref IAMRolePrefix, 'Ver-', !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
+        - !Ref AWS::NoValue
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: create-lambda-function-version-alias
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:PublishVersion
+                  - lambda:CreateAlias
+                  - lambda:DeleteAlias
+                Resource:
+                  - !GetAtt ScannerLambda.Arn
+                  - !GetAtt ScannerDeadLetterLambda.Arn
+
   ScannerQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -327,6 +397,12 @@ Resources:
       Timeout: 120
       Layers:
         - !Ref ScannerPatternLambdaLayer
+  ScannerLambdaAlias:
+    Type: Custom::ScannerLambdaAlias
+    Properties:
+      ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
+      FunctionName: !GetAtt ScannerLambda.Arn
+      Name: TM-FSS-MANAGED
   ScannerLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -350,7 +426,7 @@ Resources:
       BatchSize: 1
       Enabled: true
       EventSourceArn: !GetAtt ScannerQueue.Arn
-      FunctionName: !GetAtt ScannerLambda.Arn
+      FunctionName: !GetAtt ScannerLambdaAlias.Arn
 
   ScannerDeadLetterLambda:
     Type: AWS::Lambda::Function
@@ -371,6 +447,12 @@ Resources:
       Role: !GetAtt ScannerDeadLetterExecutionRole.Arn
       Runtime: python3.8
       Timeout: 60
+  ScannerDeadLetterLambdaAlias:
+    Type: Custom::ScannerDeadLetterLambdaAlias
+    Properties:
+      ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
+      FunctionName: !GetAtt ScannerDeadLetterLambda.Arn
+      Name: TM-FSS-MANAGED
   ScannerDeadLetterLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -382,7 +464,7 @@ Resources:
       BatchSize: 1
       Enabled: true
       EventSourceArn: !GetAtt ScannerDLQ.Arn
-      FunctionName: !GetAtt ScannerDeadLetterLambda.Arn
+      FunctionName: !GetAtt ScannerDeadLetterLambdaAlias.Arn
 
   ScannerExecutionRole:
     Type: AWS::IAM::Role
@@ -565,6 +647,8 @@ Resources:
                 Resource:
                   - !GetAtt ScannerLambda.Arn
                   - !GetAtt ScannerDeadLetterLambda.Arn
+                  - !Sub ${ScannerLambda.Arn}:*
+                  - !Sub ${ScannerDeadLetterLambda.Arn}:*
               - Effect: Allow
                 Action:
                   - lambda:GetEventSourceMapping
@@ -626,3 +710,5 @@ Outputs:
     Description: The ARN of the IAM role for File Storage Security backend services to manage the deployed resources.
   ScannerLambdaARN:
     Value: !GetAtt ScannerLambda.Arn
+  ScannerLambdaAliasARN:
+    Value: !GetAtt ScannerLambdaAlias.Arn
