@@ -115,11 +115,9 @@ Parameters:
     Description: ""
     Type: String
   CloudOneRegion:
-    Description: The region of the Trend Micro Cloud One services. This region may be different from your stack's region.
+    Description: The region of the Trend Micro Cloud One services.
     Type: String
-    Default: us-east-1
-    AllowedValues:
-      - us-east-1
+    Default: us-1
   TrendMicroManagementAccount:
     AllowedPattern: ^[0-9]*$
     ConstraintDescription: AWS account ID.
@@ -780,6 +778,9 @@ Resources:
                 Resource: !Sub arn:${AWS::Partition}:s3:::*
 
 Outputs:
+  CloudOneRegion:
+    Value: !Ref CloudOneRegion
+    Description: The region of the Trend Micro Cloud One services.
   ScanningBucket:
     Value: !Ref S3BucketToScan
   BucketListenerRoleARN:
