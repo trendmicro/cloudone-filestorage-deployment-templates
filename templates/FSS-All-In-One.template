@@ -106,11 +106,9 @@ Parameters:
     Description: ""
     Type: String
   CloudOneRegion:
-    Description: The region of the Trend Micro Cloud One services. This region may be different from your stack's region.
+    Description: The region of the Trend Micro Cloud One services.
     Type: String
-    Default: us-east-1
-    AllowedValues:
-      - us-east-1
+    Default: us-1
   TrendMicroManagementAccount:
     AllowedPattern: ^[0-9]*$
     ConstraintDescription: AWS account ID.
@@ -222,6 +220,9 @@ Resources:
       TimeoutInMinutes: 30
 
 Outputs:
+  CloudOneRegion:
+    Value: !Ref CloudOneRegion
+    Description: The region of the Trend Micro Cloud One services.
   ScanningBucket:
     Value: !GetAtt StorageStack.Outputs.ScanningBucket
     Description: The name of the scanning bucket in storage stack.

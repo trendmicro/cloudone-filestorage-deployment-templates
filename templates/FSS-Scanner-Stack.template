@@ -76,11 +76,9 @@ Parameters:
     Description: ""
     Type: String
   CloudOneRegion:
-    Description: The region of the Trend Micro Cloud One services. This region may be different from your stack's region.
+    Description: The region of the Trend Micro Cloud One services.
     Type: String
-    Default: us-east-1
-    AllowedValues:
-      - us-east-1
+    Default: us-1
   TrendMicroManagementAccount:
     AllowedPattern: ^[0-9]*$
     ConstraintDescription: AWS account ID.
@@ -132,6 +130,15 @@ Parameters:
     Description: Prefix for the name of SQS queues being deployed. Must end with a hyphen (-).
     Type: String
     MaxLength: 50
+
+Mappings:
+  CloudOneRegionAttributes:
+    us-east-1: # for backward compatibility
+      AWSRegion: us-east-1
+    us-1:
+      AWSRegion: us-east-1
+    trend-us-1:
+      AWSRegion: us-east-2
 
 Conditions:
   HasIAMRolePrefix:
@@ -389,8 +396,11 @@ Resources:
       Environment:
         Variables:
           queueURL: !Ref ScannerQueue
-          telemetry_sns_arn: !Sub arn:${AWS::Partition}:sns:${CloudOneRegion}:${TrendMicroManagementAccount}:fss-telemetry-topic
+          telemetry_sns_arn: !Sub
+            - arn:${AWS::Partition}:sns:${Region}:${TrendMicroManagementAccount}:fss-telemetry-topic
+            - Region: !FindInMap [CloudOneRegionAttributes, !Ref CloudOneRegion, AWSRegion]
           stackARN: !Ref AWS::StackId
+          cloudOneRegion: !Ref CloudOneRegion
       MemorySize: 512
       Role: !GetAtt ScannerExecutionRole.Arn
       Runtime: python3.6
@@ -443,6 +453,7 @@ Resources:
       Environment:
         Variables:
           stackARN: !Ref AWS::StackId
+          cloudOneRegion: !Ref CloudOneRegion
       MemorySize: 128
       Role: !GetAtt ScannerDeadLetterExecutionRole.Arn
       Runtime: python3.8
@@ -501,7 +512,9 @@ Resources:
                 Action:
                   - sns:Publish
                 Resource:
-                  - !Sub arn:${AWS::Partition}:sns:${CloudOneRegion}:${TrendMicroManagementAccount}:fss-telemetry-topic
+                  - !Sub
+                    - arn:${AWS::Partition}:sns:${Region}:${TrendMicroManagementAccount}:fss-telemetry-topic
+                    - Region: !FindInMap [CloudOneRegionAttributes, !Ref CloudOneRegion, AWSRegion]
                   - !Sub arn:${AWS::Partition}:sns:*:*:*-ScanResultTopic-*
   ScannerExecutionRoleKMSDecryptPolicyForSQS:
     Type: AWS::IAM::Policy
@@ -555,7 +568,9 @@ Resources:
                 Action:
                   - sns:Publish
                 Resource:
-                  - !Sub arn:${AWS::Partition}:sns:${CloudOneRegion}:${TrendMicroManagementAccount}:fss-telemetry-topic
+                  - !Sub
+                    - arn:${AWS::Partition}:sns:${Region}:${TrendMicroManagementAccount}:fss-telemetry-topic
+                    - Region: !FindInMap [CloudOneRegionAttributes, !Ref CloudOneRegion, AWSRegion]
                   - !Sub arn:${AWS::Partition}:sns:*:*:*-ScanResultTopic-*
   ScannerDeadLetterExecutionRoleKMSDecryptPolicyForSQS:
     Type: AWS::IAM::Policy
@@ -702,6 +717,9 @@ Resources:
             Resource: !GetAtt ManagementRole.Arn
 
 Outputs:
+  CloudOneRegion:
+    Value: !Ref CloudOneRegion
+    Description: The region of the Trend Micro Cloud One services.
   ScannerQueueURL:
     Value: !Ref ScannerQueue
     Description: The SQS URL for storage stacks to publish events to.
