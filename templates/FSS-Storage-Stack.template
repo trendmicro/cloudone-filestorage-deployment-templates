@@ -486,6 +486,7 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt BucketListenerLambdaAlias.Arn
       Principal: s3.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
       SourceArn: !Sub arn:${AWS::Partition}:s3:::${S3BucketToScan}
   BucketListenerLogGroup:
     Type: AWS::Logs::LogGroup
