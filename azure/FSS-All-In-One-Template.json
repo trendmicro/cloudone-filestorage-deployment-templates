@@ -1,0 +1,205 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "FileStorageSecurityServicePrincipalID": {
+            "type": "string",
+            "metadata": {
+                "description": "The ID of the Service Principal created for Trend Micro's App Registration."
+            },
+            "defaultValue": "",
+            "maxLength": 36
+        },
+        "CloudOneRegion": {
+            "type": "string",
+            "metadata": {
+                "description": "The region of the Trend Micro Cloud One services. Supported regions: us-1."
+            },
+            "defaultValue": "us-1"
+        },
+        "ScannerStackResourceGroup": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the scanner stack resource group."
+            },
+            "defaultValue": "Scanner-TM-FileStorageSecurity",
+            "minLength": 1,
+            "maxLength": 90
+        },
+        "StorageStackResourceGroup": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the storage stack resource group."
+            },
+            "defaultValue": "Storage-TM-FileStorageSecurity",
+            "minLength": 1,
+            "maxLength": 90
+        },
+        "BlobStorageAccountResourceID": {
+            "type": "String",
+            "metadata": {
+                "description": "The resource ID of Storage Account to scan."
+            }
+        },
+        "BlobSystemTopicExist": {
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "metadata": {
+                "description": "Select <B>Yes</B> if your Blob system topic is already created."
+            },
+            "defaultValue": "No",
+            "type": "String"
+        },
+        "BlobSystemTopicName": {
+            "defaultValue": "BlobEventTopic",
+            "type": "String",
+            "metadata": {
+                "description": "The existing blob system topic name or the name of blob system topic to be created."
+            }
+        },
+        "StackPackageLocation": {
+            "type": "string",
+            "defaultValue": "https://file-storage-security-preview.s3.amazonaws.com",
+            "metadata": {
+                "description": "Warning: Do not modify the field. Modifications may cause your deployment to fail."
+            }
+        },
+        "Version": {
+            "type": "string",
+            "defaultValue": "latest",
+            "metadata": {
+                "description": "Warning: Do not modify the field. Modifications may cause your deployment to fail."
+            }
+        },
+        "SharedAccessSignature": {
+            "type": "secureString",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Warning: Do not modify the field. Modifications may cause your deployment to fail."
+            }
+        }
+    },
+    "variables": {
+        "location": "[deployment().location]",
+        "templateLinkPrefix": "[concat(parameters('Version'), '/arm-templates')]",
+        "unifiedSAS": "[if(empty(parameters('SharedAccessSignature')), '', if(startsWith(parameters('SharedAccessSignature'), '?'), parameters('SharedAccessSignature'), concat('?', parameters('SharedAccessSignature'))))]",
+        "scannerStackTemplateLink": "[concat(parameters('StackPackageLocation'), '/', variables('templateLinkPrefix'), '/FSS-Scanner-Stack-Template.json', variables('unifiedSAS'))]",
+        "storageStackTemplateLink": "[concat(parameters('StackPackageLocation'), '/', variables('templateLinkPrefix'), '/FSS-Storage-Stack-Template.json', variables('unifiedSAS'))]",
+        "scannerRoleAssignmentTemplateLink": "[concat(parameters('StackPackageLocation'), '/', variables('templateLinkPrefix'), '/FSS-Scanner-Stack-Role-Assignment.json', variables('unifiedSAS'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[variables('location')]",
+            "name": "[parameters('ScannerStackResourceGroup')]"
+        },
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[variables('location')]",
+            "name": "[parameters('StorageStackResourceGroup')]"
+        },
+        {
+            "apiVersion": "2019-05-01",
+            "name": "scannerStack",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups', parameters('ScannerStackResourceGroup'))]"
+            ],
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "[parameters('ScannerStackResourceGroup')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('scannerStackTemplateLink')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "FileStorageSecurityServicePrincipalID": {
+                        "value": "[parameters('FileStorageSecurityServicePrincipalID')]"
+                    },
+                    "CloudOneRegion": {
+                        "value": "[parameters('CloudOneRegion')]"
+                    },
+                    "StackPackageLocation": {
+                        "value": "[parameters('StackPackageLocation')]"
+                    },
+                    "Version": {
+                        "value": "[parameters('Version')]"
+                    },
+                    "SharedAccessSignature": {
+                        "value": "[parameters('SharedAccessSignature')]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2019-05-01",
+            "name": "storageStack",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups', parameters('StorageStackResourceGroup'))]"
+            ],
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "[parameters('StorageStackResourceGroup')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('storageStackTemplateLink')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "FileStorageSecurityServicePrincipalID": {
+                        "value": "[parameters('FileStorageSecurityServicePrincipalID')]"
+                    },
+                    "CloudOneRegion": {
+                        "value": "[parameters('CloudOneRegion')]"
+                    },
+                    "BlobStorageAccountResourceID": {
+                        "value": "[parameters('BlobStorageAccountResourceID')]"
+                    },
+                    "ScannerIdentityPrincipalID": {
+                        "value": "[reference('scannerStack').outputs.ScannerIdentityPrincipalID.value]"
+                    },
+                    "ScannerQueueNamespace": {
+                        "value": "[reference('scannerStack').outputs.ScannerQueueNamespace.value]"
+                    },
+                    "BlobSystemTopicExist": {
+                        "value": "[parameters('BlobSystemTopicExist')]"
+                    },
+                    "BlobSystemTopicName": {
+                        "value": "[parameters('BlobSystemTopicName')]"
+                    },
+                    "StackPackageLocation": {
+                        "value": "[parameters('StackPackageLocation')]"
+                    },
+                    "Version": {
+                        "value": "[parameters('Version')]"
+                    },
+                    "SharedAccessSignature": {
+                        "value": "[parameters('SharedAccessSignature')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "TenantID": {
+            "type": "string",
+            "value": "[subscription().tenantId]"
+        },
+        "ScannerStackResourceGroupID": {
+            "type": "string",
+            "value": "[reference('scannerStack').outputs.ScannerStackResourceGroupID.value]"
+        },
+        "StorageStackResourceGroupID": {
+            "type": "string",
+            "value": "[reference('storageStack').outputs.StorageStackResourceGroupID.value]"
+        },
+        "CloudOneRegion": {
+            "type": "string",
+            "value": "[parameters('CloudOneRegion')]"
+        }
+    }
+}
