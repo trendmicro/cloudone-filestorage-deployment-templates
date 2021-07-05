@@ -7,7 +7,6 @@
             "metadata": {
                 "description": "The ID of the Service Principal created for Trend Micro's App Registration."
             },
-            "defaultValue": "",
             "maxLength": 36
         },
         "CloudOneRegion": {

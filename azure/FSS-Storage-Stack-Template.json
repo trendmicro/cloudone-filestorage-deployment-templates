@@ -7,7 +7,6 @@
             "metadata": {
                 "description": "The ID of the Service Principal created for Trend Micro's App Registration."
             },
-            "defaultValue": "",
             "maxLength": 36
         },
         "CloudOneRegion": {
@@ -701,6 +700,10 @@
         "BlobStorageAccountResourceID": {
             "type": "string",
             "value": "[variables('blobStorageAccountResourceID')]"
+        },
+        "ScanResultTopicResourceID": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.ServiceBus/namespaces/topics', variables('scanResultTopicNamespaceName'), variables('scanResultTopicName'))]"
         },
         "BlobListenerResourceID": {
             "type": "string",
