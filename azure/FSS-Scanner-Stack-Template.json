@@ -12,7 +12,7 @@
         "CloudOneRegion": {
             "type": "string",
             "metadata": {
-                "description": "The region of the Trend Micro Cloud One services. Supported regions: us-1."
+                "description": "The region of the Trend Micro Cloud One services.<br/>Supported regions: us-1."
             },
             "defaultValue": "us-1"
         },
