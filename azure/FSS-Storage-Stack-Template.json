@@ -12,7 +12,7 @@
         "CloudOneRegion": {
             "type": "string",
             "metadata": {
-                "description": "The region of the Trend Micro Cloud One services. Supported regions: us-1."
+                "description": "The region of the Trend Micro Cloud One services.<br/>Supported regions: us-1."
             },
             "defaultValue": "us-1"
         },
@@ -31,7 +31,7 @@
         "BlobStorageAccountResourceID": {
             "type": "String",
             "metadata": {
-                "description": "The resource ID of Storage Account to scan."
+                "description": "The resource ID of Storage Account to scan. The ID can be found in the Storage Account's <b>Endpoints</b> page.<br/>For example, <b>/subscriptions/1234abcd-3c6d-4347-9019-123456789012/resourceGroups/storage-resource-group/providers/Microsoft.Storage/storageAccounts/protectingstorageaccount</b>"
             }
         },
         "BlobSystemTopicExist": {
@@ -40,7 +40,7 @@
                 "No"
             ],
             "metadata": {
-                "description": "Select <B>Yes</B> if your Blob system topic is already created."
+                "description": "Select <b>Yes</b> if an Event Grid System Topic associated to the Blob Storage Account already exists."
             },
             "defaultValue": "No",
             "type": "String"
@@ -49,7 +49,7 @@
             "type": "String",
             "defaultValue": "BlobEventTopic",
             "metadata": {
-                "description": "The existing blob system topic name or the name of blob system topic to be created."
+                "description": "The name of the existing Event Grid System Topic associated to the Blob Storage Account or the Event Grid System Topic to be created and associated."
             }
         },
         "StackPackageLocation": {
