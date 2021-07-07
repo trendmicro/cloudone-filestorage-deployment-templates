@@ -606,7 +606,7 @@
                                 },
                                 "eventDeliverySchema": "EventGridSchema",
                                 "retryPolicy": {
-                                    "maxDeliveryAttempts": 2,
+                                    "maxDeliveryAttempts": 5,
                                     "eventTimeToLiveInMinutes": 1440
                                 }
                             }
