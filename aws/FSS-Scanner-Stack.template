@@ -129,6 +129,8 @@ Mappings:
       AWSRegion: us-east-1
     trend-us-1:
       AWSRegion: us-east-2
+    in-1:
+      AWSRegion: ap-south-1
 
 Conditions:
   HasIAMRolePrefix:
@@ -291,7 +293,6 @@ Resources:
             - arn:${AWS::Partition}:sns:${Region}:${TrendMicroManagementAccount}:fss-telemetry-topic
             - Region: !FindInMap [CloudOneRegionAttributes, !Ref CloudOneRegion, AWSRegion]
           stackARN: !Ref AWS::StackId
-          cloudOneRegion: !Ref CloudOneRegion
       MemorySize: 512
       Role: !GetAtt ScannerExecutionRole.Arn
       Runtime: python3.6
@@ -342,7 +343,6 @@ Resources:
       Environment:
         Variables:
           stackARN: !Ref AWS::StackId
-          cloudOneRegion: !Ref CloudOneRegion
       MemorySize: 128
       Role: !GetAtt ScannerDeadLetterExecutionRole.Arn
       Runtime: python3.8
