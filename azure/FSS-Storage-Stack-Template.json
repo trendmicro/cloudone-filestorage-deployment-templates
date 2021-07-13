@@ -245,6 +245,7 @@
                                 "[variables('scanResultTopicName')]"
                             ],
                             "properties": {
+                                "lockDuration": "PT5M",
                                 "defaultMessageTimeToLive": "PT1H"
                             }
                         }
