@@ -114,7 +114,7 @@
                         "[resourceId('Microsoft.ServiceBus/namespaces', variables('scannerQueueNamespaceName'))]"
                     ],
                     "properties": {
-                        "lockDuration": "PT30S",
+                        "lockDuration": "PT5M",
                         "maxSizeInMegabytes": 1024,
                         "requiresDuplicateDetection": false,
                         "requiresSession": false,
