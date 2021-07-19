@@ -168,6 +168,10 @@ Resources:
               client = boto3.client('lambda')
               version_result = client.publish_version(FunctionName=function)
               return client.create_alias(FunctionName=function, Name=name, FunctionVersion=version_result['Version'])
+          def update_alias(function, name):
+              client = boto3.client('lambda')
+              version_result = client.publish_version(FunctionName=function)
+              return client.update_alias(FunctionName=function, Name=name, FunctionVersion=version_result['Version'], RoutingConfig={})
           def delete_alias(function, name):
               client = boto3.client('lambda')
               client.delete_alias(FunctionName=function, Name=name)
@@ -177,16 +181,25 @@ Resources:
               response_data = {}
               try:
                   if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
-                      alias_result = create_alias(event['ResourceProperties']['FunctionName'], event['ResourceProperties']['Name'])
-                      if event['RequestType'] == 'Update':
-                        delete_alias(event['OldResourceProperties']['FunctionName'], event['OldResourceProperties']['Name'])
+                      function_name = event['ResourceProperties']['FunctionName']
+                      alias_name = event['ResourceProperties']['Name']
+                      if event['RequestType'] == 'Create':
+                          alias_result = create_alias(function_name, alias_name)
+                      else:
+                          old_function_name = event['OldResourceProperties']['FunctionName']
+                          old_alias_name = event['OldResourceProperties']['Name']
+                          if function_name == old_function_name and alias_name == old_alias_name:
+                              alias_result = update_alias(function_name, alias_name)
+                          else:
+                              alias_result = create_alias(function_name, alias_name)
+                              delete_alias(old_function_name, old_alias_name)
                       response_data = {'Arn': alias_result['AliasArn']}
               except Exception as ex:
                   print('Unhandled exception: ' + str(ex))
                   traceback.print_exc()
                   status = cfnresponse.FAILED
               finally:
-                  cfnresponse.send(event, context, status, response_data, None)
+                  cfnresponse.send(event, context, status, response_data)
   CreateLambdaAliasExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -212,6 +225,7 @@ Resources:
                 Action:
                   - lambda:PublishVersion
                   - lambda:CreateAlias
+                  - lambda:UpdateAlias
                   - lambda:DeleteAlias
                 Resource:
                   - !GetAtt ScannerLambda.Arn
@@ -305,6 +319,9 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerLambda.Arn
       Name: TM-FSS-MANAGED
+      Modified: 20210708.1
+      TrendMicroManagementAccount: !Ref TrendMicroManagementAccount
+      CloudOneRegion: !Ref CloudOneRegion
   ScannerLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -353,6 +370,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerDeadLetterLambda.Arn
       Name: TM-FSS-MANAGED
+      Modified: 20210708.1
   ScannerDeadLetterLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
