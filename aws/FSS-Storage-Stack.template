@@ -198,6 +198,40 @@ Resources:
           def delete_alias(function, name):
               client = boto3.client('lambda')
               client.delete_alias(FunctionName=function, Name=name)
+          def get_function_configuration(function, qualifier=None):
+              client = boto3.client('lambda')
+              if (qualifier is not None):
+                  return client.get_function_configuration(FunctionName=function, Qualifier=qualifier)
+              else:
+                  return client.get_function_configuration(FunctionName=function)
+          def update_function_configuration(function, environments, layers):
+              client = boto3.client('lambda')
+              client.update_function_configuration(FunctionName=function, Environment=environments, Layers=layers)
+          def replace_environments(env_vars_to_recover, old_environments, current_environments):
+              for env_var in env_vars_to_recover:
+                  current_environments['Variables'][env_var] = old_environments['Variables'].get(env_var, '')
+              return current_environments
+          def find_recover_layer_arn(layers, keyword):
+              found_arns = [layer_arn for layer_arn in layers if keyword in layer_arn]
+              return found_arns[0] if len(found_arns) > 0 else ''
+          def is_not_match_layer(layer_arn, keywords):
+              return len(list(filter(lambda keyword: keyword in layer_arn, keywords))) == 0
+          def replace_layers(layers_to_recover, old_layers, current_layers):
+              get_arn = lambda layer: layer['Arn']
+              old_layer_arns = list(map(get_arn, old_layers))
+              current_layer_arns = list(map(get_arn, current_layers))
+              for recover_layer, replacing_layers in layers_to_recover.items():
+                  recover_layer_arn = find_recover_layer_arn(old_layer_arns, recover_layer)
+                  if len(recover_layer_arn) == 0: break
+                  current_layer_arns = [layer_arn for layer_arn in current_layer_arns if is_not_match_layer(layer_arn, replacing_layers)]
+                  current_layer_arns.append(recover_layer_arn)
+              return current_layer_arns
+          def recover_lambda_function_config(current_function_name, old_function_name, old_alias_name, env_vars_to_recover, layers_to_recover):
+              old_version_info = get_function_configuration(old_function_name, old_alias_name)
+              current_version_info = get_function_configuration(current_function_name)
+              new_environments = replace_environments(env_vars_to_recover, old_version_info['Environment'], current_version_info['Environment'])
+              new_layers = replace_layers(layers_to_recover, old_version_info.get('Layers', []), current_version_info.get('Layers', []))
+              update_function_configuration(current_function_name, new_environments, new_layers)
           def handler(event, context):
               print(event)
               status = cfnresponse.SUCCESS
@@ -206,11 +240,14 @@ Resources:
                   if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
                       function_name = event['ResourceProperties']['FunctionName']
                       alias_name = event['ResourceProperties']['Name']
+                      env_vars_to_recover = event['ResourceProperties'].get('EnvVarsToRecover', [])
+                      layers_to_recover = event['ResourceProperties'].get('LayersToRecover', {})
                       if event['RequestType'] == 'Create':
                           alias_result = create_alias(function_name, alias_name)
                       else:
                           old_function_name = event['OldResourceProperties']['FunctionName']
                           old_alias_name = event['OldResourceProperties']['Name']
+                          recover_lambda_function_config(function_name, old_function_name, old_alias_name, env_vars_to_recover, layers_to_recover)
                           if function_name == old_function_name and alias_name == old_alias_name:
                               alias_result = update_alias(function_name, alias_name)
                           else:
@@ -250,6 +287,8 @@ Resources:
                   - lambda:CreateAlias
                   - lambda:UpdateAlias
                   - lambda:DeleteAlias
+                  - lambda:GetFunctionConfiguration
+                  - lambda:UpdateFunctionConfiguration
                 Resource:
                   - !GetAtt BucketListenerLambda.Arn
                   - !GetAtt PostScanActionTagLambda.Arn
