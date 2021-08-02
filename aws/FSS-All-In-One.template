@@ -22,6 +22,12 @@ Metadata:
           - SQSQueuePrefix
           - SNSTopicPrefix
       - Label:
+          default: "[ Optional: Deploy in VPC ] Warning: Make sure the subnets have access to domains .amazonaws.com and .trendmicro.com over HTTPS"
+        Parameters:
+          - SubnetIDs
+          - SecurityGroupIDs
+          - NetworkProxy
+      - Label:
           default: "[ Warning: Do not modify the fields below. Modifications may cause your deployment to fail. ]"
         Parameters:
           - FSSBucketName
@@ -39,6 +45,12 @@ Metadata:
         default: KMSKeyARNForQueueSSE
       TriggerWithObjectCreatedEvent:
         default: TriggerWithObjectCreatedEvent
+      NetworkProxy:
+        default: NetworkProxy
+      SubnetIDs:
+        default: SubnetIDs
+      SecurityGroupIDs:
+        default: SecurityGroupIDs
       FSSBucketName:
         default: Stack package location
       FSSKeyPrefix:
@@ -84,6 +96,18 @@ Parameters:
       - 'true'
       - 'false'
     Description: If the s3:ObjectCreated:* event of the S3BucketToScan is in use, set this option to false. Then trigger the scans by invoking the deployed BucketListenerLambda.
+    Type: String
+  SubnetIDs:
+    Default: ''
+    Description: A comma-separated list of VPC Subnet IDs that are attached to Lambda functions. Leave it blank if you don't want to attach Lambda functions to a VPC.
+    Type: CommaDelimitedList
+  SecurityGroupIDs:
+    Default: ''
+    Description: A comma-separated list of VPC Security Group IDs that are attached to Lambda functions. Leave it blank if you don't want to attach Lambda functions to a VPC.
+    Type: CommaDelimitedList
+  NetworkProxy:
+    Default: ''
+    Description: Network proxy setting in the format scheme://[user:pass@]host:port, for example http://proxy.server:8080. Leave it blank if you don't want Lambda functions to connect to an explicit proxy in the VPC.
     Type: String
   FSSBucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
@@ -167,6 +191,9 @@ Resources:
         KMSKeyARNForBucketSSE: !Ref KMSKeyARNForBucketSSE
         KMSKeyARNForQueueSSE: !Ref KMSKeyARNForQueueSSE
         TriggerWithObjectCreatedEvent: !Ref TriggerWithObjectCreatedEvent
+        SubnetIDs: !Join [',', !Ref SubnetIDs]
+        SecurityGroupIDs: !Join [',', !Ref SecurityGroupIDs]
+        NetworkProxy: !Ref NetworkProxy
         ScannerAWSAccount: !Ref AWS::AccountId
         ScannerSQSURL: !GetAtt ScannerStack.Outputs.ScannerQueueURL
         FSSBucketName: !Ref FSSBucketName
@@ -190,6 +217,9 @@ Resources:
     Properties:
       Parameters:
         KMSKeyARNForQueueSSE: !Ref KMSKeyARNForQueueSSE
+        SubnetIDs: !Join [',', !Ref SubnetIDs]
+        SecurityGroupIDs: !Join [',', !Ref SecurityGroupIDs]
+        NetworkProxy: !Ref NetworkProxy
         FSSBucketName: !Ref FSSBucketName
         FSSKeyPrefix: !Ref FSSKeyPrefix
         CloudOneRegion: !Ref CloudOneRegion

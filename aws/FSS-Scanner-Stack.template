@@ -18,6 +18,12 @@ Metadata:
           - LambdaLayerPrefix
           - SQSQueuePrefix
       - Label:
+          default: "[ Optional: Deploy in VPC ] Warning: Make sure the subnets have access to domains .amazonaws.com and .trendmicro.com over HTTPS"
+        Parameters:
+          - SubnetIDs
+          - SecurityGroupIDs
+          - NetworkProxy
+      - Label:
           default: "[ Warning: Do not modify the fields below. Modifications may cause your deployment to fail. ]"
         Parameters:
           - FSSBucketName
@@ -29,6 +35,12 @@ Metadata:
     ParameterLabels:
       KMSKeyARNForQueueSSE:
         default: KMSKeyARNForQueueSSE
+      NetworkProxy:
+        default: NetworkProxy
+      SubnetIDs:
+        default: SubnetIDs
+      SecurityGroupIDs:
+        default: SecurityGroupIDs
       FSSBucketName:
         default: Stack package location
       FSSKeyPrefix:
@@ -54,6 +66,18 @@ Parameters:
   KMSKeyARNForQueueSSE:
     Default: ''
     Description: The ARN for the KMS master key used to encrypt messages in SQS. Leave it blank if you haven't used your own CMK for SQS server-side encryption.
+    Type: String
+  SubnetIDs:
+    Default: ''
+    Description: A comma-separated list of VPC Subnet IDs that are attached to Lambda functions. Leave it blank if you don't want to attach Lambda functions to a VPC.
+    Type: CommaDelimitedList
+  SecurityGroupIDs:
+    Default: ''
+    Description: A comma-separated list of VPC Security Group IDs that are attached to Lambda functions. Leave it blank if you don't want to attach Lambda functions to a VPC.
+    Type: CommaDelimitedList
+  NetworkProxy:
+    Default: ''
+    Description: Network proxy setting in the format scheme://[user:pass@]host:port, for example http://proxy.server:8080. Leave it blank if you don't want Lambda functions to connect to an explicit proxy in the VPC.
     Type: String
   FSSBucketName:
     AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
@@ -145,6 +169,12 @@ Conditions:
     !Not [!Equals ['', !Ref SQSQueuePrefix]]
   IsQueueSSEKMSEnabled:
     !Not [!Equals ['', !Ref KMSKeyARNForQueueSSE]]
+  IsVPCEnabled: !And
+    - !Not [!Equals ['', !Select [0, !Ref SubnetIDs]]]
+    - !Not [!Equals ['', !Select [0, !Ref SecurityGroupIDs]]]
+  IsProxyEnabled: !And
+    - !Condition IsVPCEnabled
+    - !Not [!Equals ['', !Ref NetworkProxy]]
 
 Resources:
   CreateLambdaAliasLambda:
@@ -159,11 +189,44 @@ Resources:
       Runtime: python3.8
       Role: !GetAtt CreateLambdaAliasExecutionRole.Arn
       Timeout: 120
+      Environment:
+        Variables:
+          HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
+      VpcConfig:
+        SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
+        SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
       Code:
         ZipFile: |
-          import cfnresponse
           import boto3
           import traceback
+          import json
+          import urllib.request
+          SUCCESS = "SUCCESS"
+          FAILED = "FAILED"
+          def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False):
+              responseUrl = event['ResponseURL']
+              print(responseUrl)
+              responseBody = {}
+              responseBody['Status'] = responseStatus
+              responseBody['Reason'] = 'See the details in CloudWatch Log Stream: ' + context.log_stream_name
+              responseBody['PhysicalResourceId'] = physicalResourceId or context.log_stream_name
+              responseBody['StackId'] = event['StackId']
+              responseBody['RequestId'] = event['RequestId']
+              responseBody['LogicalResourceId'] = event['LogicalResourceId']
+              responseBody['NoEcho'] = noEcho
+              responseBody['Data'] = responseData
+              json_responseBody = json.dumps(responseBody)
+              print("Response body:\n" + json_responseBody)
+              headers = {
+                  'content-type' : '',
+                  'content-length' : str(len(json_responseBody))
+              }
+              request = urllib.request.Request(responseUrl, headers=headers, data=json_responseBody.encode('utf-8'), method='PUT')
+              try:
+                  with urllib.request.urlopen(request) as response:
+                      print("Status code: " + response.reason)
+              except Exception as e:
+                  print("send(..) failed executing requests.put(..): " + str(e))
           def create_alias(function, name):
               client = boto3.client('lambda')
               version_result = client.publish_version(FunctionName=function)
@@ -211,7 +274,7 @@ Resources:
               update_function_configuration(current_function_name, new_environments, new_layers)
           def handler(event, context):
               print(event)
-              status = cfnresponse.SUCCESS
+              status = SUCCESS
               response_data = {}
               try:
                   if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
@@ -234,9 +297,9 @@ Resources:
               except Exception as ex:
                   print('Unhandled exception: ' + str(ex))
                   traceback.print_exc()
-                  status = cfnresponse.FAILED
+                  status = FAILED
               finally:
-                  cfnresponse.send(event, context, status, response_data)
+                  send(event, context, status, response_data)
   CreateLambdaAliasExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -253,6 +316,10 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - !If
+          - IsVPCEnabled
+          - !Sub arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+          - !Ref AWS::NoValue
       Policies:
         - PolicyName: create-lambda-function-version-alias
           PolicyDocument:
@@ -356,12 +423,16 @@ Resources:
             - arn:${AWS::Partition}:sns:${Region}:${TrendMicroManagementAccount}:fss-telemetry-topic
             - Region: !FindInMap [CloudOneRegionAttributes, !Ref CloudOneRegion, AWSRegion]
           stackARN: !Ref AWS::StackId
+          HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
       MemorySize: 512
       Role: !GetAtt ScannerExecutionRole.Arn
       Runtime: python3.6
       Timeout: 120
       Layers:
         - !Ref ScannerPatternLambdaLayer
+      VpcConfig:
+        SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
+        SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
   ScannerLambdaAlias:
     Type: Custom::ScannerLambdaAlias
     Properties:
@@ -371,6 +442,9 @@ Resources:
       Modified: 20210708.1
       TrendMicroManagementAccount: !Ref TrendMicroManagementAccount
       CloudOneRegion: !Ref CloudOneRegion
+      SubnetIDs: !Ref SubnetIDs
+      SecurityGroupIDs: !Ref SecurityGroupIDs
+      NetworkProxy: !Ref NetworkProxy
       EnvVarsToRecover:
         - LICENSE
       LayersToRecover:
@@ -419,10 +493,14 @@ Resources:
       Environment:
         Variables:
           stackARN: !Ref AWS::StackId
+          HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
       MemorySize: 128
       Role: !GetAtt ScannerDeadLetterExecutionRole.Arn
       Runtime: python3.8
       Timeout: 60
+      VpcConfig:
+        SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
+        SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
   ScannerDeadLetterLambdaAlias:
     Type: Custom::ScannerDeadLetterLambdaAlias
     Properties:
@@ -430,6 +508,9 @@ Resources:
       FunctionName: !GetAtt ScannerDeadLetterLambda.Arn
       Name: TM-FSS-MANAGED
       Modified: 20210708.1
+      NetworkProxy: !Ref NetworkProxy
+      SubnetIDs: !Ref SubnetIDs
+      SecurityGroupIDs: !Ref SecurityGroupIDs
   ScannerDeadLetterLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -462,6 +543,10 @@ Resources:
       Path: /
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - !If
+          - IsVPCEnabled
+          - !Sub arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+          - !Ref AWS::NoValue
       Policies:
         - PolicyName: root
           PolicyDocument:
@@ -519,6 +604,10 @@ Resources:
       Path: /
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - !If
+          - IsVPCEnabled
+          - !Sub arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+          - !Ref AWS::NoValue
       Policies:
         - PolicyName: root
           PolicyDocument:
