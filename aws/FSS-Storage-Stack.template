@@ -25,6 +25,12 @@ Metadata:
           - LambdaFunctionPrefix
           - SNSTopicPrefix
       - Label:
+          default: "[ Optional: Deploy in VPC ] Warning: Make sure the subnets have access to domains .amazonaws.com and .trendmicro.com over HTTPS"
+        Parameters:
+          - NetworkProxy
+          - SubnetIDs
+          - SecurityGroupIDs
+      - Label:
           default: "[ Warning: Do not modify the fields below. Modifications may cause your deployment to fail. ]"
         Parameters:
           - FSSBucketName
@@ -40,6 +46,12 @@ Metadata:
         default: KMSKeyARNForBucketSSE
       TriggerWithObjectCreatedEvent:
         default: TriggerWithObjectCreatedEvent
+      NetworkProxy:
+        default: NetworkProxy
+      SubnetIDs:
+        default: SubnetIDs
+      SecurityGroupIDs:
+        default: SecurityGroupIDs
       ScannerAWSAccount:
         default: ScannerAWSAccount
       ScannerSQSURL:
@@ -86,6 +98,18 @@ Parameters:
       - 'true'
       - 'false'
     Description: If the s3:ObjectCreated:* event of the S3BucketToScan is in use, set this option to false and trigger the scans by invoking the deployed BucketListenerLambda.
+    Type: String
+  SubnetIDs:
+    Default: ''
+    Description: A comma-separated list of VPC Subnet IDs that are attached to Lambda functions. Leave it blank if you don't want to attach Lambda functions to a VPC.
+    Type: CommaDelimitedList
+  SecurityGroupIDs:
+    Default: ''
+    Description: A comma-separated list of VPC Security Group IDs that are attached to Lambda functions. Leave it blank if you don't want to attach Lambda functions to a VPC.
+    Type: CommaDelimitedList
+  NetworkProxy:
+    Default: ''
+    Description: Network proxy setting in the format scheme://[user:pass@]host:port, for example http://proxy.server:8080. Leave it blank if you don't want Lambda functions to connect to an explicit proxy in the VPC.
     Type: String
   ScannerSQSURL:
     Description: ""
@@ -168,6 +192,12 @@ Conditions:
     !Not [!Equals ['', !Ref KMSKeyARNForQueueSSE]]
   IsTriggeredWithObjectCreatedEvent:
     !Equals ['true', !Ref TriggerWithObjectCreatedEvent]
+  IsVPCEnabled: !And
+    - !Not [!Equals ['', !Select [0, !Ref SubnetIDs]]]
+    - !Not [!Equals ['', !Select [0, !Ref SecurityGroupIDs]]]
+  IsProxyEnabled: !And
+    - !Condition IsVPCEnabled
+    - !Not [!Equals ['', !Ref NetworkProxy]]
 
 Resources:
   CreateLambdaAliasLambda:
@@ -182,11 +212,44 @@ Resources:
       Runtime: python3.8
       Role: !GetAtt CreateLambdaAliasExecutionRole.Arn
       Timeout: 120
+      Environment:
+        Variables:
+          HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
+      VpcConfig:
+        SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
+        SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
       Code:
         ZipFile: |
-          import cfnresponse
           import boto3
           import traceback
+          import json
+          import urllib.request
+          SUCCESS = "SUCCESS"
+          FAILED = "FAILED"
+          def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False):
+              responseUrl = event['ResponseURL']
+              print(responseUrl)
+              responseBody = {}
+              responseBody['Status'] = responseStatus
+              responseBody['Reason'] = 'See the details in CloudWatch Log Stream: ' + context.log_stream_name
+              responseBody['PhysicalResourceId'] = physicalResourceId or context.log_stream_name
+              responseBody['StackId'] = event['StackId']
+              responseBody['RequestId'] = event['RequestId']
+              responseBody['LogicalResourceId'] = event['LogicalResourceId']
+              responseBody['NoEcho'] = noEcho
+              responseBody['Data'] = responseData
+              json_responseBody = json.dumps(responseBody)
+              print("Response body:\n" + json_responseBody)
+              headers = {
+                  'content-type' : '',
+                  'content-length' : str(len(json_responseBody))
+              }
+              request = urllib.request.Request(responseUrl, headers=headers, data=json_responseBody.encode('utf-8'), method='PUT')
+              try:
+                  with urllib.request.urlopen(request) as response:
+                      print("Status code: " + response.reason)
+              except Exception as e:
+                  print("send(..) failed executing requests.put(..): " + str(e))
           def create_alias(function, name):
               client = boto3.client('lambda')
               version_result = client.publish_version(FunctionName=function)
@@ -234,7 +297,7 @@ Resources:
               update_function_configuration(current_function_name, new_environments, new_layers)
           def handler(event, context):
               print(event)
-              status = cfnresponse.SUCCESS
+              status = SUCCESS
               response_data = {}
               try:
                   if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
@@ -257,9 +320,9 @@ Resources:
               except Exception as ex:
                   print('Unhandled exception: ' + str(ex))
                   traceback.print_exc()
-                  status = cfnresponse.FAILED
+                  status = FAILED
               finally:
-                  cfnresponse.send(event, context, status, response_data)
+                  send(event, context, status, response_data)
   CreateLambdaAliasExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -276,6 +339,10 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - !If
+          - IsVPCEnabled
+          - !Sub arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+          - !Ref AWS::NoValue
       Policies:
         - PolicyName: create-lambda-function-version-alias
           PolicyDocument:
@@ -337,10 +404,14 @@ Resources:
           SQSUrl: !Ref ScannerSQSURL
           SNSArn: !Ref ScanResultTopic
           stackARN: !Ref AWS::StackId
+          HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
       MemorySize: 128
       Role: !GetAtt BucketListenerExecutionRole.Arn
       Runtime: python3.8
       Timeout: 15
+      VpcConfig:
+        SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
+        SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
   BucketListenerLambdaAlias:
     Type: Custom::BucketListenerLambdaAlias
     Properties:
@@ -350,6 +421,9 @@ Resources:
       Modified: 20210708.1
       ScannerSQSURL: !Ref ScannerSQSURL
       ScanResultTopic: !Ref ScanResultTopic
+      NetworkProxy: !Ref NetworkProxy
+      SubnetIDs: !Ref SubnetIDs
+      SecurityGroupIDs: !Ref SecurityGroupIDs
   BucketListenerExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -369,6 +443,10 @@ Resources:
       Path: /
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - !If
+          - IsVPCEnabled
+          - !Sub arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+          - !Ref AWS::NoValue
       Policies:
         - PolicyName: root
           PolicyDocument:
@@ -456,10 +534,14 @@ Resources:
       Environment:
         Variables:
           stackARN: !Ref AWS::StackId
+          HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
       MemorySize: 128
       Role: !GetAtt PostScanActionTagExecutionRole.Arn
       Runtime: python3.8
       Timeout: 15
+      VpcConfig:
+        SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
+        SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
   PostScanActionTagLambdaAlias:
     Type: Custom::PostScanActionTagLambdaAlias
     Properties:
@@ -467,6 +549,9 @@ Resources:
       FunctionName: !GetAtt PostScanActionTagLambda.Arn
       Name: TM-FSS-MANAGED
       Modified: 20210708.1
+      NetworkProxy: !Ref NetworkProxy
+      SubnetIDs: !Ref SubnetIDs
+      SecurityGroupIDs: !Ref SecurityGroupIDs
   PostScanActionTagExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -486,6 +571,10 @@ Resources:
       Path: /
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - !If
+          - IsVPCEnabled
+          - !Sub arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+          - !Ref AWS::NoValue
       Policies:
         - PolicyName: root
           PolicyDocument:
@@ -624,22 +713,53 @@ Resources:
         Variables:
           AWSRegion: !Ref AWS::Region
           LambdaArn: !GetAtt BucketListenerLambda.Arn # deprecated, for handling the old custom resource input
+          HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
       Handler: index.handler
       Role: !GetAtt SetupBucketNotificationExecutionRole.Arn
       Runtime: python3.8
       Timeout: 50
+      VpcConfig:
+        SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
+        SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
       Code:
         ZipFile: |
           import os
           import traceback
-          import cfnresponse
+          import json
+          import urllib.request
           import boto3
           from botocore.config import Config
           LAMBDA_CFG = 'LambdaFunctionConfigurations'
           LAMBDA_ARN = 'LambdaFunctionArn'
+          SUCCESS = "SUCCESS"
+          FAILED = "FAILED"
           s3 = boto3.client('s3', config=Config(region_name=os.environ.get('AWSRegion', 'us-east-1')))
           class BucketNotFound(Exception): pass
           class ObjectCreatedOccupiedException(Exception): pass
+          def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False):
+              responseUrl = event['ResponseURL']
+              print(responseUrl)
+              responseBody = {}
+              responseBody['Status'] = responseStatus
+              responseBody['Reason'] = 'See the details in CloudWatch Log Stream: ' + context.log_stream_name
+              responseBody['PhysicalResourceId'] = physicalResourceId or context.log_stream_name
+              responseBody['StackId'] = event['StackId']
+              responseBody['RequestId'] = event['RequestId']
+              responseBody['LogicalResourceId'] = event['LogicalResourceId']
+              responseBody['NoEcho'] = noEcho
+              responseBody['Data'] = responseData
+              json_responseBody = json.dumps(responseBody)
+              print("Response body:\n" + json_responseBody)
+              headers = {
+                  'content-type' : '',
+                  'content-length' : str(len(json_responseBody))
+              }
+              request = urllib.request.Request(responseUrl, headers=headers, data=json_responseBody.encode('utf-8'), method='PUT')
+              try:
+                  with urllib.request.urlopen(request) as response:
+                      print("Status code: " + response.reason)
+              except Exception as e:
+                  print("send(..) failed executing requests.put(..): " + str(e))
           def is_bucket_existing(bucket):
             try:
               s3.head_bucket(Bucket=bucket)
@@ -677,7 +797,7 @@ Resources:
               if LAMBDA_CFG in configs: configs[LAMBDA_CFG] = [config for config in configs[LAMBDA_CFG] if config[LAMBDA_ARN] != arn]
           def handler(event, context):
               print(event)
-              status = cfnresponse.SUCCESS
+              status = SUCCESS
               try:
                 bucket = event['ResourceProperties']['Bucket']
                 arn = event['ResourceProperties'].get('LambdaArn', os.environ['LambdaArn'])
@@ -692,8 +812,8 @@ Resources:
               except Exception as ex:
                 print('Unhandled exception: ' + str(ex))
                 traceback.print_exc()
-                status = cfnresponse.FAILED
-              cfnresponse.send(event, context, status, {})
+                status = FAILED
+              send(event, context, status, {})
   SetupBucketNotificationExecutionRole:
     Type: AWS::IAM::Role
     Condition: IsTriggeredWithObjectCreatedEvent
@@ -714,6 +834,10 @@ Resources:
       Path: /
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - !If
+          - IsVPCEnabled
+          - !Sub arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+          - !Ref AWS::NoValue
       Policies:
         - PolicyName: root
           PolicyDocument:
