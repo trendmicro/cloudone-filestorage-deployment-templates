@@ -291,6 +291,14 @@
                             "value": "[concat('/home/', variables('scannerPatternPath'))]"
                         },
                         {
+                            "name": "PATTERN_VERSION",
+                            "value": ""
+                        },
+                        {
+                            "name": "PATTERN_UPDATE_SCHEDULE",
+                            "value": "0 0 */1 * * *"
+                        },
+                        {
                             "name": "LICENSE",
                             "value": "[concat('@Microsoft.KeyVault(VaultName=', variables('scannerLicenseKeyVaultName'), ';SecretName=', variables('scannerLicenseSecretName'), ')')]"
                         },
