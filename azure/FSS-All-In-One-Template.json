@@ -86,7 +86,6 @@
         "unifiedSAS": "[if(empty(parameters('SharedAccessSignature')), '', if(startsWith(parameters('SharedAccessSignature'), '?'), parameters('SharedAccessSignature'), concat('?', parameters('SharedAccessSignature'))))]",
         "scannerStackTemplateLink": "[concat(parameters('StackPackageLocation'), '/', variables('templateLinkPrefix'), '/FSS-Scanner-Stack-Template.json', variables('unifiedSAS'))]",
         "storageStackTemplateLink": "[concat(parameters('StackPackageLocation'), '/', variables('templateLinkPrefix'), '/FSS-Storage-Stack-Template.json', variables('unifiedSAS'))]",
-        "scannerRoleAssignmentTemplateLink": "[concat(parameters('StackPackageLocation'), '/', variables('templateLinkPrefix'), '/FSS-Scanner-Stack-Role-Assignment.json', variables('unifiedSAS'))]"
     },
     "resources": [
         {
