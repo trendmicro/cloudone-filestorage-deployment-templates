@@ -155,6 +155,10 @@ Mappings:
       AWSRegion: us-east-2
     in-1:
       AWSRegion: ap-south-1
+    gb-1:
+      AWSRegion: eu-west-2
+    au-1:
+      AWSRegion: ap-southeast-2
 
 Conditions:
   HasIAMRolePrefix:
@@ -439,7 +443,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20210708.1
+      Modified: 20210809.1
       TrendMicroManagementAccount: !Ref TrendMicroManagementAccount
       CloudOneRegion: !Ref CloudOneRegion
       SubnetIDs: !Ref SubnetIDs
