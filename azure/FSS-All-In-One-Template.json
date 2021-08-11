@@ -85,7 +85,7 @@
         "templateLinkPrefix": "[concat(parameters('Version'), '/arm-templates')]",
         "unifiedSAS": "[if(empty(parameters('SharedAccessSignature')), '', if(startsWith(parameters('SharedAccessSignature'), '?'), parameters('SharedAccessSignature'), concat('?', parameters('SharedAccessSignature'))))]",
         "scannerStackTemplateLink": "[concat(parameters('StackPackageLocation'), '/', variables('templateLinkPrefix'), '/FSS-Scanner-Stack-Template.json', variables('unifiedSAS'))]",
-        "storageStackTemplateLink": "[concat(parameters('StackPackageLocation'), '/', variables('templateLinkPrefix'), '/FSS-Storage-Stack-Template.json', variables('unifiedSAS'))]",
+        "storageStackTemplateLink": "[concat(parameters('StackPackageLocation'), '/', variables('templateLinkPrefix'), '/FSS-Storage-Stack-Template.json', variables('unifiedSAS'))]"
     },
     "resources": [
         {
