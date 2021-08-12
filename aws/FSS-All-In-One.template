@@ -12,6 +12,7 @@ Metadata:
           - KMSKeyARNForBucketSSE
           - KMSKeyARNForQueueSSE
           - TriggerWithObjectCreatedEvent
+          - ScanOnGetObject
       - Label:
           default: "[ Optional: resource prefixes ] Warning: Do not modify these fields when you update the stack. This may cause management problems. The maximum prefix length is 50 characters."
         Parameters:
@@ -45,6 +46,8 @@ Metadata:
         default: KMSKeyARNForQueueSSE
       TriggerWithObjectCreatedEvent:
         default: TriggerWithObjectCreatedEvent
+      ScanOnGetObject:
+        default: "ScanOnGetObject [ In Preview ]"
       NetworkProxy:
         default: NetworkProxy
       SubnetIDs:
@@ -96,6 +99,16 @@ Parameters:
       - 'true'
       - 'false'
     Description: If the s3:ObjectCreated:* event of the S3BucketToScan is in use, set this option to false. Then trigger the scans by invoking the deployed BucketListenerLambda.
+    Type: String
+  ScanOnGetObject:
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: |
+      Scan objects retrieved (GET requests) from S3 with the Object Lambda Access Point.
+      Enabling this option requires that the storage stack is deployed in the same account and same region as the scanner stack.
+      For more information, see https://cloudone.trendmicro.com/docs/file-storage-security/aws-scan-on-get-object/
     Type: String
   SubnetIDs:
     Default: ''
@@ -182,6 +195,10 @@ Parameters:
     Type: String
     MaxLength: 50
 
+Conditions:
+  IsScanOnGetObjectEnabled:
+    !Equals ['true', !Ref ScanOnGetObject]
+
 Resources:
   StorageStack:
     Type: AWS::CloudFormation::Stack
@@ -191,11 +208,13 @@ Resources:
         KMSKeyARNForBucketSSE: !Ref KMSKeyARNForBucketSSE
         KMSKeyARNForQueueSSE: !Ref KMSKeyARNForQueueSSE
         TriggerWithObjectCreatedEvent: !Ref TriggerWithObjectCreatedEvent
+        ScanOnGetObject: !Ref ScanOnGetObject
         SubnetIDs: !Join [',', !Ref SubnetIDs]
         SecurityGroupIDs: !Join [',', !Ref SecurityGroupIDs]
         NetworkProxy: !Ref NetworkProxy
         ScannerAWSAccount: !Ref AWS::AccountId
         ScannerSQSURL: !GetAtt ScannerStack.Outputs.ScannerQueueURL
+        ScannerLambdaAliasARN: !GetAtt ScannerStack.Outputs.ScannerLambdaAliasARN
         FSSBucketName: !Ref FSSBucketName
         FSSKeyPrefix: !Ref FSSKeyPrefix
         CloudOneRegion: !Ref CloudOneRegion
@@ -259,3 +278,7 @@ Outputs:
   ScanResultTopicARN:
     Value: !GetAtt StorageStack.Outputs.ScanResultTopicARN
     Description: The ARN of the scan result SNS topic in storage stack.
+  ScanOnGetObjectAccessPointARN:
+    Condition: IsScanOnGetObjectEnabled
+    Value: !GetAtt StorageStack.Outputs.ScanOnGetObjectAccessPointARN
+    Description: Using this ARN to get objects will have them scanned by File Storage Security before they are returned.

@@ -11,11 +11,13 @@ Metadata:
           - S3BucketToScan
           - KMSKeyARNForBucketSSE
           - TriggerWithObjectCreatedEvent
+          - ScanOnGetObject
       - Label:
           default: "[ Scanner stack ]"
         Parameters:
           - ScannerAWSAccount
           - ScannerSQSURL
+          - ScannerLambdaAliasARN
           - KMSKeyARNForQueueSSE
       - Label:
           default: "[ Optional: resource prefixes ] Warning: Do not modify these fields when you update the stack. This may cause management problems. The maximum prefix length is 50 characters."
@@ -46,6 +48,8 @@ Metadata:
         default: KMSKeyARNForBucketSSE
       TriggerWithObjectCreatedEvent:
         default: TriggerWithObjectCreatedEvent
+      ScanOnGetObject:
+        default: "ScanOnGetObject [ In Preview ]"
       NetworkProxy:
         default: NetworkProxy
       SubnetIDs:
@@ -56,6 +60,8 @@ Metadata:
         default: ScannerAWSAccount
       ScannerSQSURL:
         default: ScannerSQSURL
+      ScannerLambdaAliasARN:
+        default: "ScannerLambdaAliasARN [ Note: Required if ScanOnGetObject is enabled. ]"
       KMSKeyARNForQueueSSE:
         default: KMSKeyARNForQueueSSE
       FSSBucketName:
@@ -99,6 +105,16 @@ Parameters:
       - 'false'
     Description: If the s3:ObjectCreated:* event of the S3BucketToScan is in use, set this option to false and trigger the scans by invoking the deployed BucketListenerLambda.
     Type: String
+  ScanOnGetObject:
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: |
+      Scan objects retrieved (GET requests) from S3 with the Object Lambda Access Point.
+      Enabling this option requires that the storage stack is deployed in the same account and same region as the scanner stack.
+      For more information, see https://cloudone.trendmicro.com/docs/file-storage-security/aws-scan-on-get-object/
+    Type: String
   SubnetIDs:
     Default: ''
     Description: A comma-separated list of VPC Subnet IDs that are attached to Lambda functions. Leave it blank if you don't want to attach Lambda functions to a VPC.
@@ -113,6 +129,10 @@ Parameters:
     Type: String
   ScannerSQSURL:
     Description: ""
+    Type: String
+  ScannerLambdaAliasARN:
+    Default: ''
+    Description: ''
     Type: String
   KMSKeyARNForQueueSSE:
     Default: ''
@@ -192,6 +212,8 @@ Conditions:
     !Not [!Equals ['', !Ref KMSKeyARNForQueueSSE]]
   IsTriggeredWithObjectCreatedEvent:
     !Equals ['true', !Ref TriggerWithObjectCreatedEvent]
+  IsScanOnGetObjectEnabled:
+    !Equals ['true', !Ref ScanOnGetObject]
   IsVPCEnabled: !And
     - !Not [!Equals ['', !Select [0, !Ref SubnetIDs]]]
     - !Not [!Equals ['', !Select [0, !Ref SecurityGroupIDs]]]
@@ -850,6 +872,42 @@ Resources:
                   - s3:ListBucket
                 Resource: !Sub arn:${AWS::Partition}:s3:::*
 
+  ScanningBucketAccessPoint:
+    Type: AWS::S3::AccessPoint
+    Condition: IsScanOnGetObjectEnabled
+    Properties:
+      Bucket: !Ref S3BucketToScan
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+  ScanningBucketObjectLambdaAccessPoint:
+    Type: AWS::S3ObjectLambda::AccessPoint
+    Condition: IsScanOnGetObjectEnabled
+    Properties:
+      Name: !Join
+        - '-'
+        - - 'fss-olap'
+          - !GetAtt ScanningBucketAccessPoint.Name
+      ObjectLambdaConfiguration:
+        SupportingAccessPoint: !Join
+          - ''
+          - - !Sub arn:${AWS::Partition}:s3:${AWS::Region}:${AWS::AccountId}:accesspoint/
+            - !Ref ScanningBucketAccessPoint
+        TransformationConfigurations:
+          - Actions:
+              - GetObject
+            ContentTransformation:
+              AwsLambda:
+                FunctionArn: !Ref ScannerLambdaAliasARN
+                FunctionPayload: !Join
+                  - ''
+                  - - '{"bucket":"'
+                    - !Ref S3BucketToScan
+                    - '"}'
+        CloudWatchMetricsEnabled: true
+
 Outputs:
   CloudOneRegion:
     Value: !Ref CloudOneRegion
@@ -871,3 +929,7 @@ Outputs:
     Value: !GetAtt PostScanActionTagLambdaAlias.Arn
   ScanResultTopicARN:
     Value: !Ref ScanResultTopic
+  ScanOnGetObjectAccessPointARN:
+    Condition: IsScanOnGetObjectEnabled
+    Value: !GetAtt ScanningBucketObjectLambdaAccessPoint.Arn
+    Description: Using this ARN to get objects will have them scanned by File Storage Security before they are returned.

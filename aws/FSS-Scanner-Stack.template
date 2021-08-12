@@ -443,7 +443,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20210809.1
+      Modified: 20210812.1
       TrendMicroManagementAccount: !Ref TrendMicroManagementAccount
       CloudOneRegion: !Ref CloudOneRegion
       SubnetIDs: !Ref SubnetIDs
@@ -571,6 +571,10 @@ Resources:
                     - arn:${AWS::Partition}:sns:${Region}:${TrendMicroManagementAccount}:fss-telemetry-topic
                     - Region: !FindInMap [CloudOneRegionAttributes, !Ref CloudOneRegion, AWSRegion]
                   - !Sub arn:${AWS::Partition}:sns:*:*:*-ScanResultTopic-*
+              - Effect: Allow # https://docs.aws.amazon.com/AmazonS3/latest/userguide/olap-policies.html
+                Action:
+                  - s3-object-lambda:WriteGetObjectResponse
+                Resource: '*'
   ScannerExecutionRoleKMSDecryptPolicyForSQS:
     Type: AWS::IAM::Policy
     Condition: IsQueueSSEKMSEnabled
