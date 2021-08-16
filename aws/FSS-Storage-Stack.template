@@ -446,6 +446,8 @@ Resources:
       NetworkProxy: !Ref NetworkProxy
       SubnetIDs: !Ref SubnetIDs
       SecurityGroupIDs: !Ref SecurityGroupIDs
+      FSSBucketName: !Ref FSSBucketName
+      FSSKeyPrefix: !Ref FSSKeyPrefix
   BucketListenerExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -574,6 +576,8 @@ Resources:
       NetworkProxy: !Ref NetworkProxy
       SubnetIDs: !Ref SubnetIDs
       SecurityGroupIDs: !Ref SecurityGroupIDs
+      FSSBucketName: !Ref FSSBucketName
+      FSSKeyPrefix: !Ref FSSKeyPrefix
   PostScanActionTagExecutionRole:
     Type: AWS::IAM::Role
     Properties:

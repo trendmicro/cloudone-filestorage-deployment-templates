@@ -444,11 +444,13 @@ Resources:
       FunctionName: !GetAtt ScannerLambda.Arn
       Name: TM-FSS-MANAGED
       Modified: 20210812.1
-      TrendMicroManagementAccount: !Ref TrendMicroManagementAccount
-      CloudOneRegion: !Ref CloudOneRegion
       SubnetIDs: !Ref SubnetIDs
       SecurityGroupIDs: !Ref SecurityGroupIDs
       NetworkProxy: !Ref NetworkProxy
+      FSSBucketName: !Ref FSSBucketName
+      FSSKeyPrefix: !Ref FSSKeyPrefix
+      TrendMicroManagementAccount: !Ref TrendMicroManagementAccount
+      CloudOneRegion: !Ref CloudOneRegion
       EnvVarsToRecover:
         - LICENSE
       LayersToRecover:
@@ -515,6 +517,8 @@ Resources:
       NetworkProxy: !Ref NetworkProxy
       SubnetIDs: !Ref SubnetIDs
       SecurityGroupIDs: !Ref SecurityGroupIDs
+      FSSBucketName: !Ref FSSBucketName
+      FSSKeyPrefix: !Ref FSSKeyPrefix
   ScannerDeadLetterLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
