@@ -42,101 +42,54 @@ Metadata:
           - ExternalID
 
     ParameterLabels:
-      S3BucketToScan:
-        default: S3BucketToScan
-      KMSKeyARNForBucketSSE:
-        default: KMSKeyARNForBucketSSE
-      TriggerWithObjectCreatedEvent:
-        default: TriggerWithObjectCreatedEvent
-      ScanOnGetObject:
-        default: "ScanOnGetObject [ In Preview ]"
-      NetworkProxy:
-        default: NetworkProxy
-      SubnetIDs:
-        default: SubnetIDs
-      SecurityGroupIDs:
-        default: SecurityGroupIDs
-      ScannerAWSAccount:
-        default: ScannerAWSAccount
-      ScannerSQSURL:
-        default: ScannerSQSURL
-      ScannerLambdaAliasARN:
-        default: "ScannerLambdaAliasARN [ Note: Required if ScanOnGetObject is enabled. ]"
-      KMSKeyARNForQueueSSE:
-        default: KMSKeyARNForQueueSSE
-      FSSBucketName:
-        default: Stack package location
-      FSSKeyPrefix:
-        default: Version
-      TrendMicroManagementAccount:
-        default: File Storage Security management account
       CloudOneRegion:
         default: Trend Micro Cloud One region
       ExternalID:
         default: ExternalID
+      FSSBucketName:
+        default: Stack package location
+      FSSKeyPrefix:
+        default: Version
       IAMRolePrefix:
         default: Prefix for IAM role name
       IAMPolicyPrefix:
         default: Prefix for IAM policy name
+      KMSKeyARNForBucketSSE:
+        default: KMSKeyARNForBucketSSE
+      KMSKeyARNForQueueSSE:
+        default: KMSKeyARNForQueueSSE
       LambdaFunctionPrefix:
         default: "Prefix for Lambda function name [ Warning: Do not modify this field when you update the stack. Modifications may cause your update to fail. ]"
+      NetworkProxy:
+        default: NetworkProxy
+      S3BucketToScan:
+        default: S3BucketToScan
+      ScannerAWSAccount:
+        default: ScannerAWSAccount
+      ScannerLambdaAliasARN:
+        default: "ScannerLambdaAliasARN [ Note: Required if ScanOnGetObject is enabled. ]"
+      ScannerSQSURL:
+        default: ScannerSQSURL
+      ScanOnGetObject:
+        default: "ScanOnGetObject [ In Preview ]"
+      SecurityGroupIDs:
+        default: SecurityGroupIDs
       SNSTopicPrefix:
         default: Prefix for SNS topic name
+      SubnetIDs:
+        default: SubnetIDs
+      TrendMicroManagementAccount:
+        default: File Storage Security management account
+      TriggerWithObjectCreatedEvent:
+        default: TriggerWithObjectCreatedEvent
 
 Parameters:
-  ScannerAWSAccount:
-    Description: ""
-    Type: List<Number>
-  S3BucketToScan:
-    AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
-    ConstraintDescription: S3 bucket name can include numbers, lowercase
-      letters, and hyphens (-). It cannot start or end with a hyphen
-      (-).
-    Description: The S3 bucket to scan. Specify an existing S3 bucket.
+  CloudOneRegion:
+    Description: The region of the Trend Micro Cloud One services.
     Type: String
-  KMSKeyARNForBucketSSE:
-    Default: ''
-    Description: The ARN for the KMS master key used to encrypt S3 bucket objects. Leave it blank if you haven't enabled SSE-KMS for the bucket.
-    Type: String
-  TriggerWithObjectCreatedEvent:
-    Default: 'true'
-    AllowedValues:
-      - 'true'
-      - 'false'
-    Description: If the s3:ObjectCreated:* event of the S3BucketToScan is in use, set this option to false and trigger the scans by invoking the deployed BucketListenerLambda.
-    Type: String
-  ScanOnGetObject:
-    Default: 'false'
-    AllowedValues:
-      - 'true'
-      - 'false'
-    Description: |
-      Scan objects retrieved (GET requests) from S3 with the Object Lambda Access Point.
-      Enabling this option requires that the storage stack is deployed in the same account and same region as the scanner stack.
-      For more information, see https://cloudone.trendmicro.com/docs/file-storage-security/aws-scan-on-get-object/
-    Type: String
-  SubnetIDs:
-    Default: ''
-    Description: A comma-separated list of VPC Subnet IDs that are attached to Lambda functions. Leave it blank if you don't want to attach Lambda functions to a VPC.
-    Type: CommaDelimitedList
-  SecurityGroupIDs:
-    Default: ''
-    Description: A comma-separated list of VPC Security Group IDs that are attached to Lambda functions. Leave it blank if you don't want to attach Lambda functions to a VPC.
-    Type: CommaDelimitedList
-  NetworkProxy:
-    Default: ''
-    Description: Network proxy setting in the format scheme://[user:pass@]host:port, for example http://proxy.server:8080. Leave it blank if you don't want Lambda functions to connect to an explicit proxy in the VPC.
-    Type: String
-  ScannerSQSURL:
-    Description: ""
-    Type: String
-  ScannerLambdaAliasARN:
-    Default: ''
-    Description: ''
-    Type: String
-  KMSKeyARNForQueueSSE:
-    Default: ''
-    Description: The ARN for the KMS master key used to encrypt messages in SQS. Leave it blank if you haven't used your own CMK for SQS server-side encryption.
+    Default: us-1
+  ExternalID:
+    Description: "The External ID is for future use with updating Lambdas and also to address and prevent the 'confused deputy' problem."
     Type: String
   FSSBucketName:
     AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
@@ -155,26 +108,6 @@ Parameters:
     Default: latest/
     Description: ""
     Type: String
-  CloudOneRegion:
-    Description: The region of the Trend Micro Cloud One services.
-    Type: String
-    Default: us-1
-  TrendMicroManagementAccount:
-    AllowedPattern: ^[0-9]*$
-    ConstraintDescription: AWS account ID.
-    Default: 415485722356
-    Description: This account will be given permission to modify the stacks for upgrades and troubleshooting purposes.
-    Type: String
-  ExternalID:
-    Description: "The External ID is for future use with updating Lambdas and also to address and prevent the 'confused deputy' problem."
-    Type: String
-  IAMRolePrefix:
-    AllowedPattern: ^$|^[a-zA-Z0-9+=,.@\-_]+-$
-    ConstraintDescription: Prefix for IAM role name can be empty or include alphanumeric and '+=,.@-_' characters and must end with a hyphen. The maximum length is 50 characters.
-    Default: ''
-    Description: Prefix for the name of the IAM roles being deployed. Must end with a hyphen (-).
-    Type: String
-    MaxLength: 50
   IAMPolicyPrefix:
     AllowedPattern: ^$|^[a-zA-Z0-9+=,.@\-_]+-$
     ConstraintDescription: Prefix for IAM policy name can be empty or include alphanumeric and '+=,.@-_' characters and must end with a hyphen. The maximum length is 50 characters.
@@ -182,6 +115,21 @@ Parameters:
     Description: Prefix for the name of the IAM Policies. Must end with a hyphen (-).
     Type: String
     MaxLength: 50
+  IAMRolePrefix:
+    AllowedPattern: ^$|^[a-zA-Z0-9+=,.@\-_]+-$
+    ConstraintDescription: Prefix for IAM role name can be empty or include alphanumeric and '+=,.@-_' characters and must end with a hyphen. The maximum length is 50 characters.
+    Default: ''
+    Description: Prefix for the name of the IAM roles being deployed. Must end with a hyphen (-).
+    Type: String
+    MaxLength: 50
+  KMSKeyARNForBucketSSE:
+    Default: ''
+    Description: The ARN for the KMS master key used to encrypt S3 bucket objects. Leave it blank if you haven't enabled SSE-KMS for the bucket.
+    Type: String
+  KMSKeyARNForQueueSSE:
+    Default: ''
+    Description: The ARN for the KMS master key used to encrypt messages in SQS. Leave it blank if you haven't used your own CMK for SQS server-side encryption.
+    Type: String
   LambdaFunctionPrefix:
     AllowedPattern: ^$|^[a-zA-Z0-9_\-]+-$
     ConstraintDescription: Prefix for Lambda function name can be empty or include letters, numbers, hyphens (-), and underscores (_) and must end with a hyphen. The maximum length is 50 characters.
@@ -189,6 +137,41 @@ Parameters:
     Description: Prefix for the name of the Lambda functions being deployed. Must end with a hyphen (-).
     Type: String
     MaxLength: 50
+  NetworkProxy:
+    Default: ''
+    Description: Network proxy setting in the format scheme://[user:pass@]host:port, for example http://proxy.server:8080. Leave it blank if you don't want Lambda functions to connect to an explicit proxy in the VPC.
+    Type: String
+  S3BucketToScan:
+    AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
+    ConstraintDescription: S3 bucket name can include numbers, lowercase
+      letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Description: The S3 bucket to scan. Specify an existing S3 bucket.
+    Type: String
+  ScannerAWSAccount:
+    Description: ""
+    Type: List<Number>
+  ScannerLambdaAliasARN:
+    Default: ''
+    Description: ''
+    Type: String
+  ScannerSQSURL:
+    Description: ""
+    Type: String
+  ScanOnGetObject:
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: |
+      Scan objects retrieved (GET requests) from S3 with the Object Lambda Access Point.
+      Enabling this option requires that the storage stack is deployed in the same account and same region as the scanner stack.
+      For more information, see https://cloudone.trendmicro.com/docs/file-storage-security/aws-scan-on-get-object/
+    Type: String
+  SecurityGroupIDs:
+    Default: ''
+    Description: A comma-separated list of VPC Security Group IDs that are attached to Lambda functions. Leave it blank if you don't want to attach Lambda functions to a VPC.
+    Type: CommaDelimitedList
   SNSTopicPrefix:
     AllowedPattern: ^$|^[a-zA-Z0-9_\-]+-$
     ConstraintDescription: Prefix for SNS topic name can be empty or include include alphanumeric characters, hyphens (-) and underscores (_) and must end with a hyphen. The maximum length is 50 characters.
@@ -196,12 +179,29 @@ Parameters:
     Description: Prefix for the name of SNS topics being deployed. Must end with a hyphen (-).
     Type: String
     MaxLength: 50
+  SubnetIDs:
+    Default: ''
+    Description: A comma-separated list of VPC Subnet IDs that are attached to Lambda functions. Leave it blank if you don't want to attach Lambda functions to a VPC.
+    Type: CommaDelimitedList
+  TrendMicroManagementAccount:
+    AllowedPattern: ^[0-9]*$
+    ConstraintDescription: AWS account ID.
+    Default: 415485722356
+    Description: This account will be given permission to modify the stacks for upgrades and troubleshooting purposes.
+    Type: String
+  TriggerWithObjectCreatedEvent:
+    Default: 'true'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: If the s3:ObjectCreated:* event of the S3BucketToScan is in use, set this option to false and trigger the scans by invoking the deployed BucketListenerLambda.
+    Type: String
 
 Conditions:
-  HasIAMRolePrefix:
-    !Not [!Equals ['', !Ref IAMRolePrefix]]
   HasIAMPolicyPrefix:
     !Not [!Equals ['', !Ref IAMPolicyPrefix]]
+  HasIAMRolePrefix:
+    !Not [!Equals ['', !Ref IAMRolePrefix]]
   HasLambdaFunctionPrefix:
     !Not [!Equals ['', !Ref LambdaFunctionPrefix]]
   HasSNSTopicPrefix:
@@ -248,6 +248,7 @@ Resources:
           import urllib.request
           SUCCESS = "SUCCESS"
           FAILED = "FAILED"
+          lambda_client = boto3.client('lambda')
           def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False):
               responseUrl = event['ResponseURL']
               print(responseUrl)
@@ -273,37 +274,32 @@ Resources:
               except Exception as e:
                   print("send(..) failed executing requests.put(..): " + str(e))
           def create_alias(function, name):
-              client = boto3.client('lambda')
-              version_result = client.publish_version(FunctionName=function)
-              return client.create_alias(FunctionName=function, Name=name, FunctionVersion=version_result['Version'])
+              version_result = lambda_client.publish_version(FunctionName=function)
+              return lambda_client.create_alias(FunctionName=function, Name=name, FunctionVersion=version_result['Version'])
           def update_alias(function, name):
-              client = boto3.client('lambda')
-              version_result = client.publish_version(FunctionName=function)
-              return client.update_alias(FunctionName=function, Name=name, FunctionVersion=version_result['Version'], RoutingConfig={})
+              version_result = lambda_client.publish_version(FunctionName=function)
+              return lambda_client.update_alias(FunctionName=function, Name=name, FunctionVersion=version_result['Version'], RoutingConfig={})
           def delete_alias(function, name):
-              client = boto3.client('lambda')
-              client.delete_alias(FunctionName=function, Name=name)
+              lambda_client.delete_alias(FunctionName=function, Name=name)
           def get_function_configuration(function, qualifier=None):
-              client = boto3.client('lambda')
               if (qualifier is not None):
-                  return client.get_function_configuration(FunctionName=function, Qualifier=qualifier)
+                  return lambda_client.get_function_configuration(FunctionName=function, Qualifier=qualifier)
               else:
-                  return client.get_function_configuration(FunctionName=function)
+                  return lambda_client.get_function_configuration(FunctionName=function)
           def update_function_configuration(function, environments, layers):
-              client = boto3.client('lambda')
-              client.update_function_configuration(FunctionName=function, Environment=environments, Layers=layers)
-          def replace_environments(env_vars_to_recover, old_environments, current_environments):
+              lambda_client.update_function_configuration(FunctionName=function, Environment=environments, Layers=layers)
+          def replace_environments(env_vars_to_recover, last_env_vars, current_environments):
               for env_var in env_vars_to_recover:
-                  current_environments['Variables'][env_var] = old_environments['Variables'].get(env_var, '')
+                  current_environments['Variables'][env_var] = last_env_vars.get(env_var, '')
               return current_environments
           def find_recover_layer_arn(layers, keyword):
               found_arns = [layer_arn for layer_arn in layers if keyword in layer_arn]
               return found_arns[0] if len(found_arns) > 0 else ''
           def is_not_match_layer(layer_arn, keywords):
               return len(list(filter(lambda keyword: keyword in layer_arn, keywords))) == 0
-          def replace_layers(layers_to_recover, old_layers, current_layers):
+          def replace_layers(layers_to_recover, last_layers, current_layers):
               get_arn = lambda layer: layer['Arn']
-              old_layer_arns = list(map(get_arn, old_layers))
+              old_layer_arns = list(map(get_arn, last_layers))
               current_layer_arns = list(map(get_arn, current_layers))
               for recover_layer, replacing_layers in layers_to_recover.items():
                   recover_layer_arn = find_recover_layer_arn(old_layer_arns, recover_layer)
@@ -311,28 +307,32 @@ Resources:
                   current_layer_arns = [layer_arn for layer_arn in current_layer_arns if is_not_match_layer(layer_arn, replacing_layers)]
                   current_layer_arns.append(recover_layer_arn)
               return current_layer_arns
-          def recover_lambda_function_config(current_function_name, old_function_name, old_alias_name, env_vars_to_recover, layers_to_recover):
-              old_version_info = get_function_configuration(old_function_name, old_alias_name)
+          def recover_lambda_function_config(current_function_name, last_env_vars, last_layers, env_vars_to_recover, layers_to_recover):
               current_version_info = get_function_configuration(current_function_name)
-              new_environments = replace_environments(env_vars_to_recover, old_version_info['Environment'], current_version_info['Environment'])
-              new_layers = replace_layers(layers_to_recover, old_version_info.get('Layers', []), current_version_info.get('Layers', []))
+              new_environments = replace_environments(env_vars_to_recover, last_env_vars, current_version_info['Environment'])
+              new_layers = replace_layers(layers_to_recover, last_layers, current_version_info.get('Layers', []))
               update_function_configuration(current_function_name, new_environments, new_layers)
           def handler(event, context):
+              # Do not print LastEnvVars values cause it might contain license (JWT)
+              last_env_vars = event['ResourceProperties'].pop('LastEnvVars', {})
+              event.get('OldResourceProperties', {}).pop('LastEnvVars', None)
               print(event)
+              print('ResourceProperties.LastEnvVars:', last_env_vars.keys())
               status = SUCCESS
               response_data = {}
               try:
                   if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
                       function_name = event['ResourceProperties']['FunctionName']
                       alias_name = event['ResourceProperties']['Name']
+                      last_layers = event['ResourceProperties'].get('LastLayers', [])
                       env_vars_to_recover = event['ResourceProperties'].get('EnvVarsToRecover', [])
                       layers_to_recover = event['ResourceProperties'].get('LayersToRecover', {})
+                      recover_lambda_function_config(function_name, last_env_vars, last_layers, env_vars_to_recover, layers_to_recover)
                       if event['RequestType'] == 'Create':
                           alias_result = create_alias(function_name, alias_name)
                       else:
                           old_function_name = event['OldResourceProperties']['FunctionName']
                           old_alias_name = event['OldResourceProperties']['Name']
-                          recover_lambda_function_config(function_name, old_function_name, old_alias_name, env_vars_to_recover, layers_to_recover)
                           if function_name == old_function_name and alias_name == old_alias_name:
                               alias_result = update_alias(function_name, alias_name)
                           else:
@@ -363,7 +363,7 @@ Resources:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - !If
           - IsVPCEnabled
-          - !Sub arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+          - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
           - !Ref AWS::NoValue
       Policies:
         - PolicyName: create-lambda-function-version-alias
@@ -441,13 +441,15 @@ Resources:
       FunctionName: !GetAtt BucketListenerLambda.Arn
       Name: TM-FSS-MANAGED
       Modified: 20210708.1
-      ScannerSQSURL: !Ref ScannerSQSURL
-      ScanResultTopic: !Ref ScanResultTopic
-      NetworkProxy: !Ref NetworkProxy
-      SubnetIDs: !Ref SubnetIDs
-      SecurityGroupIDs: !Ref SecurityGroupIDs
+      # Template parameters
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
+      NetworkProxy: !Ref NetworkProxy
+      ScannerSQSURL: !Ref ScannerSQSURL
+      SecurityGroupIDs: !Ref SecurityGroupIDs
+      SubnetIDs: !Ref SubnetIDs
+      # Other inputs
+      ScanResultTopic: !Ref ScanResultTopic
   BucketListenerExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -469,7 +471,7 @@ Resources:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - !If
           - IsVPCEnabled
-          - !Sub arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+          - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
           - !Ref AWS::NoValue
       Policies:
         - PolicyName: root
@@ -573,11 +575,12 @@ Resources:
       FunctionName: !GetAtt PostScanActionTagLambda.Arn
       Name: TM-FSS-MANAGED
       Modified: 20210708.1
-      NetworkProxy: !Ref NetworkProxy
-      SubnetIDs: !Ref SubnetIDs
-      SecurityGroupIDs: !Ref SecurityGroupIDs
+      # Template parameters
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
+      NetworkProxy: !Ref NetworkProxy
+      SecurityGroupIDs: !Ref SecurityGroupIDs
+      SubnetIDs: !Ref SubnetIDs
   PostScanActionTagExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -599,7 +602,7 @@ Resources:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - !If
           - IsVPCEnabled
-          - !Sub arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+          - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
           - !Ref AWS::NoValue
       Policies:
         - PolicyName: root
@@ -862,7 +865,7 @@ Resources:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - !If
           - IsVPCEnabled
-          - !Sub arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+          - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
           - !Ref AWS::NoValue
       Policies:
         - PolicyName: root
@@ -913,27 +916,27 @@ Resources:
         CloudWatchMetricsEnabled: true
 
 Outputs:
+  BucketListenerLambdaAliasARN:
+    Value: !GetAtt BucketListenerLambdaAlias.Arn
+  BucketListenerLambdaARN:
+    Value: !GetAtt BucketListenerLambda.Arn
+  BucketListenerRoleARN:
+    Value: !GetAtt BucketListenerExecutionRole.Arn
   CloudOneRegion:
     Value: !Ref CloudOneRegion
     Description: The region of the Trend Micro Cloud One services.
-  ScanningBucket:
-    Value: !Ref S3BucketToScan
-  BucketListenerRoleARN:
-    Value: !GetAtt BucketListenerExecutionRole.Arn
-  StorageStackManagementRoleARN:
-    Value: !GetAtt ManagementRole.Arn
-    Description: The ARN of the IAM role for File Storage Security backend services to manage the deployed resources.
-  BucketListenerLambdaARN:
-    Value: !GetAtt BucketListenerLambda.Arn
-  BucketListenerLambdaAliasARN:
-    Value: !GetAtt BucketListenerLambdaAlias.Arn
-  PostScanActionTagLambdaARN:
-    Value: !GetAtt PostScanActionTagLambda.Arn
   PostScanActionTagLambdaAliasARN:
     Value: !GetAtt PostScanActionTagLambdaAlias.Arn
-  ScanResultTopicARN:
-    Value: !Ref ScanResultTopic
+  PostScanActionTagLambdaARN:
+    Value: !GetAtt PostScanActionTagLambda.Arn
+  ScanningBucket:
+    Value: !Ref S3BucketToScan
   ScanOnGetObjectAccessPointARN:
     Condition: IsScanOnGetObjectEnabled
     Value: !GetAtt ScanningBucketObjectLambdaAccessPoint.Arn
     Description: Using this ARN to get objects will have them scanned by File Storage Security before they are returned.
+  ScanResultTopicARN:
+    Value: !Ref ScanResultTopic
+  StorageStackManagementRoleARN:
+    Value: !GetAtt ManagementRole.Arn
+    Description: The ARN of the IAM role for File Storage Security backend services to manage the deployed resources.
