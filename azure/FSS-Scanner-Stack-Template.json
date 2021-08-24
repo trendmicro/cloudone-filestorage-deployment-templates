@@ -18,7 +18,7 @@
         },
         "StackPackageLocation": {
             "type": "string",
-            "defaultValue": "https://file-storage-security-preview.s3.amazonaws.com",
+            "defaultValue": "https://file-storage-security.s3.amazonaws.com",
             "metadata": {
                 "description": "Warning: Do not modify the field. Modifications may cause your deployment to fail."
             }
