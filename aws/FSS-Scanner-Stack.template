@@ -304,6 +304,7 @@ Resources:
                         - !Ref LambdaFunctionPrefix
                         - 'Scan-'
                         - !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]
+                        - '*'
                     - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:*ScannerLambda*
                   - !If
                     - HasLambdaFunctionPrefix
