@@ -59,7 +59,6 @@
         "scannerQueueSASKeyName": "RootManageSharedAccessKey",
         "scannerQueueAuthRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', variables('scannerQueueNamespaceName'), variables('scannerQueueSASKeyName'))]",
         "scannerQueueAPIVersion": "2017-04-01",
-        "scannerLicense": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ3d3cudHJlbmRtaWNyby5jb20iLCJleHAiOjE2MzMwNDY0MDAsIm5iZiI6MTYyMzk4NjQ4MiwiaWF0IjoxNjIzOTg2NDgyLCJzdWIiOiJhenVyZS1zY2FubmVyLXBvYyIsImNsb3VkT25lIjp7ImFjY291bnQiOiIxMjM0NTY3ODkwMTIifX0.tblST2tdTSb_7lFtaz3bF0SAMFbprUXYaH29WGTj8eDtFtOh36nsPDOm1d2SHncPPZ8wr7lPpujTo6AuohxQt1uk6xu1Z76Uy_k-8esjZP0_e2S7OVPPfMopEaBfPQGZ8CtpQ0DotdxjSTJzX6eN7KUuWn1iv7YOEKQ7yU5vMblErRkN1kgDzCOuIzHyjHB3dtjriOrXkH2YhQdojKQkN5ce00STMv4t1zXHw-akAzSaLrMyuFVZgbXZ0CLSG6d7dYXDweSWSYRxSpn1XsqiLlzc54--3-Mexk-W_P3lWqYUuHtMKDw6hI5EsTs8Ve4hovDZEenKFAE8kqpDd7Mzb2EAnCcd_IOyOpFV8d16BjsCUrxPAUVFxN-Qb3499LY2gXBs3EAwX0kgY4VA_EjeNIz4EXGozUwVCjUyknDtTTSJnEiOX4y-Z4pxVT1c8PNmwWqgkZXexHFhNga8E0coGcn4ycNyTkjkgVkp3QrycrARxMDxF3jjSulp7mx7ddWvspJEPm-OOL7veGpNHAydXXr4SODPHBkEY93G3NioIl2oyCkIAafAV-_7mL6SmrZK-dRZkL343B7GcH4esCugZyasGDNS7l78lIs_HV_G8lao6sLsI6h_L1csQX6t6QhkG_eJvU7IhDZwNuJ1Hp8DIgwPPsJ3IMuAcL2J9VripxM",
         "scannerLicenseKeyVaultName": "[concat('tmsl0', variables('stackUID'))]",
         "scannerLicenseSecretName": "scanner-license",
         "scanResultTopicName": "scan-result-topic",
@@ -408,7 +407,7 @@
                 "[resourceId('Microsoft.KeyVault/vaults', variables('scannerLicenseKeyVaultName'))]"
             ],
             "properties": {
-                "value": "[variables('scannerLicense')]"
+                "value": ""
             }
         },
         {
