@@ -74,7 +74,8 @@
         "resourcesReaderRoleAssignmentUID": "[guid(resourceGroup().id, 'ResourcesReaderRoleAssignment')]",
         "resourcesReaderRoleID": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
         "scannerLicenseReaderRoleAssignmentUID": "[guid(resourceGroup().id, 'scannerLicenseReaderRoleAssignment')]",
-        "keyVaultSecretsUserRoleID": "4633458b-17de-408a-b874-0445c86b69e6"
+        "keyVaultSecretsUserRoleID": "4633458b-17de-408a-b874-0445c86b69e6",
+        "functionsWorkerProcessCount": "10"
     },
     "resources": [
         {
@@ -113,13 +114,13 @@
                         "[resourceId('Microsoft.ServiceBus/namespaces', variables('scannerQueueNamespaceName'))]"
                     ],
                     "properties": {
-                        "lockDuration": "PT5M",
+                        "lockDuration": "PT3M",
                         "maxSizeInMegabytes": 1024,
                         "requiresDuplicateDetection": false,
                         "requiresSession": false,
                         "defaultMessageTimeToLive": "PT1H",
                         "deadLetteringOnMessageExpiration": true,
-                        "enableBatchedOperations": true,
+                        "enableBatchedOperations": false,
                         "maxDeliveryCount": 2,
                         "status": "Active",
                         "enablePartitioning": false,
@@ -199,7 +200,7 @@
         },
         {
             "type": "Microsoft.Web/serverfarms",
-            "apiVersion": "2020-06-01",
+            "apiVersion": "2020-12-01",
             "name": "[variables('scannerServerFarmName')]",
             "kind": "linux",
             "properties": {
@@ -210,8 +211,7 @@
                 "name": "EP1",
                 "tier": "ElasticPremium",
                 "size": "EP1",
-                "family": "EP",
-                "capacity": 1
+                "family": "EP"
             }
         },
         {
@@ -328,6 +328,10 @@
                         {
                             "name": "CLOUD_ONE_REGION",
                             "value": "[parameters('CloudOneRegion')]"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_PROCESS_COUNT",
+                            "value": "[variables('functionsWorkerProcessCount')]"
                         }
                     ],
                     "use32BitWorkerProcess": false,
