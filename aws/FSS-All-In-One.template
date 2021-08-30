@@ -9,6 +9,7 @@ Metadata:
           default: "[ Customizable section ]"
         Parameters:
           - S3BucketToScan
+          - ObjectFilterPrefix
           - KMSKeyARNForBucketSSE
           - KMSKeyARNForQueueSSE
           - TriggerWithObjectCreatedEvent
@@ -60,6 +61,8 @@ Metadata:
         default: Prefix for Lambda layer name
       NetworkProxy:
         default: NetworkProxy
+      ObjectFilterPrefix:
+        default: ObjectFilterPrefix
       S3BucketToScan:
         default: S3BucketToScan
       ScanOnGetObject:
@@ -142,6 +145,10 @@ Parameters:
     Default: ''
     Description: Network proxy setting in the format scheme://[user:pass@]host:port, for example http://proxy.server:8080. Leave it blank if you don't want Lambda functions to connect to an explicit proxy in the VPC.
     Type: String
+  ObjectFilterPrefix:
+    Default: ''
+    Description: Limit the scan to objects with key starting with specified characters.
+    Type: String
   S3BucketToScan:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     ConstraintDescription: S3 bucket name can include numbers, lowercase
@@ -214,6 +221,7 @@ Resources:
         KMSKeyARNForQueueSSE: !Ref KMSKeyARNForQueueSSE
         LambdaFunctionPrefix: !Ref LambdaFunctionPrefix
         NetworkProxy: !Ref NetworkProxy
+        ObjectFilterPrefix: !Ref ObjectFilterPrefix
         S3BucketToScan: !Ref S3BucketToScan
         ScannerAWSAccount: !Ref AWS::AccountId
         ScannerLambdaAliasARN: !GetAtt ScannerStack.Outputs.ScannerLambdaAliasARN
