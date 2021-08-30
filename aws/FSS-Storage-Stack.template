@@ -9,6 +9,7 @@ Metadata:
           default: "[ Customizable section ]"
         Parameters:
           - S3BucketToScan
+          - ObjectFilterPrefix
           - KMSKeyARNForBucketSSE
           - TriggerWithObjectCreatedEvent
           - ScanOnGetObject
@@ -62,6 +63,8 @@ Metadata:
         default: "Prefix for Lambda function name [ Warning: Do not modify this field when you update the stack. Modifications may cause your update to fail. ]"
       NetworkProxy:
         default: NetworkProxy
+      ObjectFilterPrefix:
+        default: ObjectFilterPrefix
       S3BucketToScan:
         default: S3BucketToScan
       ScannerAWSAccount:
@@ -140,6 +143,10 @@ Parameters:
   NetworkProxy:
     Default: ''
     Description: Network proxy setting in the format scheme://[user:pass@]host:port, for example http://proxy.server:8080. Leave it blank if you don't want Lambda functions to connect to an explicit proxy in the VPC.
+    Type: String
+  ObjectFilterPrefix:
+    Default: ''
+    Description: Limit the scan to objects with key starting with specified characters.
     Type: String
   S3BucketToScan:
     AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
@@ -344,7 +351,7 @@ Resources:
                   traceback.print_exc()
                   status = FAILED
               finally:
-                  send(event, context, status, response_data)
+                  send(event, context, status, response_data, response_data.get('Arn', None))
   CreateLambdaAliasExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -730,6 +737,7 @@ Resources:
       ServiceToken: !GetAtt SetupBucketNotificationLambda.Arn
       Bucket: !Ref S3BucketToScan
       LambdaArn: !GetAtt BucketListenerLambdaAlias.Arn
+      Prefix: !Ref ObjectFilterPrefix
   SetupBucketNotificationLambda:
     Type: AWS::Lambda::Function
     Condition: IsTriggeredWithObjectCreatedEvent
@@ -740,7 +748,6 @@ Resources:
         - !Ref AWS::NoValue
       Environment:
         Variables:
-          AWSRegion: !Ref AWS::Region
           LambdaArn: !GetAtt BucketListenerLambda.Arn # deprecated, for handling the old custom resource input
           HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
       Handler: index.handler
@@ -757,14 +764,12 @@ Resources:
           import json
           import urllib.request
           import boto3
-          from botocore.config import Config
           LAMBDA_CFG = 'LambdaFunctionConfigurations'
           LAMBDA_ARN = 'LambdaFunctionArn'
           SUCCESS = "SUCCESS"
           FAILED = "FAILED"
-          s3 = boto3.client('s3', config=Config(region_name=os.environ.get('AWSRegion', 'us-east-1')))
+          s3 = boto3.client('s3')
           class BucketNotFound(Exception): pass
-          class ObjectCreatedOccupiedException(Exception): pass
           def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False):
               responseUrl = event['ResponseURL']
               print(responseUrl)
@@ -790,59 +795,97 @@ Resources:
               except Exception as e:
                   print("send(..) failed executing requests.put(..): " + str(e))
           def is_bucket_existing(bucket):
-            try:
-              s3.head_bucket(Bucket=bucket)
-              return True
-            except Exception as ex:
-              print('head_bucket exception: ' + str(ex))
-              if ex.response['Error']['Code'] == '404': return False
-              else: raise ex
-          def remove_configs_arn(bucket, arn):
-            if is_bucket_existing(bucket):
-              configs = get_configs(bucket)
-              delete_arn(configs, arn)
-              put_configs(bucket, configs)
+              try:
+                  s3.head_bucket(Bucket=bucket)
+                  return True
+              except Exception as ex:
+                  print('head_bucket exception: ' + str(ex))
+                  if ex.response['Error']['Code'] == '404': return False
+                  else: raise ex
+          def find_and_remove_config(configs, arn, rules):
+              configs[LAMBDA_CFG] = [
+                  config for config in configs[LAMBDA_CFG] \
+                  if config[LAMBDA_ARN] != arn \
+                      or not compare_rules(rules, config.get('Filter', {}).get('Key', {}).get('FilterRules', [])) \
+                      or 's3:ObjectCreated:*' not in config['Events']
+              ]
+          def delete_notification(bucket, arn, rules):
+              if is_bucket_existing(bucket):
+                  configs = get_configs(bucket)
+                  if LAMBDA_CFG in configs:
+                      find_and_remove_config(configs, arn, rules)
+                      put_configs(bucket, configs)
           def get_configs(bucket):
-            configs = s3.get_bucket_notification_configuration(Bucket=bucket)
-            configs.pop('ResponseMetadata', None)
-            print(f'get {bucket} config: {configs}')
-            return configs
+              configs = s3.get_bucket_notification_configuration(Bucket=bucket)
+              configs.pop('ResponseMetadata', None)
+              print(f'get {bucket} config: {configs}')
+              return configs
           def put_configs(bucket, configs):
-            print(f'put {bucket} config: {configs}')
-            s3.put_bucket_notification_configuration(Bucket=bucket, NotificationConfiguration=configs)
-          def put_arn(configs, arn, old_arn):
-            created = []
-            for key in configs: created += [entry for entry in configs[key] if len([event for event in entry['Events'] if 's3:ObjectCreated' in event]) != 0]
-            if len(created) == 0:
-              entry = { LAMBDA_ARN: arn, 'Events': ['s3:ObjectCreated:*'] }
+              print(f'put {bucket} config: {configs}')
+              s3.put_bucket_notification_configuration(Bucket=bucket, NotificationConfiguration=configs)
+          def append_new_entry(configs, arn, rules):
+              entry = {
+                  LAMBDA_ARN: arn,
+                  'Events': ['s3:ObjectCreated:*'],
+                  'Filter': {
+                      'Key': {
+                          'FilterRules': rules,
+                      }
+                  }
+              }
               if LAMBDA_CFG in configs: configs[LAMBDA_CFG].append(entry)
               else: configs[LAMBDA_CFG] = [entry]
-            else:
-              old_entries = [entry for entry in created if LAMBDA_ARN in entry and entry[LAMBDA_ARN] == old_arn]
-              if len(old_entries) != 0:
-                for entry in old_entries: entry[LAMBDA_ARN] = arn
-              else: raise ObjectCreatedOccupiedException('s3:ObjectCreated occupied')
-          def delete_arn(configs, arn):
-              if LAMBDA_CFG in configs: configs[LAMBDA_CFG] = [config for config in configs[LAMBDA_CFG] if config[LAMBDA_ARN] != arn]
+          def compare_rules(a, b):
+              a_prefix = ''
+              a_suffix = ''
+              b_prefix = ''
+              b_suffix = ''
+              for r in a:
+                  if r['Name'] == 'prefix': a_prefix = r['Value']
+                  elif r['Name'] == 'suffix': a_suffix = r['Value']
+              for r in b:
+                  if r['Name'] == 'prefix': b_prefix = r['Value']
+                  elif r['Name'] == 'suffix': b_suffix = r['Value']
+              return (a_prefix == b_prefix) and (a_suffix == b_suffix)
+          def update_configs(configs, arn, rules, old_arn, old_rules):
+              created = []
+              for key in configs: created += [entry for entry in configs[key] if len([event for event in entry['Events'] if 's3:ObjectCreated' in event]) != 0]
+              old_entries = [entry for entry in created if entry.get(LAMBDA_ARN, None) == old_arn]
+              found_entry = False
+              for entry in old_entries:
+                  print(entry)
+                  entry[LAMBDA_ARN] = arn
+                  if compare_rules(old_rules, entry.get('Filter', {}).get('Key', {}).get('FilterRules', [])):
+                      entry['Filter'] = { 'Key': { 'FilterRules': rules } }
+                      found_entry = True
+              if not found_entry:
+                  append_new_entry(configs, arn, rules)
           def handler(event, context):
               print(event)
               status = SUCCESS
+              bucket = event['ResourceProperties']['Bucket']
+              arn = event['ResourceProperties'].get('LambdaArn', os.environ['LambdaArn'])
+              prefix = event['ResourceProperties'].get('Prefix', None)
               try:
-                bucket = event['ResourceProperties']['Bucket']
-                arn = event['ResourceProperties'].get('LambdaArn', os.environ['LambdaArn'])
-                old_arn = event['OldResourceProperties'].get('LambdaArn', os.environ['LambdaArn']) if event['RequestType'] =='Update' else ''
-                if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
-                  if not is_bucket_existing(bucket): raise BucketNotFound('Bucket not found')
-                  configs = get_configs(bucket)
-                  put_arn(configs, arn, old_arn)
-                  put_configs(bucket, configs)
-                  if event['RequestType'] == 'Update': remove_configs_arn(event['OldResourceProperties']['Bucket'], old_arn)
-                elif event['RequestType'] == 'Delete': remove_configs_arn(bucket, arn)
+                  old_arn = event.get('OldResourceProperties', {}).get('LambdaArn', os.environ['LambdaArn']) if event['RequestType'] =='Update' else ''
+                  old_prefix = event.get('OldResourceProperties', {}).get('Prefix', '') if event['RequestType'] =='Update' else ''
+                  rules = [{'Name': 'prefix', 'Value': prefix if prefix else ''}]
+                  old_rules = [{'Name': 'prefix', 'Value': old_prefix}]
+                  if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
+                      if not is_bucket_existing(bucket): raise BucketNotFound('Bucket not found')
+                      configs = get_configs(bucket)
+                      update_configs(configs, arn, rules, old_arn, old_rules)
+                      put_configs(bucket, configs)
+                  elif event['RequestType'] == 'Delete':
+                      if prefix is not None: # handling the old custom resource version without setting physical resource ID
+                          delete_notification(bucket, arn, rules)
+                      else:
+                          print('Skip deleting notification for migrating from old resource without Prefix property')
               except Exception as ex:
-                print('Unhandled exception: ' + str(ex))
-                traceback.print_exc()
-                status = FAILED
-              send(event, context, status, {})
+                  print('Unhandled exception: ' + str(ex))
+                  traceback.print_exc()
+                  status = FAILED
+              send(event, context, status, {}, f'{bucket}+{arn}')
   SetupBucketNotificationExecutionRole:
     Type: AWS::IAM::Role
     Condition: IsTriggeredWithObjectCreatedEvent

@@ -437,7 +437,7 @@ Resources:
                   traceback.print_exc()
                   status = FAILED
               finally:
-                  send(event, context, status, response_data)
+                  send(event, context, status, response_data, response_data.get('Arn', None))
   CreateLambdaAliasExecutionRole:
     Type: AWS::IAM::Role
     Properties:
