@@ -226,8 +226,7 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', variables('scannerServerFarmName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('scannerStorageAccountName'))]",
-                "[resourceId('Microsoft.ServiceBus/namespaces/', variables('scannerQueueNamespaceName'))]",
-                "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('scannerLicenseKeyVaultName'), variables('scannerLicenseSecretName'))]"
+                "[resourceId('Microsoft.ServiceBus/namespaces/', variables('scannerQueueNamespaceName'))]"
             ],
             "properties": {
                 "enabled": true,
@@ -400,18 +399,6 @@
                     "defaultAction": "Allow",
                     "bypass": "AzureServices"
                 }
-            }
-        },
-        {
-            "type": "Microsoft.KeyVault/vaults/secrets",
-            "apiVersion": "2019-09-01",
-            "name": "[concat(variables('scannerLicenseKeyVaultName'), '/', variables('scannerLicenseSecretName'))]",
-            "location": "[variables('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', variables('scannerLicenseKeyVaultName'))]"
-            ],
-            "properties": {
-                "value": ""
             }
         },
         {
