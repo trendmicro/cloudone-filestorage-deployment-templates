@@ -118,7 +118,8 @@
         "blobListenerRoleDefinitionName": "[concat('FSS-BlobListenerRole-', variables('blobListenerRoleName'))]",
         "blobSystemTopicSubscriptionID": "[concat('/subscriptions/', variables('blobSubscriptionID'), '/resourcegroups/', variables('blobResourceGroupName'), '/providers/Microsoft.EventGrid/systemTopics/', parameters('BlobSystemTopicName'), '/eventSubscriptions/', variables('blobSystemTopicSubscriptionName'))]",
         "managementRoleName": "[guid(variables('stackUID'), 'ManagementRole')]",
-        "managementRoleAssignmentUID": "[guid(variables('stackUID'), 'ManagementRoleAssignment', parameters('FileStorageSecurityServicePrincipalID'))]"
+        "managementRoleAssignmentUID": "[guid(variables('stackUID'), 'ManagementRoleAssignment', parameters('FileStorageSecurityServicePrincipalID'))]",
+        "functionsWorkerProcessCount": "10"
     },
     "resources": [
         {
@@ -245,8 +246,9 @@
                                 "[variables('scanResultTopicName')]"
                             ],
                             "properties": {
-                                "lockDuration": "PT5M",
-                                "defaultMessageTimeToLive": "PT1H"
+                                "lockDuration": "PT30S",
+                                "defaultMessageTimeToLive": "PT1H",
+                                "maxDeliveryCount": 20
                             }
                         }
                     ]
@@ -300,8 +302,7 @@
                 "name": "Y1",
                 "tier": "Dynamic",
                 "size": "Y1",
-                "family": "Y",
-                "capacity": 1
+                "family": "Y"
             }
         },
         {
@@ -380,6 +381,10 @@
                         {
                             "name": "STORAGE_STACK_NAME",
                             "value": "[resourceGroup().name]"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_PROCESS_COUNT",
+                            "value": "[variables('functionsWorkerProcessCount')]"
                         }
                     ],
                     "use32BitWorkerProcess": false,
@@ -428,8 +433,7 @@
                 "name": "Y1",
                 "tier": "Dynamic",
                 "size": "Y1",
-                "family": "Y",
-                "capacity": 1
+                "family": "Y"
             }
         },
         {
@@ -508,6 +512,10 @@
                         {
                             "name": "SCAN_RESULT_SUBSCRIPTION_NAME",
                             "value": "[variables('scanResultTopicSubscriptionName')]"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_PROCESS_COUNT",
+                            "value": "[variables('functionsWorkerProcessCount')]"
                         }
                     ],
                     "use32BitWorkerProcess": false,
