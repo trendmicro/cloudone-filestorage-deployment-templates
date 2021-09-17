@@ -253,6 +253,7 @@ Resources:
           import traceback
           import json
           import urllib.request
+          import time
           SUCCESS = "SUCCESS"
           FAILED = "FAILED"
           lambda_client = boto3.client('lambda')
@@ -280,8 +281,17 @@ Resources:
                       print("Status code: " + response.reason)
               except Exception as e:
                   print("send(..) failed executing requests.put(..): " + str(e))
+          def publish_version_with_retry(function, retry_attempts=6):
+              try:
+                  return lambda_client.publish_version(FunctionName=function)
+              except lambda_client.exceptions.ResourceConflictException as e:
+                  if retry_attempts > 0:
+                      print('publish_version failed with ResourceConflictException, retrying in 10 seconds...')
+                      time.sleep(10)
+                      return publish_version_with_retry(function, retry_attempts-1)
+                  else: raise e
           def create_alias(function, name):
-              version_result = lambda_client.publish_version(FunctionName=function)
+              version_result = publish_version_with_retry(function)
               return lambda_client.create_alias(FunctionName=function, Name=name, FunctionVersion=version_result['Version'])
           def update_alias(function, name):
               version_result = lambda_client.publish_version(FunctionName=function)
