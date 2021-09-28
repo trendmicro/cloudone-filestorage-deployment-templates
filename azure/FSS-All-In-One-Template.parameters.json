@@ -22,6 +22,9 @@
         },
         "BlobSystemTopicName": {
             "value": "BlobEventTopic"
+        },
+        "UpdateScanResultToBlobMetadata": {
+            "value": "Yes"
         }
     }
 }
