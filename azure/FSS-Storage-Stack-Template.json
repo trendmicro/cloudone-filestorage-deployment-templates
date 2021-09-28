@@ -52,6 +52,17 @@
                 "description": "The name of the existing Event Grid System Topic associated to the Blob Storage Account or the Event Grid System Topic to be created and associated."
             }
         },
+        "UpdateScanResultToBlobMetadata": {
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "type": "String",
+            "defaultValue": "Yes",
+            "metadata": {
+                "description": "Post scan action function requires <b>Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write</b> permission to update blob metadata. Select <b>Yes</b> to update the blob metadata and index tag with the scan result. Select <b>No</b> to update only the blob index tag."
+            }
+        },
         "StackPackageLocation": {
             "type": "string",
             "defaultValue": "https://file-storage-security.s3.amazonaws.com",
@@ -109,17 +120,35 @@
         "scanResultTopicSubscriptionName": "scan-result",
         "scanResultSASKeyName": "RootManageSharedAccessKey",
         "scanResultAuthRuleResourceID": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', variables('scanResultTopicNamespaceName'), variables('scanResultSASKeyName'))]",
-        "blobActionTagRoleName": "[guid(variables('stackUID'), 'blobActionTagRoleName')]",
-        "blobListenerRoleName": "[guid(variables('stackUID'), 'blobListenerRoleName')]",
+        "blobActionTagRoleDefinitionName": "[guid(variables('stackUID'), 'blobActionTagRoleName')]",
+        "blobListenerRoleDefinitionName": "[guid(variables('stackUID'), 'blobListenerRoleName')]",
         "blobSystemTopicSubscriptionName": "[concat(variables('blobListenerAppName'), '-trigger')]",
         "blobActionTagRoleAssignmentUID": "[guid(resourceGroup().id, 'BlobActionTagRoleAssignment')]",
         "blobListenerRoleAssignmentUID": "[guid(resourceGroup().id, 'BlobListenerRoleAssignment')]",
-        "blobActionTagRoleDefinitionName": "[concat('FSS-BlobActionTagRole-', variables('blobActionTagRoleName'))]",
-        "blobListenerRoleDefinitionName": "[concat('FSS-BlobListenerRole-', variables('blobListenerRoleName'))]",
+        "blobActionTagRoleName": "[concat('FSS-BlobActionTagRole-', uniqueString(string(variables('blobActionTagDataActions')), variables('stackUID')))]",
+        "blobListenerRoleName": "[concat('FSS-BlobListenerRole-', uniqueString(string(variables('blobListenerActions')), string(variables('blobListenerDataActions')), variables('stackUID')))]",
         "blobSystemTopicSubscriptionID": "[concat('/subscriptions/', variables('blobSubscriptionID'), '/resourcegroups/', variables('blobResourceGroupName'), '/providers/Microsoft.EventGrid/systemTopics/', parameters('BlobSystemTopicName'), '/eventSubscriptions/', variables('blobSystemTopicSubscriptionName'))]",
         "managementRoleName": "[guid(variables('stackUID'), 'ManagementRole')]",
         "managementRoleAssignmentUID": "[guid(variables('stackUID'), 'ManagementRoleAssignment', parameters('FileStorageSecurityServicePrincipalID'))]",
-        "functionsWorkerProcessCount": "10"
+        "functionsWorkerProcessCount": "10",
+        "blobListenerActions": [
+            "Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action"
+        ],
+        "blobListenerDataActions": [
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"
+        ],
+        "blobIndexTagDataActions": [
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags/read",
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags/write"
+        ],
+        "blobDataActions": [
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags/read",
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags/write",
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read",
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write"
+        ],
+        "blobActionTagDataActions": "[if(equals(parameters('UpdateScanResultToBlobMetadata'),'Yes'), variables('blobDataActions'), variables('blobIndexTagDataActions'))]",
+        "updateScanResultToBlobMetadata": "[if(equals(parameters('UpdateScanResultToBlobMetadata'),'Yes'), 'True', 'False')]"
     },
     "resources": [
         {
@@ -139,20 +168,15 @@
                         {
                             "type": "Microsoft.Authorization/roleDefinitions",
                             "apiVersion": "2018-07-01",
-                            "name": "[variables('blobActionTagRoleName')]",
+                            "name": "[variables('blobActionTagRoleDefinitionName')]",
                             "properties": {
-                                "roleName": "[variables('blobActionTagRoleDefinitionName')]",
+                                "roleName": "[variables('blobActionTagRoleName')]",
                                 "description": "The Role has Blob Writer permission",
                                 "type": "customRole",
                                 "isCustom": true,
                                 "permissions": [
                                     {
-                                        "dataActions": [
-                                            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags/read",
-                                            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags/write",
-                                            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read",
-                                            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write"
-                                        ]
+                                        "dataActions": "[variables('blobActionTagDataActions')]"
                                     }
                                 ],
                                 "assignableScopes": [
@@ -163,20 +187,16 @@
                         {
                             "type": "Microsoft.Authorization/roleDefinitions",
                             "apiVersion": "2018-07-01",
-                            "name": "[variables('blobListenerRoleName')]",
+                            "name": "[variables('blobListenerRoleDefinitionName')]",
                             "properties": {
-                                "roleName": "[variables('blobListenerRoleDefinitionName')]",
+                                "roleName": "[variables('blobListenerRoleName')]",
                                 "description": "The Role has Blob read and generate delegation key permission",
                                 "type": "customRole",
                                 "isCustom": true,
                                 "permissions": [
                                     {
-                                        "actions": [
-                                            "Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action"
-                                        ],
-                                        "dataActions": [
-                                            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"
-                                        ]
+                                        "actions": "[variables('blobListenerActions')]",
+                                        "dataActions": "[variables('blobListenerDataActions')]"
                                     }
                                 ],
                                 "assignableScopes": [
@@ -190,10 +210,10 @@
                             "name": "[variables('blobListenerRoleAssignmentUID')]",
                             "scope": "[concat('Microsoft.Storage/storageAccounts/', variables('blobAccountName'))]",
                             "dependsOn": [
-                                "[variables('blobListenerRoleName')]"
+                                "[variables('blobListenerRoleDefinitionName')]"
                             ],
                             "properties": {
-                                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('blobListenerRoleName'))]",
+                                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('blobListenerRoleDefinitionName'))]",
                                 "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('blobListenerAppName')), variables('blobListenerAppAPIVersion'), 'full').identity.principalId]",
                                 "principalType": "ServicePrincipal"
                             }
@@ -204,10 +224,10 @@
                             "name": "[variables('blobActionTagRoleAssignmentUID')]",
                             "scope": "[concat('Microsoft.Storage/storageAccounts/', variables('blobAccountName'))]",
                             "dependsOn": [
-                                "[variables('blobActionTagRoleName')]"
+                                "[variables('blobActionTagRoleDefinitionName')]"
                             ],
                             "properties": {
-                                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('blobActionTagRoleName'))]",
+                                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('blobActionTagRoleDefinitionName'))]",
                                 "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('actionTagAppName')), variables('actionTagAppAPIVersion'), 'full').identity.principalId]",
                                 "principalType": "ServicePrincipal"
                             }
@@ -516,6 +536,10 @@
                         {
                             "name": "FUNCTIONS_WORKER_PROCESS_COUNT",
                             "value": "[variables('functionsWorkerProcessCount')]"
+                        },
+                        {
+                            "name": "UPDATE_SCAN_RESULT_TO_BLOB_METADATA",
+                            "value": "[variables('updateScanResultToBlobMetadata')]"
                         }
                     ],
                     "use32BitWorkerProcess": false,

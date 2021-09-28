@@ -121,7 +121,7 @@
                         "defaultMessageTimeToLive": "PT1H",
                         "deadLetteringOnMessageExpiration": true,
                         "enableBatchedOperations": false,
-                        "maxDeliveryCount": 2,
+                        "maxDeliveryCount": 3,
                         "status": "Active",
                         "enablePartitioning": false,
                         "enableExpress": false
