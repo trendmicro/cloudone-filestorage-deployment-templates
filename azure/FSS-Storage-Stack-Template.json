@@ -103,6 +103,7 @@
         "blobListenerApplicationInsightsID": "[guid(variables('blobListenerApplicationInsightsName'))]",
         "blobListenerServerFarmName": "[concat('tmblsf0', variables('stackUID'))]",
         "blobListenerStorageAccountName": "[concat('tmblsa0', variables('stackUID'))]",
+        "blobEventsDeadLetterContainer": "blob-events-dead-letter",
         "actionTagAppName": "[concat('tmat0', variables('stackUID'))]",
         "actionTagAppAPIVersion": "2018-11-01",
         "actionTagApplicationInsightsName": "[concat('tmatai0', variables('stackUID'))]",
@@ -268,7 +269,9 @@
                             "properties": {
                                 "lockDuration": "PT30S",
                                 "defaultMessageTimeToLive": "PT1H",
-                                "maxDeliveryCount": 20
+                                "maxDeliveryCount": 20,
+                                "deadLetteringOnFilterEvaluationExceptions": true,
+                                "deadLetteringOnMessageExpiration": true
                             }
                         }
                     ]
@@ -301,13 +304,26 @@
         },
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2019-06-01",
+            "apiVersion": "2021-04-01",
             "name": "[variables('blobListenerStorageAccountName')]",
             "location": "[variables('location')]",
             "sku": {
                 "name": "Standard_LRS"
             },
-            "kind": "Storage"
+            "kind": "Storage",
+            "resources": [
+                {
+                    "type": "blobServices/containers",
+                    "apiVersion": "2021-04-01",
+                    "name": "[concat('default/', variables('blobEventsDeadLetterContainer'))]",
+                    "dependsOn": [
+                        "[variables('blobListenerStorageAccountName')]"
+                    ],
+                    "properties": {
+                        "publicAccess": "None"
+                    }
+                }
+            ]
         },
         {
             "type": "Microsoft.Web/serverfarms",
@@ -643,6 +659,13 @@
                                 "retryPolicy": {
                                     "maxDeliveryAttempts": 5,
                                     "eventTimeToLiveInMinutes": 1440
+                                },
+                                "deadletterdestination": {
+                                    "endpointType": "StorageBlob",
+                                    "properties": {
+                                        "resourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('blobListenerStorageAccountName'))]",
+                                        "blobContainerName": "[variables('blobEventsDeadLetterContainer')]"
+                                    }
                                 }
                             }
                         }
@@ -771,6 +794,14 @@
         "BlobSystemTopicSubscriptionID": {
             "type": "string",
             "value": "[variables('blobSystemTopicSubscriptionID')]"
+        },
+        "BlobSystemTopicDeadLetterStorageID": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers',variables('blobListenerStorageAccountName'), 'default', variables('blobEventsDeadLetterContainer'))]"
+        },
+        "BlobScanResultSubscriptionDeadLetterQueueID": {
+            "type": "string",
+            "value": "[concat(resourceId('Microsoft.ServiceBus/Namespaces/Topics/Subscriptions', variables('scanResultTopicNamespaceName'), variables('scanResultTopicName'), variables('scanResultTopicSubscriptionName')), '/$DeadLetterQueue')]"
         }
     }
 }
