@@ -75,7 +75,8 @@
         "resourcesReaderRoleID": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
         "scannerLicenseReaderRoleAssignmentUID": "[guid(resourceGroup().id, 'scannerLicenseReaderRoleAssignment')]",
         "keyVaultSecretsUserRoleID": "4633458b-17de-408a-b874-0445c86b69e6",
-        "functionsWorkerProcessCount": "1"
+        "functionsWorkerProcessCount": "1",
+        "fssAPIEndpoint": "[format('https://filestorage.{0}.cloudone.trendmicro.com/api/', parameters('CloudOneRegion'))]"
     },
     "resources": [
         {
@@ -331,6 +332,10 @@
                         {
                             "name": "FUNCTIONS_WORKER_PROCESS_COUNT",
                             "value": "[variables('functionsWorkerProcessCount')]"
+                        },
+                        {
+                            "name": "FSS_API_ENDPOINT",
+                            "value": "[variables('fssAPIEndpoint')]"
                         }
                     ],
                     "use32BitWorkerProcess": false,
