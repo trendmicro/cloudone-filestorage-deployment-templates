@@ -851,11 +851,11 @@ Resources:
               b_prefix = ''
               b_suffix = ''
               for r in a:
-                  if r['Name'] == 'prefix': a_prefix = r['Value']
-                  elif r['Name'] == 'suffix': a_suffix = r['Value']
+                  if r['Name'].lower() == 'prefix': a_prefix = r['Value']
+                  elif r['Name'].lower() == 'suffix': a_suffix = r['Value']
               for r in b:
-                  if r['Name'] == 'prefix': b_prefix = r['Value']
-                  elif r['Name'] == 'suffix': b_suffix = r['Value']
+                  if r['Name'].lower() == 'prefix': b_prefix = r['Value']
+                  elif r['Name'].lower() == 'suffix': b_suffix = r['Value']
               return (a_prefix == b_prefix) and (a_suffix == b_suffix)
           def update_configs(configs, arn, rules, old_arn, old_rules):
               created = []
