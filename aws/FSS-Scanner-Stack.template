@@ -607,7 +607,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20210901.1
+      Modified: 20210907.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
@@ -621,6 +621,7 @@ Resources:
       LastLayers: !GetAtt ScannerLambdaLastConfig.Layers
       EnvVarsToRecover:
         - LICENSE
+        - FSS_API_ENDPOINT
       LayersToRecover:
         # Find the layer pushed by FSS backend and replace the layer created by templates.
         # The layer name could be:
