@@ -21,7 +21,11 @@ Metadata:
           - ScannerLambdaAliasARN
           - KMSKeyARNForQueueSSE
       - Label:
-          default: "[ Optional: resource prefixes ] Warning: Do not modify these fields when you update the stack. This may cause management problems. The maximum prefix length is 50 characters."
+          default: "[ Optional: Permissions control ]"
+        Parameters:
+          - PermissionsBoundary
+      - Label:
+          default: "[ Optional: Resource prefixes ] Warning: Do not modify these fields when you update the stack. This may cause management problems. The maximum prefix length is 50 characters."
         Parameters:
           - IAMRolePrefix
           - IAMPolicyPrefix
@@ -65,6 +69,8 @@ Metadata:
         default: NetworkProxy
       ObjectFilterPrefix:
         default: ObjectFilterPrefix
+      PermissionsBoundary:
+        default: PermissionsBoundary
       S3BucketToScan:
         default: S3BucketToScan
       ScannerAWSAccount:
@@ -101,15 +107,15 @@ Parameters:
       letters, and hyphens (-). It cannot start or end with a hyphen
       (-).
     Default: file-storage-security
-    Description: ""
+    Description: ''
     Type: String
   FSSKeyPrefix:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
     ConstraintDescription:
-      File Storage Security key prefix can include numbers, lowercase letters,
+     The File Storage Security key prefix can include numbers, lowercase letters,
       uppercase letters, hyphens (-), and forward slash (/).
     Default: latest/
-    Description: ""
+    Description: ''
     Type: String
   IAMPolicyPrefix:
     AllowedPattern: ^$|^[a-zA-Z0-9+=,.@\-_]+-$
@@ -146,24 +152,28 @@ Parameters:
     Type: String
   ObjectFilterPrefix:
     Default: ''
-    Description: Limit the scan to objects with key starting with specified characters.
+    Description: Limit the scan to objects whose key starts with the specified characters.
+    Type: String
+  PermissionsBoundary:
+    Default: ''
+    Description: The ARN of the policy used to set the permissions boundary for all the roles that will be created.
     Type: String
   S3BucketToScan:
     AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
-    ConstraintDescription: S3 bucket name can include numbers, lowercase
+    ConstraintDescription: The S3 bucket name can include numbers, lowercase
       letters, and hyphens (-). It cannot start or end with a hyphen
       (-).
     Description: The S3 bucket to scan. Specify an existing S3 bucket.
     Type: String
   ScannerAWSAccount:
-    Description: ""
+    Description: ''
     Type: List<Number>
   ScannerLambdaAliasARN:
     Default: ''
     Description: ''
     Type: String
   ScannerSQSURL:
-    Description: ""
+    Description: ''
     Type: String
   ScanOnGetObject:
     Default: 'false'
@@ -211,6 +221,8 @@ Conditions:
     !Not [!Equals ['', !Ref IAMRolePrefix]]
   HasLambdaFunctionPrefix:
     !Not [!Equals ['', !Ref LambdaFunctionPrefix]]
+  HasPermissionsBoundary:
+    !Not [!Equals ['', !Ref PermissionsBoundary]]
   HasSNSTopicPrefix:
     !Not [!Equals ['', !Ref SNSTopicPrefix]]
   IsBucketSSEKMSEnabled:
@@ -376,6 +388,7 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
+      PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundary , !Ref AWS::NoValue ]
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - !If
@@ -484,6 +497,7 @@ Resources:
             Action:
               - sts:AssumeRole
       Path: /
+      PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundary , !Ref AWS::NoValue ]
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - !If
@@ -615,6 +629,7 @@ Resources:
             Action:
               - sts:AssumeRole
       Path: /
+      PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundary , !Ref AWS::NoValue ]
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - !If
@@ -663,6 +678,7 @@ Resources:
             Condition:
               StringEquals:
                 sts:ExternalId: !Ref ExternalID
+      PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundary , !Ref AWS::NoValue ]
       Policies:
         - PolicyName: stack-management
           PolicyDocument:
@@ -914,6 +930,7 @@ Resources:
             Action:
               - sts:AssumeRole
       Path: /
+      PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundary , !Ref AWS::NoValue ]
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - !If

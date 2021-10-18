@@ -15,7 +15,11 @@ Metadata:
           - TriggerWithObjectCreatedEvent
           - ScanOnGetObject
       - Label:
-          default: "[ Optional: resource prefixes ] Warning: Do not modify these fields when you update the stack. This may cause management problems. The maximum prefix length is 50 characters."
+          default: "[ Optional: Permissions control ]"
+        Parameters:
+          - PermissionsBoundary
+      - Label:
+          default: "[ Optional: Resource prefixes ] Warning: Do not modify these fields when you update the stack. This may cause management problems. The maximum prefix length is 50 characters."
         Parameters:
           - IAMRolePrefix
           - IAMPolicyPrefix
@@ -63,6 +67,8 @@ Metadata:
         default: NetworkProxy
       ObjectFilterPrefix:
         default: ObjectFilterPrefix
+      PermissionsBoundary:
+        default: PermissionsBoundary
       S3BucketToScan:
         default: S3BucketToScan
       ScanOnGetObject:
@@ -147,11 +153,15 @@ Parameters:
     Type: String
   ObjectFilterPrefix:
     Default: ''
-    Description: Limit the scan to objects with key starting with specified characters.
+    Description: Limit the scan to objects whose key starts with the specified characters.
+    Type: String
+  PermissionsBoundary:
+    Default: ''
+    Description: The ARN of the policy used to set the permissions boundary for all the roles that will be created.
     Type: String
   S3BucketToScan:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-    ConstraintDescription: S3 bucket name can include numbers, lowercase
+    ConstraintDescription: The S3 bucket name can include numbers, lowercase
       letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
       (-).
     Description: The S3 bucket to scan. Specify an existing S3 bucket.
@@ -222,6 +232,7 @@ Resources:
         LambdaFunctionPrefix: !Ref LambdaFunctionPrefix
         NetworkProxy: !Ref NetworkProxy
         ObjectFilterPrefix: !Ref ObjectFilterPrefix
+        PermissionsBoundary: !Ref PermissionsBoundary
         S3BucketToScan: !Ref S3BucketToScan
         ScannerAWSAccount: !Ref AWS::AccountId
         ScannerLambdaAliasARN: !GetAtt ScannerStack.Outputs.ScannerLambdaAliasARN
@@ -253,6 +264,7 @@ Resources:
         LambdaFunctionPrefix: !Ref LambdaFunctionPrefix
         LambdaLayerPrefix: !Ref LambdaLayerPrefix
         NetworkProxy: !Ref NetworkProxy
+        PermissionsBoundary: !Ref PermissionsBoundary
         SecurityGroupIDs: !Join [',', !Ref SecurityGroupIDs]
         SQSQueuePrefix: !Ref SQSQueuePrefix
         SubnetIDs: !Join [',', !Ref SubnetIDs]
