@@ -173,6 +173,10 @@ Mappings:
       AWSRegion: eu-central-1
     jp-1:
       AWSRegion: ap-northeast-1
+    ca-1:
+      AWSRegion: ca-central-1
+    sg-1:
+      AWSRegion: ap-southeast-1
 
 Conditions:
   HasIAMPolicyPrefix:
@@ -621,7 +625,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20210907.1
+      Modified: 20211015.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
