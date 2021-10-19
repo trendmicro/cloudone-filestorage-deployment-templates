@@ -34,6 +34,13 @@ Metadata:
           - SecurityGroupIDs
           - NetworkProxy
       - Label:
+          default: "[ Optional: Storage stack dead-letter queues ARNs ] The SQS ARNs for dead-letter queues can all be the same value. They have to be both deployed in the same region and managed by the same account as the storage stack."
+        Parameters:
+          - BucketListenerDLQARN
+          - PostScanActionTagDLQARN
+          - ScanResultTopicDLQARN
+          - KMSKeyARNForDLQSSE
+      - Label:
           default: "[ Warning: Do not modify the fields below. Modifications may cause your deployment to fail. ]"
         Parameters:
           - FSSBucketName
@@ -43,6 +50,8 @@ Metadata:
           - ExternalID
 
     ParameterLabels:
+      BucketListenerDLQARN:
+        default: SQS ARN for BucketListenerLambda DLQ
       CloudOneRegion:
         default: Trend Micro Cloud One region
       ExternalID:
@@ -57,6 +66,8 @@ Metadata:
         default: Prefix for IAM role name
       KMSKeyARNForBucketSSE:
         default: KMSKeyARNForBucketSSE
+      KMSKeyARNForDLQSSE:
+        default: KMSKeyARNForDLQSSE
       KMSKeyARNForQueueSSE:
         default: KMSKeyARNForQueueSSE
       LambdaFunctionPrefix:
@@ -69,10 +80,14 @@ Metadata:
         default: ObjectFilterPrefix
       PermissionsBoundary:
         default: PermissionsBoundary
+      PostScanActionTagDLQARN:
+        default: SQS ARN for PostScanActionTagLambda DLQ
       S3BucketToScan:
         default: S3BucketToScan
       ScanOnGetObject:
         default: "ScanOnGetObject [ In Preview ]"
+      ScanResultTopicDLQARN:
+        default: ScanResultTopicDLQARN
       SecurityGroupIDs:
         default: SecurityGroupIDs
       SNSTopicPrefix:
@@ -87,6 +102,10 @@ Metadata:
         default: TriggerWithObjectCreatedEvent
 
 Parameters:
+  BucketListenerDLQARN:
+    Default: ''
+    Description: The SQS ARN for BucketListenerLambda DLQ.
+    Type: String
   CloudOneRegion:
     Description: The region of the Trend Micro Cloud One services.
     Type: String
@@ -129,6 +148,10 @@ Parameters:
     Default: ''
     Description: The ARN for the KMS master key used to encrypt S3 bucket objects. Leave it blank if you haven't enabled SSE-KMS for the bucket.
     Type: String
+  KMSKeyARNForDLQSSE:
+    Default: ''
+    Description: The ARN for the KMS master key used to encrypt messages of DLQ for storage stack. Leave it blank if you haven't used your own CMK for SQS server-side encryption on the queue ARNs you provided.
+    Type: String
   KMSKeyARNForQueueSSE:
     Default: ''
     Description: The ARN for the KMS master key used to encrypt messages in SQS. Leave it blank if you haven't used your own CMK for SQS server-side encryption.
@@ -159,10 +182,14 @@ Parameters:
     Default: ''
     Description: The ARN of the policy used to set the permissions boundary for all the roles that will be created.
     Type: String
+  PostScanActionTagDLQARN:
+    Default: ''
+    Description: The SQS ARN for PostScanActionTag DLQ.
+    Type: String
   S3BucketToScan:
-    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-    ConstraintDescription: The S3 bucket name can include numbers, lowercase
-      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+    AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
+    ConstraintDescription: S3 bucket name can include numbers, lowercase
+      letters, and hyphens (-). It cannot start or end with a hyphen
       (-).
     Description: The S3 bucket to scan. Specify an existing S3 bucket.
     Type: String
@@ -173,8 +200,12 @@ Parameters:
       - 'false'
     Description: |
       Scan objects retrieved (GET requests) from S3 with the Object Lambda Access Point.
-      Enabling this option requires that the storage stack is deployed in the same account and same region as the scanner stack.
+      This option requires that the storage stack is deployed in both the same account and the same region as the scanner stack.
       For more information, see https://cloudone.trendmicro.com/docs/file-storage-security/aws-scan-on-get-object/
+    Type: String
+  ScanResultTopicDLQARN:
+    Default: ''
+    Description: The SQS ARN for ScanResultTopic DLQ.
     Type: String
   SecurityGroupIDs:
     Default: ''
@@ -221,6 +252,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
+        BucketListenerDLQARN: !Ref BucketListenerDLQARN
         CloudOneRegion: !Ref CloudOneRegion
         ExternalID: !Ref ExternalID
         FSSBucketName: !Ref FSSBucketName
@@ -228,16 +260,19 @@ Resources:
         IAMPolicyPrefix: !Ref IAMPolicyPrefix
         IAMRolePrefix: !Ref IAMRolePrefix
         KMSKeyARNForBucketSSE: !Ref KMSKeyARNForBucketSSE
+        KMSKeyARNForDLQSSE: !Ref KMSKeyARNForDLQSSE
         KMSKeyARNForQueueSSE: !Ref KMSKeyARNForQueueSSE
         LambdaFunctionPrefix: !Ref LambdaFunctionPrefix
         NetworkProxy: !Ref NetworkProxy
         ObjectFilterPrefix: !Ref ObjectFilterPrefix
         PermissionsBoundary: !Ref PermissionsBoundary
+        PostScanActionTagDLQARN: !Ref PostScanActionTagDLQARN
         S3BucketToScan: !Ref S3BucketToScan
         ScannerAWSAccount: !Ref AWS::AccountId
         ScannerLambdaAliasARN: !GetAtt ScannerStack.Outputs.ScannerLambdaAliasARN
         ScannerSQSURL: !GetAtt ScannerStack.Outputs.ScannerQueueURL
         ScanOnGetObject: !Ref ScanOnGetObject
+        ScanResultTopicDLQARN: !Ref ScanResultTopicDLQARN
         SecurityGroupIDs: !Join [',', !Ref SecurityGroupIDs]
         SNSTopicPrefix: !Ref SNSTopicPrefix
         SubnetIDs: !Join [',', !Ref SubnetIDs]

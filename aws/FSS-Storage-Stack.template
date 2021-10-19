@@ -32,6 +32,13 @@ Metadata:
           - LambdaFunctionPrefix
           - SNSTopicPrefix
       - Label:
+          default: "[ Optional: Dead-letter queues ARNs] The SQS ARNs for dead-letter queues can all be the same value. They have to be both deployed in the same region and managed by the same account as the storage stack."
+        Parameters:
+          - BucketListenerDLQARN
+          - PostScanActionTagDLQARN
+          - ScanResultTopicDLQARN
+          - KMSKeyARNForDLQSSE
+      - Label:
           default: "[ Optional: Deploy in VPC ] Warning: Make sure the subnets have access to domains .amazonaws.com and .trendmicro.com over HTTPS"
         Parameters:
           - NetworkProxy
@@ -47,6 +54,8 @@ Metadata:
           - ExternalID
 
     ParameterLabels:
+      BucketListenerDLQARN:
+        default: BucketListenerDLQARN
       CloudOneRegion:
         default: Trend Micro Cloud One region
       ExternalID:
@@ -61,6 +70,8 @@ Metadata:
         default: Prefix for IAM policy name
       KMSKeyARNForBucketSSE:
         default: KMSKeyARNForBucketSSE
+      KMSKeyARNForDLQSSE:
+        default: KMSKeyARNForDLQSSE
       KMSKeyARNForQueueSSE:
         default: KMSKeyARNForQueueSSE
       LambdaFunctionPrefix:
@@ -71,6 +82,8 @@ Metadata:
         default: ObjectFilterPrefix
       PermissionsBoundary:
         default: PermissionsBoundary
+      PostScanActionTagDLQARN:
+        default: PostScanActionTagDLQARN
       S3BucketToScan:
         default: S3BucketToScan
       ScannerAWSAccount:
@@ -81,6 +94,8 @@ Metadata:
         default: ScannerSQSURL
       ScanOnGetObject:
         default: "ScanOnGetObject [ In Preview ]"
+      ScanResultTopicDLQARN:
+        default: ScanResultTopicDLQARN
       SecurityGroupIDs:
         default: SecurityGroupIDs
       SNSTopicPrefix:
@@ -93,6 +108,10 @@ Metadata:
         default: TriggerWithObjectCreatedEvent
 
 Parameters:
+  BucketListenerDLQARN:
+    Default: ''
+    Description: The SQS ARN for BucketListenerLambda DLQ.
+    Type: String
   CloudOneRegion:
     Description: The region of the Trend Micro Cloud One services.
     Type: String
@@ -135,6 +154,10 @@ Parameters:
     Default: ''
     Description: The ARN for the KMS master key used to encrypt S3 bucket objects. Leave it blank if you haven't enabled SSE-KMS for the bucket.
     Type: String
+  KMSKeyARNForDLQSSE:
+    Default: ''
+    Description: The ARN for the KMS master key used to encrypt messages of DLQ for storage stack. Leave it blank if you haven't used your own CMK for SQS server-side encryption on the queue ARNs you provided.
+    Type: String
   KMSKeyARNForQueueSSE:
     Default: ''
     Description: The ARN for the KMS master key used to encrypt messages in SQS. Leave it blank if you haven't used your own CMK for SQS server-side encryption.
@@ -157,6 +180,10 @@ Parameters:
   PermissionsBoundary:
     Default: ''
     Description: The ARN of the policy used to set the permissions boundary for all the roles that will be created.
+    Type: String
+  PostScanActionTagDLQARN:
+    Default: ''
+    Description: The SQS ARN for PostScanActionTag DLQ.
     Type: String
   S3BucketToScan:
     AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
@@ -185,9 +212,13 @@ Parameters:
       Enabling this option requires that the storage stack is deployed in the same account and same region as the scanner stack.
       For more information, see https://cloudone.trendmicro.com/docs/file-storage-security/aws-scan-on-get-object/
     Type: String
+  ScanResultTopicDLQARN:
+    Default: ''
+    Description: The SQS ARN for ScanResultTopic DLQ.
+    Type: String
   SecurityGroupIDs:
     Default: ''
-    Description: A comma-separated list of VPC Security Group IDs that are attached to Lambda functions. Leave it blank if you don't want to attach Lambda functions to a VPC.
+    Description: A comma-separated list of the VPC Security Group IDs that are attached to Lambda functions. Leave the list blank if you don't want to attach Lambda functions to a VPC.
     Type: CommaDelimitedList
   SNSTopicPrefix:
     AllowedPattern: ^$|^[a-zA-Z0-9_\-]+-$
@@ -225,14 +256,28 @@ Conditions:
     !Not [!Equals ['', !Ref PermissionsBoundary]]
   HasSNSTopicPrefix:
     !Not [!Equals ['', !Ref SNSTopicPrefix]]
+  IsBucketListenerDLQEnabled:
+    !Not [!Equals ['', !Ref BucketListenerDLQARN]]
+  IsBucketListenerDLQSSEKMSEnabled: !And
+    - !Condition IsBucketListenerDLQEnabled
+    - !Condition IsDLQSSEKMSEnabled
   IsBucketSSEKMSEnabled:
     !Not [!Equals ['', !Ref KMSKeyARNForBucketSSE]]
+  IsDLQSSEKMSEnabled:
+    !Not [!Equals ['', !Ref KMSKeyARNForDLQSSE]]
+  IsPostScanActionTagDLQEnabled:
+    !Not [!Equals ['', !Ref PostScanActionTagDLQARN]]
+  IsPostScanActionTagDLQSSEKMSEnabled: !And
+    - !Condition IsPostScanActionTagDLQEnabled
+    - !Condition IsDLQSSEKMSEnabled
   IsQueueSSEKMSEnabled:
     !Not [!Equals ['', !Ref KMSKeyARNForQueueSSE]]
   IsTriggeredWithObjectCreatedEvent:
     !Equals ['true', !Ref TriggerWithObjectCreatedEvent]
   IsScanOnGetObjectEnabled:
     !Equals ['true', !Ref ScanOnGetObject]
+  IsScanResultTopicDLQEnabled:
+    !Not [!Equals ['', !Ref ScanResultTopicDLQARN]]
   IsVPCEnabled: !And
     - !Not [!Equals ['', !Select [0, !Ref SubnetIDs]]]
     - !Not [!Equals ['', !Select [0, !Ref SecurityGroupIDs]]]
@@ -426,6 +471,11 @@ Resources:
       Protocol: lambda
       Endpoint: !GetAtt PostScanActionTagLambdaAlias.Arn
       TopicArn: !Ref ScanResultTopic
+      RedrivePolicy:
+        !If
+          - IsScanResultTopicDLQEnabled
+          - deadLetterTargetArn: !Ref ScanResultTopicDLQARN
+          - !Ref AWS::NoValue
   ScanResultTopicPolicy:
     Type: AWS::SNS::TopicPolicy
     Properties:
@@ -464,13 +514,15 @@ Resources:
       VpcConfig:
         SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
         SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
+      DeadLetterConfig:
+        TargetArn: !If [IsBucketListenerDLQEnabled, !Ref BucketListenerDLQARN, !Ref AWS::NoValue]
   BucketListenerLambdaAlias:
     Type: Custom::BucketListenerLambdaAlias
     Properties:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt BucketListenerLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20210708.1
+      Modified: 20211019.1
       # Template parameters
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
@@ -563,6 +615,41 @@ Resources:
               - kms:GenerateDataKey
               - kms:Decrypt
             Resource: !Ref KMSKeyARNForQueueSSE
+  BucketListenerExecutionRolePolicyForDLQ:
+    Type: AWS::IAM::Policy
+    Condition: IsBucketListenerDLQEnabled
+    Properties:
+      PolicyName: !If
+        - HasIAMPolicyPrefix
+        - !Join ['', [!Ref IAMPolicyPrefix, 'sqs-permission-for-dlq']]
+        - 'sqs-permission-for-dlq'
+      Roles:
+        - !Ref BucketListenerExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sqs:SendMessage
+            Resource: !Ref BucketListenerDLQARN
+  BucketListenerExecutionRoleKMSDecryptPolicyForDLQ:
+    Type: AWS::IAM::Policy
+    Condition: IsBucketListenerDLQSSEKMSEnabled
+    Properties:
+      PolicyName: !If
+        - HasIAMPolicyPrefix
+        - !Join ['', [!Ref IAMPolicyPrefix, 'kms-permission-for-dlq']]
+        - 'kms-permission-for-dlq'
+      Roles:
+        - !Ref BucketListenerExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey
+            Resource: !Ref KMSKeyARNForDLQSSE
   BucketListenerInvokePermissionOfScanningBucket:
     Type: AWS::Lambda::Permission
     Properties:
@@ -599,13 +686,15 @@ Resources:
       VpcConfig:
         SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
         SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
+      DeadLetterConfig:
+        TargetArn: !If [IsPostScanActionTagDLQEnabled, !Ref PostScanActionTagDLQARN, !Ref AWS::NoValue]
   PostScanActionTagLambdaAlias:
     Type: Custom::PostScanActionTagLambdaAlias
     Properties:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt PostScanActionTagLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20210708.1
+      Modified: 20211019.1
       # Template parameters
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
@@ -647,6 +736,41 @@ Resources:
                   - s3:GetObjectTagging
                   - s3:PutObjectTagging
                 Resource: !Sub arn:${AWS::Partition}:s3:::${S3BucketToScan}/*
+  PostScanActionTagPolicyForDLQ:
+    Type: AWS::IAM::Policy
+    Condition: IsPostScanActionTagDLQEnabled
+    Properties:
+      PolicyName: !If
+        - HasIAMPolicyPrefix
+        - !Join ['', [!Ref IAMPolicyPrefix, 'sqs-permission-for-postscan-action-tag-dlq']]
+        - 'sqs-permission-for-postscan-action-tag-dlq'
+      Roles:
+        - !Ref PostScanActionTagExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sqs:SendMessage
+            Resource: !Ref PostScanActionTagDLQARN
+  PostScanActionTagKMSDecryptPolicyForDLQ:
+    Type: AWS::IAM::Policy
+    Condition: IsPostScanActionTagDLQSSEKMSEnabled
+    Properties:
+      PolicyName: !If
+        - HasIAMPolicyPrefix
+        - !Join ['', [!Ref IAMPolicyPrefix, 'kms-permission-for-postscan-action-tag-dlq']]
+        - 'kms-permission-for-postscan-action-tag-dlq'
+      Roles:
+        - !Ref PostScanActionTagExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey
+            Resource: !Ref KMSKeyARNForDLQSSE
   PostScanActionTagInvokePermissionOfScanResultTopic:
     Type: AWS::Lambda::Permission
     Properties:
