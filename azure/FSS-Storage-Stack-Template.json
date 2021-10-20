@@ -311,6 +311,9 @@
                 "name": "Standard_LRS"
             },
             "kind": "Storage",
+            "properties": {
+                "minimumTlsVersion": "TLS1_2"
+            },
             "resources": [
                 {
                     "type": "blobServices/containers",
@@ -432,7 +435,7 @@
                 "hostNamesDisabled": false,
                 "containerSize": 1536,
                 "dailyMemoryTimeQuota": 0,
-                "httpsOnly": false,
+                "httpsOnly": true,
                 "redundancyMode": "None"
             }
         },
@@ -454,7 +457,10 @@
             "sku": {
                 "name": "Standard_LRS"
             },
-            "kind": "Storage"
+            "kind": "Storage",
+            "properties": {
+                "minimumTlsVersion": "TLS1_2"
+            }
         },
         {
             "type": "Microsoft.Web/serverfarms",
@@ -567,7 +573,7 @@
                 "hostNamesDisabled": false,
                 "containerSize": 1536,
                 "dailyMemoryTimeQuota": 0,
-                "httpsOnly": false,
+                "httpsOnly": true,
                 "redundancyMode": "None"
             }
         },

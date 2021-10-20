@@ -149,7 +149,10 @@
             "sku": {
                 "name": "Standard_LRS"
             },
-            "kind": "Storage"
+            "kind": "Storage",
+            "properties": {
+                "minimumTlsVersion": "TLS1_2"
+            }
         },
         {
             "type": "Microsoft.Resources/deploymentScripts",
@@ -295,7 +298,7 @@
                         },
                         {
                             "name": "PATTERN_UPDATE_SCHEDULE",
-                            "value": "0 0 */1 * * *"
+                            "value": "01:00:00"
                         },
                         {
                             "name": "LICENSE",
@@ -347,7 +350,7 @@
                 "hostNamesDisabled": false,
                 "containerSize": 1536,
                 "dailyMemoryTimeQuota": 0,
-                "httpsOnly": false,
+                "httpsOnly": true,
                 "redundancyMode": "None"
             }
         },
