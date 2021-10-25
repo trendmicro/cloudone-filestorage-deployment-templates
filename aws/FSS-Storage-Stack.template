@@ -24,6 +24,7 @@ Metadata:
           default: "[ Optional: Permissions control ]"
         Parameters:
           - PermissionsBoundary
+          - AdditionalIAMPolicies
       - Label:
           default: "[ Optional: Resource prefixes ] Warning: Do not modify these fields when you update the stack. This may cause management problems. The maximum prefix length is 50 characters."
         Parameters:
@@ -54,6 +55,8 @@ Metadata:
           - ExternalID
 
     ParameterLabels:
+      AdditionalIAMPolicies:
+        default: AdditionalIAMPolicies
       BucketListenerDLQARN:
         default: BucketListenerDLQARN
       CloudOneRegion:
@@ -108,6 +111,10 @@ Metadata:
         default: TriggerWithObjectCreatedEvent
 
 Parameters:
+  AdditionalIAMPolicies:
+    Default: ''
+    Description: A comma-separated list of IAM policy ARNs to attach to all the roles that will be created.
+    Type: CommaDelimitedList
   BucketListenerDLQARN:
     Default: ''
     Description: The SQS ARN for BucketListenerLambda DLQ.
@@ -131,7 +138,7 @@ Parameters:
   FSSKeyPrefix:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
     ConstraintDescription:
-     The File Storage Security key prefix can include numbers, lowercase letters,
+      The File Storage Security key prefix can include numbers, lowercase letters,
       uppercase letters, hyphens (-), and forward slash (/).
     Default: latest/
     Description: ''
@@ -246,6 +253,8 @@ Parameters:
     Type: String
 
 Conditions:
+  HasAdditionalIAMPolicies:
+    !Not [!Equals ['', !Select [0, !Ref AdditionalIAMPolicies]]]
   HasIAMPolicyPrefix:
     !Not [!Equals ['', !Ref IAMPolicyPrefix]]
   HasIAMRolePrefix:
@@ -434,12 +443,18 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundary , !Ref AWS::NoValue ]
-      ManagedPolicyArns:
-        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-        - !If
-          - IsVPCEnabled
-          - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
-          - !Ref AWS::NoValue
+      ManagedPolicyArns: !Split
+        - ','
+        - !Join
+          - ','
+          - - !If
+              - HasAdditionalIAMPolicies
+              - !Join [',', !Ref AdditionalIAMPolicies]
+              - !Ref AWS::NoValue
+            - !If
+              - IsVPCEnabled
+              - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+              - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: create-lambda-function-version-alias
           PolicyDocument:
@@ -550,12 +565,18 @@ Resources:
               - sts:AssumeRole
       Path: /
       PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundary , !Ref AWS::NoValue ]
-      ManagedPolicyArns:
-        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-        - !If
-          - IsVPCEnabled
-          - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
-          - !Ref AWS::NoValue
+      ManagedPolicyArns: !Split
+        - ','
+        - !Join
+          - ','
+          - - !If
+              - HasAdditionalIAMPolicies
+              - !Join [',', !Ref AdditionalIAMPolicies]
+              - !Ref AWS::NoValue
+            - !If
+              - IsVPCEnabled
+              - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+              - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: root
           PolicyDocument:
@@ -719,12 +740,18 @@ Resources:
               - sts:AssumeRole
       Path: /
       PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundary , !Ref AWS::NoValue ]
-      ManagedPolicyArns:
-        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-        - !If
-          - IsVPCEnabled
-          - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
-          - !Ref AWS::NoValue
+      ManagedPolicyArns: !Split
+        - ','
+        - !Join
+          - ','
+          - - !If
+              - HasAdditionalIAMPolicies
+              - !Join [',', !Ref AdditionalIAMPolicies]
+              - !Ref AWS::NoValue
+            - !If
+              - IsVPCEnabled
+              - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+              - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: root
           PolicyDocument:
@@ -803,6 +830,10 @@ Resources:
               StringEquals:
                 sts:ExternalId: !Ref ExternalID
       PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundary , !Ref AWS::NoValue ]
+      ManagedPolicyArns: !If
+        - HasAdditionalIAMPolicies
+        - !Ref AdditionalIAMPolicies
+        - !Ref AWS::NoValue
       Policies:
         - PolicyName: stack-management
           PolicyDocument:
@@ -1055,12 +1086,18 @@ Resources:
               - sts:AssumeRole
       Path: /
       PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundary , !Ref AWS::NoValue ]
-      ManagedPolicyArns:
-        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-        - !If
-          - IsVPCEnabled
-          - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
-          - !Ref AWS::NoValue
+      ManagedPolicyArns: !Split
+        - ','
+        - !Join
+          - ','
+          - - !If
+              - HasAdditionalIAMPolicies
+              - !Join [',', !Ref AdditionalIAMPolicies]
+              - !Ref AWS::NoValue
+            - !If
+              - IsVPCEnabled
+              - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+              - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: root
           PolicyDocument:
