@@ -127,7 +127,6 @@ Parameters:
     Description: "The External ID is for future use with updating Lambdas and also to address and prevent the 'confused deputy' problem."
     Type: String
   FSSBucketName:
-    AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
     ConstraintDescription:
       File Storage Security bucket name can include numbers, lowercase
       letters, and hyphens (-). It cannot start or end with a hyphen
@@ -136,7 +135,6 @@ Parameters:
     Description: ''
     Type: String
   FSSKeyPrefix:
-    AllowedPattern: ^[0-9a-zA-Z-/]*$
     ConstraintDescription:
       The File Storage Security key prefix can include numbers, lowercase letters,
       uppercase letters, hyphens (-), and forward slash (/).
@@ -193,10 +191,6 @@ Parameters:
     Description: The SQS ARN for PostScanActionTag DLQ.
     Type: String
   S3BucketToScan:
-    AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
-    ConstraintDescription: The S3 bucket name can include numbers, lowercase
-      letters, and hyphens (-). It cannot start or end with a hyphen
-      (-).
     Description: The S3 bucket to scan. Specify an existing S3 bucket.
     Type: String
   ScannerAWSAccount:
@@ -239,7 +233,6 @@ Parameters:
     Description: A comma-separated list of VPC Subnet IDs that are attached to Lambda functions. Leave it blank if you don't want to attach Lambda functions to a VPC.
     Type: CommaDelimitedList
   TrendMicroManagementAccount:
-    AllowedPattern: ^[0-9]*$
     ConstraintDescription: AWS account ID.
     Default: 415485722356
     Description: This account will be given permission to modify the stacks for upgrades and troubleshooting purposes.
