@@ -159,29 +159,6 @@ Parameters:
     Description: This account will be given permission to modify the stacks for upgrades and troubleshooting purposes.
     Type: String
 
-Mappings:
-  CloudOneRegionAttributes:
-    us-east-1: # for backward compatibility
-      AWSRegion: us-east-1
-    us-1:
-      AWSRegion: us-east-1
-    trend-us-1:
-      AWSRegion: us-east-2
-    in-1:
-      AWSRegion: ap-south-1
-    gb-1:
-      AWSRegion: eu-west-2
-    au-1:
-      AWSRegion: ap-southeast-2
-    de-1:
-      AWSRegion: eu-central-1
-    jp-1:
-      AWSRegion: ap-northeast-1
-    ca-1:
-      AWSRegion: ca-central-1
-    sg-1:
-      AWSRegion: ap-southeast-1
-
 Conditions:
   HasAdditionalIAMPolicies:
     !Not [!Equals ['', !Select [0, !Ref AdditionalIAMPolicies]]]
@@ -608,9 +585,6 @@ Resources:
       Environment:
         Variables:
           queueURL: !Ref ScannerQueue
-          telemetry_sns_arn: !Sub
-            - arn:${AWS::Partition}:sns:${Region}:${TrendMicroManagementAccount}:fss-telemetry-topic
-            - Region: !FindInMap [CloudOneRegionAttributes, !Ref CloudOneRegion, AWSRegion]
           stackARN: !Ref AWS::StackId
           HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
       MemorySize: 512
@@ -643,7 +617,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20211015.1
+      Modified: 20211028.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
@@ -784,9 +758,6 @@ Resources:
                 Action:
                   - sns:Publish
                 Resource:
-                  - !Sub
-                    - arn:${AWS::Partition}:sns:${Region}:${TrendMicroManagementAccount}:fss-telemetry-topic
-                    - Region: !FindInMap [CloudOneRegionAttributes, !Ref CloudOneRegion, AWSRegion]
                   - !Sub arn:${AWS::Partition}:sns:*:*:*-ScanResultTopic-*
               - Effect: Allow # https://docs.aws.amazon.com/AmazonS3/latest/userguide/olap-policies.html
                 Action:
@@ -855,9 +826,6 @@ Resources:
                 Action:
                   - sns:Publish
                 Resource:
-                  - !Sub
-                    - arn:${AWS::Partition}:sns:${Region}:${TrendMicroManagementAccount}:fss-telemetry-topic
-                    - Region: !FindInMap [CloudOneRegionAttributes, !Ref CloudOneRegion, AWSRegion]
                   - !Sub arn:${AWS::Partition}:sns:*:*:*-ScanResultTopic-*
   ScannerDeadLetterExecutionRoleKMSDecryptPolicyForSQS:
     Type: AWS::IAM::Policy
