@@ -46,7 +46,7 @@
                 "No"
             ],
             "metadata": {
-                "description": "Select <b>Yes</b> if an Event Grid System Topic associated to the Blob Storage Account already exists."
+                "description": "Select <b>Yes</b> if the system topic of the protecting storage account is already created. Select <b>No</b>, to deploy a new system topic."
             },
             "defaultValue": "No",
             "type": "String"
@@ -67,6 +67,17 @@
             "defaultValue": "Yes",
             "metadata": {
                 "description": "Post scan action function requires <b>Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write</b> permission to update blob metadata. Select <b>Yes</b> to update the blob metadata and index tag with the scan result. Select <b>No</b> to update only the blob index tag."
+            }
+        },
+        "ReportObjectKey": {
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "type": "String",
+            "defaultValue": "No",
+            "metadata": {
+                "description": "Select <b>Yes</b> to report the object keys of the scanned objects to File Storage Security backend services. File Storage Security can then display the object keys of the malicious objects in the response of events API."
             }
         },
         "StackPackageLocation": {
@@ -182,6 +193,9 @@
                     },
                     "UpdateScanResultToBlobMetadata": {
                         "value": "[parameters('UpdateScanResultToBlobMetadata')]"
+                    },
+                    "ReportObjectKey": {
+                        "value": "[parameters('ReportObjectKey')]"
                     },
                     "StackPackageLocation": {
                         "value": "[parameters('StackPackageLocation')]"
