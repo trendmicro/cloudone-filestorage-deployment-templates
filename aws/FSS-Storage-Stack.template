@@ -12,6 +12,7 @@ Metadata:
           - ObjectFilterPrefix
           - KMSKeyARNForBucketSSE
           - TriggerWithObjectCreatedEvent
+          - ReportObjectKey
           - ScanOnGetObject
       - Label:
           default: "[ Scanner stack ]"
@@ -87,6 +88,8 @@ Metadata:
         default: PermissionsBoundary
       PostScanActionTagDLQARN:
         default: PostScanActionTagDLQARN
+      ReportObjectKey:
+        default: ReportObjectKey
       S3BucketToScan:
         default: S3BucketToScan
       ScannerAWSAccount:
@@ -190,6 +193,15 @@ Parameters:
     Default: ''
     Description: The SQS ARN for PostScanActionTag DLQ.
     Type: String
+  ReportObjectKey:
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: |-
+      Enable this to report the object keys of the scanned objects to File Storage Security backend services.
+      File Storage Security can then display the object keys of the malicious objects in the response of events API.
+    Type: String
   S3BucketToScan:
     Description: The S3 bucket to scan. Specify an existing S3 bucket.
     Type: String
@@ -274,6 +286,8 @@ Conditions:
     - !Condition IsDLQSSEKMSEnabled
   IsQueueSSEKMSEnabled:
     !Not [!Equals ['', !Ref KMSKeyARNForQueueSSE]]
+  IsReportObjectKey:
+    !Equals ['true', !Ref ReportObjectKey]
   IsTriggeredWithObjectCreatedEvent:
     !Equals ['true', !Ref TriggerWithObjectCreatedEvent]
   IsScanOnGetObjectEnabled:
@@ -514,6 +528,7 @@ Resources:
           SQSUrl: !Ref ScannerSQSURL
           SNSArn: !Ref ScanResultTopic
           stackARN: !Ref AWS::StackId
+          REPORT_OBJECT_KEY: !If [IsReportObjectKey, 'True', 'False']
           HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
       MemorySize: 128
       Role: !GetAtt BucketListenerExecutionRole.Arn
@@ -530,11 +545,12 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt BucketListenerLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20211019.1
+      Modified: 20211111.1
       # Template parameters
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
       NetworkProxy: !Ref NetworkProxy
+      ReportObjectKey: !Ref ReportObjectKey
       ScannerSQSURL: !Ref ScannerSQSURL
       SecurityGroupIDs: !Ref SecurityGroupIDs
       SubnetIDs: !Ref SubnetIDs
@@ -1136,7 +1152,9 @@ Resources:
                   - ''
                   - - '{"bucket":"'
                     - !Ref S3BucketToScan
-                    - '"}'
+                    - '", "reportObjectKey":'
+                    - !If [IsReportObjectKey, 'true', 'false']
+                    - '}'
         CloudWatchMetricsEnabled: true
 
 Outputs:
