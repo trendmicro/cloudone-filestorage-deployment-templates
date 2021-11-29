@@ -13,6 +13,7 @@ Metadata:
           - KMSKeyARNForBucketSSE
           - KMSKeyARNForQueueSSE
           - TriggerWithObjectCreatedEvent
+          - ReportObjectKey
           - ScanOnGetObject
       - Label:
           default: "[ Optional: Permissions control ]"
@@ -85,6 +86,8 @@ Metadata:
         default: PermissionsBoundary
       PostScanActionTagDLQARN:
         default: SQS ARN for PostScanActionTagLambda DLQ
+      ReportObjectKey:
+        default: ReportObjectKey
       S3BucketToScan:
         default: S3BucketToScan
       ScanOnGetObject:
@@ -191,6 +194,15 @@ Parameters:
     Default: ''
     Description: The SQS ARN for PostScanActionTag DLQ.
     Type: String
+  ReportObjectKey:
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: |-
+      Enable this to report the object keys of the scanned objects to File Storage Security backend services.
+      File Storage Security can then display the object keys of the malicious objects in the response of events API.
+    Type: String
   S3BucketToScan:
     Description: The S3 bucket to scan. Specify an existing S3 bucket.
     Type: String
@@ -268,6 +280,7 @@ Resources:
         ObjectFilterPrefix: !Ref ObjectFilterPrefix
         PermissionsBoundary: !Ref PermissionsBoundary
         PostScanActionTagDLQARN: !Ref PostScanActionTagDLQARN
+        ReportObjectKey: !Ref ReportObjectKey
         S3BucketToScan: !Ref S3BucketToScan
         ScannerAWSAccount: !Ref AWS::AccountId
         ScannerLambdaAliasARN: !GetAtt ScannerStack.Outputs.ScannerLambdaAliasARN
