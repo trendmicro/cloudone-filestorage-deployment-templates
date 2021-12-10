@@ -12,6 +12,7 @@ Metadata:
           - ObjectFilterPrefix
           - KMSKeyARNForBucketSSE
           - KMSKeyARNForQueueSSE
+          - KMSKeyARNForTopicSSE
           - TriggerWithObjectCreatedEvent
           - ReportObjectKey
           - ScanOnGetObject
@@ -74,6 +75,8 @@ Metadata:
         default: KMSKeyARNForDLQSSE
       KMSKeyARNForQueueSSE:
         default: KMSKeyARNForQueueSSE
+      KMSKeyARNForTopicSSE:
+        default: KMSKeyARNForTopicSSE
       LambdaFunctionPrefix:
         default: "Prefix for Lambda function name [ Warning: Do not modify this field when you update the stack. Modifications may cause your update to fail. ]"
       LambdaLayerPrefix:
@@ -163,6 +166,10 @@ Parameters:
   KMSKeyARNForQueueSSE:
     Default: ''
     Description: The ARN for the KMS master key used to encrypt messages in SQS. Leave it blank if you haven't used your own CMK for SQS server-side encryption.
+    Type: String
+  KMSKeyARNForTopicSSE:
+    Default: ''
+    Description: The ARN for the KMS master key used to encrypt messages in SNS. Leave it blank if you haven't used your own CMK for SNS server-side encryption.
     Type: String
   LambdaFunctionPrefix:
     AllowedPattern: ^$|^[a-zA-Z0-9_\-]+-$
@@ -275,6 +282,7 @@ Resources:
         KMSKeyARNForBucketSSE: !Ref KMSKeyARNForBucketSSE
         KMSKeyARNForDLQSSE: !Ref KMSKeyARNForDLQSSE
         KMSKeyARNForQueueSSE: !Ref KMSKeyARNForQueueSSE
+        KMSKeyARNForTopicSSE: !Ref KMSKeyARNForTopicSSE
         LambdaFunctionPrefix: !Ref LambdaFunctionPrefix
         NetworkProxy: !Ref NetworkProxy
         ObjectFilterPrefix: !Ref ObjectFilterPrefix
@@ -311,6 +319,7 @@ Resources:
         IAMPolicyPrefix: !Ref IAMPolicyPrefix
         IAMRolePrefix: !Ref IAMRolePrefix
         KMSKeyARNForQueueSSE: !Ref KMSKeyARNForQueueSSE
+        KMSKeyARNsForTopicSSE: !Ref KMSKeyARNForTopicSSE
         LambdaFunctionPrefix: !Ref LambdaFunctionPrefix
         LambdaLayerPrefix: !Ref LambdaLayerPrefix
         NetworkProxy: !Ref NetworkProxy
@@ -336,6 +345,9 @@ Outputs:
   ScannerQueueURL:
     Value: !GetAtt ScannerStack.Outputs.ScannerQueueURL
     Description: The SQS URL for storage stacks to publish events to.
+  ScannerExecutionRoleARN:
+    Value: !GetAtt ScannerStack.Outputs.ScannerExecutionRoleARN
+    Description: The ARNs of the lambda execution role for Lambda in the scanner stack to execute scan requests.
   ScannerStackManagementRoleARN:
     Value: !GetAtt ScannerStack.Outputs.ScannerStackManagementRoleARN
     Description: The ARN of the IAM role for File Storage Security backend services to manage the deployed resources.

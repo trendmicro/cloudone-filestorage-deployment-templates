@@ -9,6 +9,7 @@ Metadata:
           default: "[ Customizable section ]"
         Parameters:
           - KMSKeyARNForQueueSSE
+          - KMSKeyARNsForTopicSSE
       - Label:
           default: "[ Optional: Permissions control ]"
         Parameters:
@@ -54,6 +55,8 @@ Metadata:
         default: Prefix for IAM role name
       KMSKeyARNForQueueSSE:
         default: KMSKeyARNForQueueSSE
+      KMSKeyARNsForTopicSSE:
+        default: KMSKeyARNsForTopicSSE
       LambdaFunctionPrefix:
         default: "Prefix for Lambda function name [ Warning: Do not modify this field when you update the stack. Modifications may cause your update to fail. ]"
       LambdaLayerPrefix:
@@ -116,6 +119,10 @@ Parameters:
     Default: ''
     Description: The ARN for the KMS master key used to encrypt messages in SQS. Leave it blank if you haven't used your own CMK for SQS server-side encryption.
     Type: String
+  KMSKeyARNsForTopicSSE:
+    Default: ''
+    Description: A comma-separated list of ARNs for the KMS master keys used to encrypt messages in SNS scanResultTopic. Leave it blank if you haven't used your own CMK for SNS server-side encryption.
+    Type: CommaDelimitedList
   LambdaFunctionPrefix:
     AllowedPattern: ^$|^[a-zA-Z0-9_\-]+-$
     ConstraintDescription: Prefix for Lambda function name can be empty or include letters, numbers, hyphens (-), and underscores (_) and must end with a hyphen. The maximum length is 50 characters.
@@ -176,6 +183,8 @@ Conditions:
     !Not [!Equals ['', !Ref SQSQueuePrefix]]
   IsQueueSSEKMSEnabled:
     !Not [!Equals ['', !Ref KMSKeyARNForQueueSSE]]
+  IsTopicSSEKMSEnabled:
+    !Not [!Equals ['', !Select [0, !Ref KMSKeyARNsForTopicSSE]]]
   IsVPCEnabled: !And
     - !Not [!Equals ['', !Select [0, !Ref SubnetIDs]]]
     - !Not [!Equals ['', !Select [0, !Ref SecurityGroupIDs]]]
@@ -780,6 +789,24 @@ Resources:
             Action:
               - kms:Decrypt
             Resource: !Ref KMSKeyARNForQueueSSE
+  ScannerExecutionRoleKMSDecryptPolicyForSNS:
+    Type: AWS::IAM::Policy
+    Condition: IsTopicSSEKMSEnabled
+    Properties:
+      PolicyName: !If
+        - HasIAMPolicyPrefix
+        - !Join ['', [!Ref IAMPolicyPrefix, 'kms-permission-for-sns']]
+        - 'kms-permission-for-sns'
+      Roles:
+        - !Ref ScannerExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kms:GenerateDataKey
+              - kms:Decrypt
+            Resource: !Ref KMSKeyARNsForTopicSSE
 
   ScannerDeadLetterExecutionRole:
     Type: AWS::IAM::Role
@@ -984,6 +1011,8 @@ Outputs:
     Value: !GetAtt ScannerLambda.Arn
   ScannerLambdaAliasARN:
     Value: !GetAtt ScannerLambdaAlias.Arn
+  ScannerExecutionRoleARN:
+    Value: !GetAtt ScannerExecutionRole.Arn
   ScannerQueueURL:
     Value: !Ref ScannerQueue
     Description: The SQS URL for storage stacks to publish events to.

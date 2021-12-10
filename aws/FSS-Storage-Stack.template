@@ -11,6 +11,7 @@ Metadata:
           - S3BucketToScan
           - ObjectFilterPrefix
           - KMSKeyARNForBucketSSE
+          - KMSKeyARNForTopicSSE
           - TriggerWithObjectCreatedEvent
           - ReportObjectKey
           - ScanOnGetObject
@@ -78,6 +79,8 @@ Metadata:
         default: KMSKeyARNForDLQSSE
       KMSKeyARNForQueueSSE:
         default: KMSKeyARNForQueueSSE
+      KMSKeyARNForTopicSSE:
+        default: KMSKeyARNForTopicSSE
       LambdaFunctionPrefix:
         default: "Prefix for Lambda function name [ Warning: Do not modify this field when you update the stack. Modifications may cause your update to fail. ]"
       NetworkProxy:
@@ -169,6 +172,10 @@ Parameters:
   KMSKeyARNForQueueSSE:
     Default: ''
     Description: The ARN for the KMS master key used to encrypt messages in SQS. Leave it blank if you haven't used your own CMK for SQS server-side encryption.
+    Type: String
+  KMSKeyARNForTopicSSE:
+    Default: ''
+    Description: The ARN for the KMS master key used to encrypt messages in SNS scanResultTopic. Leave it blank if you haven't used your own CMK for SNS server-side encryption.
     Type: String
   LambdaFunctionPrefix:
     AllowedPattern: ^$|^[a-zA-Z0-9_\-]+-$
@@ -288,6 +295,8 @@ Conditions:
     !Not [!Equals ['', !Ref KMSKeyARNForQueueSSE]]
   IsReportObjectKey:
     !Equals ['true', !Ref ReportObjectKey]
+  IsTopicSSEKMSEnabled:
+    !Not [!Equals ['', !Ref KMSKeyARNForTopicSSE]]
   IsTriggeredWithObjectCreatedEvent:
     !Equals ['true', !Ref TriggerWithObjectCreatedEvent]
   IsScanOnGetObjectEnabled:
@@ -487,6 +496,7 @@ Resources:
         - !Join ['', [!Ref SNSTopicPrefix, 'ScanResultTopic-', !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
         - !Ref AWS::NoValue
       DisplayName: S3 Scanning Results
+      KmsMasterKeyId: !If [IsTopicSSEKMSEnabled, !Ref KMSKeyARNForTopicSSE, !Ref AWS::NoValue]
   ScanResultTopicSubscription:
     Type: AWS::SNS::Subscription
     Properties:
