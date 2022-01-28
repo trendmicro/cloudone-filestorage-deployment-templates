@@ -161,7 +161,8 @@
         ],
         "blobActionTagDataActions": "[if(equals(parameters('UpdateScanResultToBlobMetadata'), 'Yes'), variables('blobDataActions'), variables('blobIndexTagDataActions'))]",
         "updateScanResultToBlobMetadata": "[if(equals(parameters('UpdateScanResultToBlobMetadata'), 'Yes'), 'True', 'False')]",
-        "reportObjectKey": "[if(equals(parameters('ReportObjectKey'), 'Yes'), 'True', 'False')]"
+        "reportObjectKey": "[if(equals(parameters('ReportObjectKey'), 'Yes'), 'True', 'False')]",
+        "functionsWarmupLogicAppName": "functionsWarmUpLogicApp"
     },
     "resources": [
         {
@@ -596,7 +597,7 @@
         {
             "type": "Microsoft.Logic/workflows",
             "apiVersion": "2019-05-01",
-            "name": "actionTagWarmUpLogicApp",
+            "name": "[variables('functionsWarmupLogicAppName')]",
             "location": "[variables('location')]",
             "properties": {
                 "state": "Enabled",
@@ -614,11 +615,18 @@
                         }
                     },
                     "actions": {
-                        "HTTP": {
+                        "getActionTagEndpoint": {
                             "type": "Http",
                             "inputs": {
                                 "method": "GET",
                                 "uri": "[concat('https://', reference(variables('actionTagAppName')).defaultHostName)]"
+                            }
+                        },
+                        "getBlobListenerEndpoint": {
+                            "type": "Http",
+                            "inputs": {
+                                "method": "GET",
+                                "uri": "[concat('https://', reference(variables('blobListenerAppName')).defaultHostName)]"
                             }
                         }
                     },
@@ -631,7 +639,7 @@
             "apiVersion": "2017-05-10",
             "name": "BlobSystemTopicTemplate",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('blobListenerAppName'))]"
+                "[resourceId('Microsoft.Logic/workflows', variables('functionsWarmupLogicAppName'))]"
             ],
             "type": "Microsoft.Resources/deployments",
             "resourceGroup": "[variables('blobResourceGroupName')]",
