@@ -1049,7 +1049,7 @@ Resources:
               return (a_prefix == b_prefix) and (a_suffix == b_suffix)
           def update_configs(configs, arn, rules, old_arn, old_rules):
               created = []
-              for key in configs: created += [entry for entry in configs[key] if len([event for event in entry['Events'] if 's3:ObjectCreated' in event]) != 0]
+              for configKey in configs: created += [entry for entry in configs[configKey] if len([event for event in entry['Events'] if 's3:ObjectCreated' in event]) != 0]
               old_entries = [entry for entry in created if entry.get(LAMBDA_ARN, None) == old_arn]
               found_entry = False
               for entry in old_entries:
