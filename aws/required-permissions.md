@@ -24,6 +24,8 @@ Check out the templates directly for more information.
 | `cloudformation:GetStackPolicy` | Action | Allow Cloud One File Storage Security to get the stack policy. |
 | `cloudformation:GetTemplate` | Action | Allow Cloud One File Storage Security to get the stack template. |
 | `iam:GetRolePolicy` | Action | Allow Cloud One File Storage Security to get the management role policies. |
+| `kms:Decrypt` | Action | **Optional.** Decrypt messages from encrypted `ScannerQueue` or Data key for scan result encryption. |
+| `kms:GenerateDataKey` | Action | **Optional.** Generate a Data key to encrypt scan result messages sent to `ScanResultTopic` |
 | `lambda:CreateAlias` | Action | Allow Cloud One File Storage Security to create an alias for Lambda functions created by Cloud One File Storage Security. |
 | `lambda:DeleteAlias` | Action | Allow Cloud One File Storage Security to delete the alias of Lambda functions created by Cloud One File Storage Security. |
 | `lambda:GetAlias` | Action | Allow Cloud One File Storage Security to describe the alias of Lambda functions created by Cloud One File Storage Security. |
@@ -74,6 +76,8 @@ Check out the templates directly for more information.
 | `cloudformation:GetStackPolicy` | Action | Allow Cloud One File Storage Security to get the stack policy. |
 | `cloudformation:GetTemplate` | Action | Allow Cloud One File Storage Security to get the stack template. |
 | `iam:GetRolePolicy` | Action | Allow Cloud One File Storage Security to get the management role policies. |
+| `kms:Decrypt` | Action | **Optional.** Decrypt the scanned objects, scan result, or Data key for scan message encryption. |
+| `kms:GenerateDataKey` | Action | **Optional.** Generate a Data key to encrypt scan messages sent to the `ScannerQueue` |
 | `lambda:CreateAlias` | Action | Allow Cloud One File Storage Security to create an alias for Lambda functions created by Cloud One File Storage Security. |
 | `lambda:DeleteAlias` | Action | Allow Cloud One File Storage Security to delete the alias of Lambda functions created by Cloud One File Storage Security. |
 | `lambda:GetAlias` | Action | Allow Cloud One File Storage Security to describe the alias of Lambda functions created by Cloud One File Storage Security. |
@@ -96,8 +100,11 @@ Check out the templates directly for more information.
 | `logs:StopQuery` | Action | Allow Cloud One File Storage Security to stop a log query of the Lambda functions created by Cloud One File Storage Security. |
 | `logs:GetQueryResults` | Action | Allow Cloud One File Storage Security to get the log query results of the Lambda functions created by Cloud One File Storage Security. |
 | `logs:FilterLogEvents` | Action | Allow Cloud One File Storage Security to filter the log events of the Lambda functions created by Cloud One File Storage Security. |
+| `s3:GetBucketNotification` | Action | Allow Cloud One File Storage Security to get the notification configuration of the bucket to scan. |
 | `s3:GetObject` | Action | Create pre-signed URL of the object to be scanned. |
 | `s3:GetObjectTagging` | Action | List the tags of the scanned object. |
+| `s3:ListBucket` | Action | List objects in an bucket. |
+| `s3:PutBucketNotification` | Action | Allow Cloud One File Storage Security to enable notifications of specified events for a bucket. |
 | `s3:PutObjectTagging` | Action | Put tags on the scanned object. |
 | `sqs:SendMessage` | Action | Send scan messages to the `ScannerQueue`. |
 | [AWSLambdaVPCAccessExecutionRole](https://console.aws.amazon.com/iam/home#/policies/arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole$jsonEditor?) | Managed Policy | **Optional.** Provides minimum permissions for a Lambda function to execute while accessing a resource within a VPC - create, describe, delete network interfaces and write permissions to CloudWatch Logs. |
