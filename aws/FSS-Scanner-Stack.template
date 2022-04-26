@@ -598,7 +598,7 @@ Resources:
           HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
       MemorySize: 512
       Role: !GetAtt ScannerExecutionRole.Arn
-      Runtime: python3.6
+      Runtime: python3.8
       Timeout: 120
       Layers:
         - !Ref ScannerPatternLambdaLayer
