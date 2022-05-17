@@ -302,38 +302,47 @@ Resources:
               - IsVPCEnabled
               - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
               - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-      Policies:
-        - PolicyName: get-lambda-last-config
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - cloudformation:DescribeStacks
-                Resource: !Ref AWS::StackId
-              - Effect: Allow
-                Action:
-                  - lambda:GetFunctionConfiguration
-                Resource:
-                  - !If
-                    - HasLambdaFunctionPrefix
-                    - !Join
-                      - ''
-                      - - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:'
-                        - !Ref LambdaFunctionPrefix
-                        - 'Scan-'
-                        - !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]
-                        - '*'
-                    - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:*ScannerLambda*
-                  - !If
-                    - HasLambdaFunctionPrefix
-                    - !Join
-                      - ''
-                      - - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:'
-                        - !Ref LambdaFunctionPrefix
-                        - 'SDL-'
-                        - !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]
-                    - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:*ScannerDeadLetterLambda*
+
+  GetLambdaLastConfigExecutionRolePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Roles:
+        - !Ref GetLambdaLastConfigExecutionRole
+      ManagedPolicyName: !If
+        - HasIAMRolePrefix
+        - !Join ['', [!Ref IAMRolePrefix, 'Conf-', !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
+        - !Ref AWS::NoValue
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - cloudformation:DescribeStacks
+            Resource: !Ref AWS::StackId
+          - Effect: Allow
+            Action:
+              - lambda:GetFunctionConfiguration
+            Resource:
+              - !If
+                - HasLambdaFunctionPrefix
+                - !Join
+                  - ''
+                  - - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:'
+                    - !Ref LambdaFunctionPrefix
+                    - 'Scan-'
+                    - !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]
+                    - '*'
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:*ScannerLambda*
+              - !If
+                - HasLambdaFunctionPrefix
+                - !Join
+                  - ''
+                  - - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:'
+                    - !Ref LambdaFunctionPrefix
+                    - 'SDL-'
+                    - !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:*ScannerDeadLetterLambda*
+
   CreateLambdaAliasLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -494,32 +503,40 @@ Resources:
               - IsVPCEnabled
               - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
               - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-      Policies:
-        - PolicyName: create-lambda-function-version-alias
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - lambda:PublishVersion
-                  - lambda:CreateAlias
-                  - lambda:UpdateAlias
-                  - lambda:DeleteAlias
-                  - lambda:GetFunctionConfiguration
-                  - lambda:UpdateFunctionConfiguration
-                Resource:
-                  - !GetAtt ScannerLambda.Arn
-                  - !GetAtt ScannerDeadLetterLambda.Arn
-              - Effect: Allow
-                Action:
-                  - lambda:GetLayerVersion
-                Resource:
-                  - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${TrendMicroManagementAccount}:layer:Scanner*LambdaLayer*:*
-                  - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:Scanner*LambdaLayer:*
-                  - !If
-                    - HasLambdaLayerPrefix
-                    - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:${LambdaLayerPrefix}Scanner*:*
-                    - !Ref AWS::NoValue
+
+  CreateLambdaAliasExecutionRolePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Roles:
+        - !Ref CreateLambdaAliasExecutionRole
+      ManagedPolicyName: !If
+        - HasIAMRolePrefix
+        - !Join ['', [!Ref IAMRolePrefix, 'Ver-', !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
+        - !Ref AWS::NoValue
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - lambda:PublishVersion
+              - lambda:CreateAlias
+              - lambda:UpdateAlias
+              - lambda:DeleteAlias
+              - lambda:GetFunctionConfiguration
+              - lambda:UpdateFunctionConfiguration
+            Resource:
+              - !GetAtt ScannerLambda.Arn
+              - !GetAtt ScannerDeadLetterLambda.Arn
+          - Effect: Allow
+            Action:
+              - lambda:GetLayerVersion
+            Resource:
+              - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${TrendMicroManagementAccount}:layer:Scanner*LambdaLayer*:*
+              - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:Scanner*LambdaLayer:*
+              - !If
+                - HasLambdaLayerPrefix
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:${LambdaLayerPrefix}Scanner*:*
+                - !Ref AWS::NoValue
 
   ScannerQueue:
     Type: AWS::SQS::Queue
@@ -751,27 +768,36 @@ Resources:
               - IsVPCEnabled
               - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
               - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-      Policies:
-        - PolicyName: root
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - sqs:ReceiveMessage
-                  - sqs:DeleteMessage
-                  - sqs:GetQueueAttributes
-                  - sqs:ChangeMessageVisibility
-                Resource: !GetAtt ScannerQueue.Arn
-              - Effect: Allow
-                Action:
-                  - sns:Publish
-                Resource:
-                  - !Sub arn:${AWS::Partition}:sns:*:*:*-ScanResultTopic-*
-              - Effect: Allow # https://docs.aws.amazon.com/AmazonS3/latest/userguide/olap-policies.html
-                Action:
-                  - s3-object-lambda:WriteGetObjectResponse
-                Resource: '*'
+
+  ScannerExecutionRolePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Roles:
+        - !Ref ScannerExecutionRole
+      ManagedPolicyName: !If
+        - HasIAMRolePrefix
+        - !Join ['', [!Ref IAMRolePrefix, 'Scan-', !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
+        - !Ref AWS::NoValue
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sqs:ReceiveMessage
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+              - sqs:ChangeMessageVisibility
+            Resource: !GetAtt ScannerQueue.Arn
+          - Effect: Allow
+            Action:
+              - sns:Publish
+            Resource:
+              - !Sub arn:${AWS::Partition}:sns:*:*:*-ScanResultTopic-*
+          - Effect: Allow # https://docs.aws.amazon.com/AmazonS3/latest/userguide/olap-policies.html
+            Action:
+              - s3-object-lambda:WriteGetObjectResponse
+            Resource: '*'
+
   ScannerExecutionRoleKMSDecryptPolicyForSQS:
     Type: AWS::IAM::Policy
     Condition: IsQueueSSEKMSEnabled
@@ -838,22 +864,31 @@ Resources:
               - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
               - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundary , !Ref AWS::NoValue ]
-      Policies:
-        - PolicyName: root
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - sqs:ReceiveMessage
-                  - sqs:DeleteMessage
-                  - sqs:GetQueueAttributes
-                Resource: !GetAtt ScannerDLQ.Arn
-              - Effect: Allow
-                Action:
-                  - sns:Publish
-                Resource:
-                  - !Sub arn:${AWS::Partition}:sns:*:*:*-ScanResultTopic-*
+
+  ScannerDeadLetterExecutionRolePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Roles:
+        - !Ref ScannerDeadLetterExecutionRole
+      ManagedPolicyName: !If
+        - HasIAMRolePrefix
+        - !Join ['', [!Ref IAMRolePrefix, 'SDL-', !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
+        - !Ref AWS::NoValue
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sqs:ReceiveMessage
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+            Resource: !GetAtt ScannerDLQ.Arn
+          - Effect: Allow
+            Action:
+              - sns:Publish
+            Resource:
+              - !Sub arn:${AWS::Partition}:sns:*:*:*-ScanResultTopic-*
+
   ScannerDeadLetterExecutionRoleKMSDecryptPolicyForSQS:
     Type: AWS::IAM::Policy
     Condition: IsQueueSSEKMSEnabled
@@ -895,110 +930,103 @@ Resources:
         - !Ref AdditionalIAMPolicies
         - !Ref AWS::NoValue
       PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundary , !Ref AWS::NoValue ]
-      Policies:
-        - PolicyName: stack-management
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - cloudformation:CreateChangeSet
-                  - cloudformation:ListStackResources
-                  - cloudformation:DescribeStacks
-                  - cloudformation:DescribeStackEvents
-                  - cloudformation:DescribeStackResources
-                  - cloudformation:DescribeStackResource
-                  - cloudformation:DetectStackDrift
-                  - cloudformation:DetectStackResourceDrift
-                  - cloudformation:DescribeStackResourceDrifts
-                  - cloudformation:GetStackPolicy
-                  - cloudformation:GetTemplate
-                Resource: !Ref AWS::StackId
-        - PolicyName: queue-management
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - sqs:SetQueueAttributes
-                  - sqs:GetQueueAttributes
-                  - sqs:ListDeadLetterSourceQueues
-                Resource:
-                  - !GetAtt ScannerQueue.Arn
-                  - !GetAtt ScannerDLQ.Arn
-        - PolicyName: lambda-management
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - lambda:UpdateFunctionCode
-                  - lambda:UpdateFunctionConfiguration
-                  - lambda:GetFunctionConfiguration
-                  - lambda:PublishVersion
-                  - lambda:ListVersionsByFunction
-                  - lambda:CreateAlias
-                  - lambda:UpdateAlias
-                  - lambda:DeleteAlias
-                  - lambda:ListAliases
-                  - lambda:GetAlias
-                  - lambda:GetFunction
-                  - lambda:ListProvisionedConcurrencyConfigs
-                  - lambda:GetProvisionedConcurrencyConfig
-                  - lambda:GetFunctionConcurrency
-                Resource:
-                  - !GetAtt ScannerLambda.Arn
-                  - !GetAtt ScannerDeadLetterLambda.Arn
-                  - !Sub ${ScannerLambda.Arn}:*
-                  - !Sub ${ScannerDeadLetterLambda.Arn}:*
-              - Effect: Allow
-                Action:
-                  - lambda:GetEventSourceMapping
-                Resource:
-                  - !Sub
-                    - arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:event-source-mapping:${MappingID}
-                    - MappingID: !Ref ScannerEventSourceFromScannerQueue
-                  - !Sub
-                    - arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:event-source-mapping:${MappingID}
-                    - MappingID: !Ref ScannerDeadLetterEventSourceFromDLQ
-              - Effect: Allow
-                Action:
-                  - lambda:GetLayerVersion
-                Resource:
-                  - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${TrendMicroManagementAccount}:layer:Scanner*LambdaLayer*:*
-                  - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:Scanner*LambdaLayer:*
-                  - !If
-                    - HasLambdaLayerPrefix
-                    - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:${LambdaLayerPrefix}Scanner*:*
-                    - !Ref AWS::NoValue
-        - PolicyName: lambda-logs-access
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - logs:DescribeLogStreams
-                  - logs:GetLogEvents
-                  - logs:StartQuery
-                  - logs:StopQuery
-                  - logs:GetQueryResults
-                  - logs:FilterLogEvents
-                Resource:
-                  - !GetAtt ScannerLogGroup.Arn
-                  - !GetAtt ScannerDeadLetterLogGroup.Arn
-  ManagementRoleGetRolePolicy:
-    Type: AWS::IAM::Policy
+
+  ManagementRolePolicy:
+    Type: AWS::IAM::ManagedPolicy
     Properties:
-      PolicyName: !If
-        - HasIAMPolicyPrefix
-        - !Join ['', [!Ref IAMPolicyPrefix, 'role-management']]
-        - 'role-management'
       Roles:
         - !Ref ManagementRole
+      ManagedPolicyName: !If
+        - HasIAMRolePrefix
+        - !Join ['', [!Ref IAMRolePrefix, 'Mgmt-', !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
+        - !Ref AWS::NoValue
       PolicyDocument:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
+            Sid: "StackManagement"
+            Action:
+              - cloudformation:CreateChangeSet
+              - cloudformation:ListStackResources
+              - cloudformation:DescribeStacks
+              - cloudformation:DescribeStackEvents
+              - cloudformation:DescribeStackResources
+              - cloudformation:DescribeStackResource
+              - cloudformation:DetectStackDrift
+              - cloudformation:DetectStackResourceDrift
+              - cloudformation:DescribeStackResourceDrifts
+              - cloudformation:GetStackPolicy
+              - cloudformation:GetTemplate
+            Resource: !Ref AWS::StackId
+
+          - Effect: Allow
+            Sid: "QueueManagement"
+            Action:
+              - sqs:SetQueueAttributes
+              - sqs:GetQueueAttributes
+              - sqs:ListDeadLetterSourceQueues
+            Resource:
+              - !GetAtt ScannerQueue.Arn
+              - !GetAtt ScannerDLQ.Arn
+
+          - Effect: Allow
+            Sid: "LambdaManagement"
+            Action:
+              - lambda:UpdateFunctionCode
+              - lambda:UpdateFunctionConfiguration
+              - lambda:GetFunctionConfiguration
+              - lambda:PublishVersion
+              - lambda:ListVersionsByFunction
+              - lambda:CreateAlias
+              - lambda:UpdateAlias
+              - lambda:DeleteAlias
+              - lambda:ListAliases
+              - lambda:GetAlias
+              - lambda:GetFunction
+              - lambda:ListProvisionedConcurrencyConfigs
+              - lambda:GetProvisionedConcurrencyConfig
+              - lambda:GetFunctionConcurrency
+            Resource:
+              - !GetAtt ScannerLambda.Arn
+              - !GetAtt ScannerDeadLetterLambda.Arn
+              - !Sub ${ScannerLambda.Arn}:*
+              - !Sub ${ScannerDeadLetterLambda.Arn}:*
+          - Effect: Allow
+            Action:
+              - lambda:GetEventSourceMapping
+            Resource:
+              - !Sub
+                - arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:event-source-mapping:${MappingID}
+                - MappingID: !Ref ScannerEventSourceFromScannerQueue
+              - !Sub
+                - arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:event-source-mapping:${MappingID}
+                - MappingID: !Ref ScannerDeadLetterEventSourceFromDLQ
+          - Effect: Allow
+            Action:
+              - lambda:GetLayerVersion
+            Resource:
+              - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${TrendMicroManagementAccount}:layer:Scanner*LambdaLayer*:*
+              - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:Scanner*LambdaLayer:*
+              - !If
+                - HasLambdaLayerPrefix
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:${LambdaLayerPrefix}Scanner*:*
+                - !Ref AWS::NoValue
+
+          - Effect: Allow
+            Sid: "LambdaLogsAccess"
+            Action:
+              - logs:DescribeLogStreams
+              - logs:GetLogEvents
+              - logs:StartQuery
+              - logs:StopQuery
+              - logs:GetQueryResults
+              - logs:FilterLogEvents
+            Resource:
+              - !GetAtt ScannerLogGroup.Arn
+              - !GetAtt ScannerDeadLetterLogGroup.Arn
+
+          - Effect: Allow
+            Sid: "RoleManagement"
             Action:
               - iam:GetRolePolicy
             Resource: !GetAtt ManagementRole.Arn
