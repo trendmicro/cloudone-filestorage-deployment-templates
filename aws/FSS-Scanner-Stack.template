@@ -611,7 +611,7 @@ Resources:
       ServiceToken: !GetAtt GetLambdaLastConfig.Arn
       LambdaARNOutputKey: ScannerLambdaARN
       LambdaAliasARNOutputKey: ScannerLambdaAliasARN
-      Modified: 20210812.1
+      Modified: 20220527.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
@@ -626,7 +626,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20211028.1
+      Modified: 20220527.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
