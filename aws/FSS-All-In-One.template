@@ -13,6 +13,7 @@ Metadata:
           - KMSKeyARNForBucketSSE
           - KMSKeyARNForQueueSSE
           - KMSKeyARNForTopicSSE
+          - ScannerEphemeralStorage
           - TriggerWithObjectCreatedEvent
           - ReportObjectKey
           - ScanOnGetObject
@@ -93,6 +94,8 @@ Metadata:
         default: ReportObjectKey
       S3BucketToScan:
         default: S3BucketToScan
+      ScannerEphemeralStorage:
+        default: "ScannerEphemeralStorage [ In Preview ]"
       ScanOnGetObject:
         default: "ScanOnGetObject [ In Preview ]"
       ScanResultTopicDLQARN:
@@ -213,6 +216,15 @@ Parameters:
   S3BucketToScan:
     Description: The S3 bucket to scan. Specify an existing S3 bucket.
     Type: String
+  ScannerEphemeralStorage:
+    Default: 512
+    Description: |
+      The size of the scanner lambda function's temp directory in MB. The default value is 512, but it can be any whole number between 512 and 2048 MB.
+      Configure a large ephemeral storage to scan larger files in zip files.
+      For more information, see https://docs.aws.amazon.com/lambda/latest/dg/configuration-function-common.html#configuration-ephemeral-storage
+    Type: Number
+    MinValue: 512
+    MaxValue: 2048
   ScanOnGetObject:
     Default: 'false'
     AllowedValues:
@@ -324,6 +336,7 @@ Resources:
         LambdaLayerPrefix: !Ref LambdaLayerPrefix
         NetworkProxy: !Ref NetworkProxy
         PermissionsBoundary: !Ref PermissionsBoundary
+        ScannerEphemeralStorage: !Ref ScannerEphemeralStorage
         SecurityGroupIDs: !Join [',', !Ref SecurityGroupIDs]
         SQSQueuePrefix: !Ref SQSQueuePrefix
         SubnetIDs: !Join [',', !Ref SubnetIDs]
