@@ -10,6 +10,7 @@ Metadata:
         Parameters:
           - KMSKeyARNForQueueSSE
           - KMSKeyARNsForTopicSSE
+          - ScannerEphemeralStorage
       - Label:
           default: "[ Optional: Permissions control ]"
         Parameters:
@@ -65,6 +66,8 @@ Metadata:
         default: NetworkProxy
       PermissionsBoundary:
         default: PermissionsBoundary
+      ScannerEphemeralStorage:
+        default: "ScannerEphemeralStorage [ In Preview ]"
       SecurityGroupIDs:
         default: SecurityGroupIDs
       SQSQueuePrefix:
@@ -145,6 +148,15 @@ Parameters:
     Default: ''
     Description: The ARN of the policy used to set the permissions boundary for all the roles that will be created.
     Type: String
+  ScannerEphemeralStorage:
+    Default: 512
+    Description: |
+      The size of the scanner lambda function's temp directory in MB. The default value is 512, but it can be any whole number between 512 and 2048 MB.
+      Configure a large ephemeral storage to scan larger files in zip files.
+      For more information, see https://docs.aws.amazon.com/lambda/latest/dg/configuration-function-common.html#configuration-ephemeral-storage
+    Type: Number
+    MinValue: 512
+    MaxValue: 2048
   SecurityGroupIDs:
     Default: ''
     Description: A comma-separated list of the VPC Security Group IDs that are attached to Lambda functions. Leave it blank if you don't want to attach Lambda functions to a VPC.
@@ -605,18 +617,21 @@ Resources:
       VpcConfig:
         SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
         SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
+      EphemeralStorage:
+        Size: !Ref ScannerEphemeralStorage
   ScannerLambdaLastConfig:
     Type: Custom::ScannerLambdaLastConfig
     Properties:
       ServiceToken: !GetAtt GetLambdaLastConfig.Arn
       LambdaARNOutputKey: ScannerLambdaARN
       LambdaAliasARNOutputKey: ScannerLambdaAliasARN
-      Modified: 20220527.1
+      Modified: 20220531.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
       NetworkProxy: !Ref NetworkProxy
+      ScannerEphemeralStorage: !Ref ScannerEphemeralStorage
       SecurityGroupIDs: !Ref SecurityGroupIDs
       SubnetIDs: !Ref SubnetIDs
       TrendMicroManagementAccount: !Ref TrendMicroManagementAccount
@@ -626,12 +641,13 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20220527.1
+      Modified: 20220531.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
       NetworkProxy: !Ref NetworkProxy
+      ScannerEphemeralStorage: !Ref ScannerEphemeralStorage
       SecurityGroupIDs: !Ref SecurityGroupIDs
       SubnetIDs: !Ref SubnetIDs
       TrendMicroManagementAccount: !Ref TrendMicroManagementAccount
