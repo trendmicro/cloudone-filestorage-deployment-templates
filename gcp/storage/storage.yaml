@@ -1,0 +1,53 @@
+# Copyright (C) 2022 Trend Micro Inc. All rights reserved.
+
+imports:
+  - path: ../common.py
+    name: common.py
+  - path: ../management_roles.py
+    name: management_roles.py
+  - path: ../role.py
+    name: role.py
+  - path: storage.py
+  - path: storage_stack_service_accounts.py
+  - path: storage_stack_roles.py
+
+resources:
+- name: storage-stack-service-accounts
+  type: storage_stack_service_accounts.py
+  properties:
+    managementServiceAccountID: <MANAGEMENT_SERVICE_ACCOUNT_ID>
+
+- name: storage-stack
+  type: storage.py
+  properties:
+    deploymentName: <DEPLOYMENT_NAME>
+    region: <REGION>
+    scanningBucket: <SCANNING_BUCKET_NAME>
+    artifactBucket: <ARTIFACT_BUCKET_NAME>
+    scannerTopic: <SCANNER_TOPIC>
+    scannerProjectID: <SCANNER_PROJECT_ID>
+    scannerServiceAccountID: <SCANNER_SERVICE_ACCOUNT_ID>
+    reportObjectKey: '<REPORT_OBJECT_KEY>'
+    managementServiceAccountID: <MANAGEMENT_SERVICE_ACCOUNT_ID>
+
+outputs:
+  - name: region
+    value: $(ref.storage-stack.region)
+  - name: storageProjectID
+    value: $(ref.storage-stack.storageProjectID)
+  - name: bucketListenerSourceArchiveUrl
+    value: $(ref.storage-stack.bucketListenerSourceArchiveUrl)
+  - name: bucketListenerServiceAccountID
+    value: $(ref.storage-stack-service-accounts.bucketListenerServiceAccountID)
+  - name: bucketListenerRoleID
+    value: $(ref.storage-stack.fssBucketListenerRoleID)
+  - name: postActionTagServiceAccountID
+    value: $(ref.storage-stack-service-accounts.postActionTagServiceAccountID)
+  - name: postActionTagRoleID
+    value: $(ref.storage-stack.fssPostActionTagRoleID)
+  - name: scanResultTopic
+    value: $(ref.storage-stack.scanResultTopic)
+  - name: bucketListenerFunctionName
+    value: $(ref.storage-stack.bucketListenerFunctionName)
+  - name: postScanActionTagFunctionName
+    value: $(ref.storage-stack.postScanActionTagFunctionName)

@@ -1,0 +1,31 @@
+# Copyright (C) 2022 Trend Micro Inc. All rights reserved.
+
+imports:
+  - path: management_roles.py
+  - path: role.py
+  - path: storage/storage_stack_roles.py
+    name: storage_stack_roles.py
+
+resources:
+- name: storage-stack-roles
+  type: storage_stack_roles.py
+- name: management-roles
+  type: management_roles.py
+
+outputs:
+  - name: bucketListenerRoleID
+    value: $(ref.storage-stack-roles.fssBucketListenerRoleID)
+  - name: cloudFunctionManagementRoleID
+    value: $(ref.management-roles.fssCloudFunctionManagementRoleID)
+  - name: deploymentManagementRoleID
+    value: $(ref.management-roles.fssDeploymentManagementRoleID)
+  - name: logManagementRoleID
+    value: $(ref.management-roles.fssLogManagementRoleID)
+  - name: postActionTagRoleID
+    value: $(ref.storage-stack-roles.fssPostActionTagRoleID)
+  - name: pubsubManagementRoleID
+    value: $(ref.management-roles.fssPubsubManagementRoleID)
+  - name: secretManagementRoleID
+    value: $(ref.management-roles.fssSecretManagementRoleID)
+  - name: serviceAccountManagementRoleID
+    value: $(ref.management-roles.fssServiceAccountManagementRoleID)
