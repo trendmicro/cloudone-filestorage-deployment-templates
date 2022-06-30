@@ -1,0 +1,44 @@
+# Copyright (C) 2022 Trend Micro Inc. All rights reserved.
+
+imports:
+  - path: ../common.py
+    name: common.py
+  - path: ../management_roles.py
+    name: management_roles.py
+  - path: ../role.py
+    name: role.py
+  - path: scanner.py
+  - path: scanner_stack_service_accounts.py
+
+resources:
+- name: scanner-stack-service-accounts
+  type: scanner_stack_service_accounts.py
+  properties:
+    managementServiceAccountID: <MANAGEMENT_SERVICE_ACCOUNT_ID>
+
+- name: scanner-stack
+  type: scanner.py
+  properties:
+    deploymentName: <DEPLOYMENT_NAME>
+    region: <REGION>
+    artifactBucket: <ARTIFACT_BUCKET_NAME>
+    scannerSecretsName: <SCANNER_SECRETS>
+    managementServiceAccountID: <MANAGEMENT_SERVICE_ACCOUNT_ID>
+
+outputs:
+  - name: region
+    value: $(ref.scanner-stack.region)
+  - name: scannerProjectID
+    value: $(ref.scanner-stack.scannerProjectID)
+  - name: scannerTopic
+    value: $(ref.scanner-stack.scannerTopic)
+  - name: scannerTopicDLT
+    value: $(ref.scanner-stack.scannerTopicDLT)
+  - name: scannerFunctionName
+    value: $(ref.scanner-stack.scannerFunctionName)
+  - name: scannerDLTFunctionName
+    value: $(ref.scanner-stack.scannerDLTFunctionName)
+  - name: scannerServiceAccountID
+    value: $(ref.scanner-stack-service-accounts.scannerServiceAccountID)
+  - name: scannerSecretsName
+    value: $(ref.scanner-stack.scannerSecretsName)
