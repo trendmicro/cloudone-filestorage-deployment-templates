@@ -34,10 +34,11 @@ if [ -z "$CLOUD_ONE_REGION" ]; then
 fi
 
 if [ -z "$CLOUD_ONE_ACCOUNT" ]; then
-  CLOUD_ONE_ACCOUNT=''
+  bash deployment-script-scanner.sh -d $DEPLOYMENT_NAME_SCANNER -r $REGION -m $MANAGEMENT_SERVICE_ACCOUNT -u $PACKAGE_URL -c $CLOUD_ONE_REGION
+else
+  bash deployment-script-scanner.sh -d $DEPLOYMENT_NAME_SCANNER -r $REGION -m $MANAGEMENT_SERVICE_ACCOUNT -u $PACKAGE_URL -c $CLOUD_ONE_REGION -a $CLOUD_ONE_ACCOUNT
 fi
 
-bash deployment-script-scanner.sh -d $DEPLOYMENT_NAME_SCANNER -r $REGION -m $MANAGEMENT_SERVICE_ACCOUNT -u $PACKAGE_URL -c $CLOUD_ONE_REGION -a $CLOUD_ONE_ACCOUNT
 bash deployment-script-storage.sh -s $SCANNING_BUCKET_NAME -d $DEPLOYMENT_NAME_STORAGE -r $REGION -m $MANAGEMENT_SERVICE_ACCOUNT -i "$(cat $DEPLOYMENT_NAME_SCANNER-info.json)" -u $PACKAGE_URL -k $REPORT_OBJECT_KEY
 
 echo "The stacks have been deployed successfully. Below is the content required to configure on File Storage Security console."
