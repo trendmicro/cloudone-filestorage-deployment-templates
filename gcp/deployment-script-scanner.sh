@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-while getopts d:r:u:m:c:a args
+while getopts d:r:u:m:c:a: args
 do
   case "${args}" in
     d) DEPLOYMENT_NAME_SCANNER=${OPTARG};;
