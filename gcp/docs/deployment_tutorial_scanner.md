@@ -14,7 +14,7 @@ This tutorial will guide you to deploy the Cloud One File Storage Security scann
 
 The permissions that File Storage Security management roles will have after it has been deployed and configured are defined in:
 
-* <walkthrough-editor-open-file filePath="templates/management_roles.py">Management roles</walkthrough-editor-open-file>
+* <walkthrough-editor-open-file filePath="management_roles.py">Management roles</walkthrough-editor-open-file>
 
 ### Backend updates (coming soon)
 
