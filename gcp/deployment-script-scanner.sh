@@ -119,7 +119,7 @@ gcloud secrets add-iam-policy-binding $DEPLOYMENT_NAME_SCANNER-scanner-secrets \
 # Allow management service account to access the secrets
 gcloud secrets add-iam-policy-binding $DEPLOYMENT_NAME_SCANNER-scanner-secrets \
   --member="serviceAccount:$MANAGEMENT_SERVICE_ACCOUNT" \
-  --role="projects/$SCANNER_PROJECT_ID/roles/fss_secret_management_role"
+  --role="projects/$SCANNER_PROJECT_ID/roles/trend_micro_fss_secret_management_role"
 
 sed -i.bak "s/<SCANNER_SECRETS>/$DEPLOYMENT_NAME_SCANNER-scanner-secrets/g" $SCANNER_YAML_PATH
 
