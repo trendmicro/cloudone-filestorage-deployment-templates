@@ -5,8 +5,12 @@ imports:
   - path: role.py
   - path: storage/storage_stack_roles.py
     name: storage_stack_roles.py
+  - path: scanner/scanner_stack_roles.py
+    name: scanner_stack_roles.py
 
 resources:
+- name: scanner-stack-roles
+  type: scanner_stack_roles.py
 - name: storage-stack-roles
   type: storage_stack_roles.py
 - name: management-roles
@@ -29,3 +33,7 @@ outputs:
     value: $(ref.management-roles.fssSecretManagementRoleID)
   - name: serviceAccountManagementRoleID
     value: $(ref.management-roles.fssServiceAccountManagementRoleID)
+  - name: patternUpdaterRoleID
+    value: $(ref.scanner-stack-roles.fssPatternUpdaterRoleID)
+  - name: patternUpdateScannerRoleID
+    value: $(ref.scanner-stack-roles.fssPatternUpdateScannerRoleID)

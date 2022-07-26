@@ -29,13 +29,40 @@ def create_service_account_resources(context):
 
     }
 
+    pattern_updater_service_account = {
+        'name': f'{prefix}-pattern-updater-service-account',
+        'type': 'gcp-types/iam-v1:projects.serviceAccounts',
+        'properties': {
+            'accountId': f'{prefix.lower()}-updater-sa',
+            'displayName': 'Service Account for Pattern Updater Function'
+        },
+        'accessControl': {
+            'gcpIamPolicy': {
+                'bindings': [
+                    {
+                        'role': role.get_role_name_ref(project_id, management_roles.SERVICE_ACCOUNT_MANAGEMENT_ROLE),
+                        'members': [
+                            f"serviceAccount:{context.properties['managementServiceAccountID']}"
+                        ]
+                    },
+                ]
+            }
+        }
+
+    }
+
     resources = [
-        scanner_service_account
+        scanner_service_account,
+        pattern_updater_service_account
     ]
     outputs = [
         {
             'name':  'scannerServiceAccountID',
             'value': scanner_service_account['properties']['accountId']
+        },
+        {
+            'name':  'patternUpdaterServiceAccountID',
+            'value': pattern_updater_service_account['properties']['accountId']
         },
         {
             'name': 'scannerProjectID',
