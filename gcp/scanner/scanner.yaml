@@ -9,6 +9,7 @@ imports:
     name: role.py
   - path: scanner.py
   - path: scanner_stack_service_accounts.py
+  - path: scanner_stack_roles.py
 
 resources:
 - name: scanner-stack-service-accounts
@@ -36,6 +37,8 @@ outputs:
     value: $(ref.scanner-stack.scannerTopicDLT)
   - name: scannerFunctionName
     value: $(ref.scanner-stack.scannerFunctionName)
+  - name: patternUpdaterFunctionName
+    value: $(ref.scanner-stack.patternUpdaterFunctionName)
   - name: scannerDLTFunctionName
     value: $(ref.scanner-stack.scannerDLTFunctionName)
   - name: scannerServiceAccountID

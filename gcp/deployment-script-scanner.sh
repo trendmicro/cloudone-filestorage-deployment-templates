@@ -42,6 +42,7 @@ fi
 TEMPLATES_FILE='gcp-templates.zip'
 SCANNER_FILE='gcp-scanner.zip'
 SCANNER_DLT_FILE='gcp-scanner-dlt.zip'
+SCANNER_PATTERN_UPDATER_FILE='gcp-scanner-pattern-updater.zip'
 
 # Check Project Setting
 gcloud deployment-manager deployments list > /dev/null
@@ -64,6 +65,7 @@ prepareArtifact() {
 
 prepareArtifact $SCANNER_FILE
 prepareArtifact $SCANNER_DLT_FILE
+prepareArtifact $SCANNER_PATTERN_UPDATER_FILE
 
 # Deploy or update File Storage Security roles
 echo "Deploying File Storage Security roles..."
