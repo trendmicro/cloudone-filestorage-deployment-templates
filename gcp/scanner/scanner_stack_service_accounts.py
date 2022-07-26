@@ -33,7 +33,7 @@ def create_service_account_resources(context):
         'name': f'{prefix}-pattern-updater-service-account',
         'type': 'gcp-types/iam-v1:projects.serviceAccounts',
         'properties': {
-            'accountId': f'{prefix.lower()}-updater-sa',
+            'accountId': f'{prefix.lower()}-upd-sa',
             'displayName': 'Service Account for Pattern Updater Function'
         },
         'accessControl': {
