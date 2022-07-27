@@ -45,3 +45,7 @@ outputs:
     value: $(ref.scanner-stack-service-accounts.scannerServiceAccountID)
   - name: scannerSecretsName
     value: $(ref.scanner-stack.scannerSecretsName)
+  - name: patternUpdateSchedulerJobName
+    value: $(ref.scanner-stack.patternUpdateSchedulerJobName)
+  - name: patternUpdateBucket
+    value: $(ref.scanner-stack.patternUpdateBucket)

@@ -57,47 +57,6 @@ def create_scanner_stack_resources(context):
         }
     }
 
-    scanner = {
-        'name': f'{prefix}-scanner',
-        # https://cloud.google.com/functions/docs/reference/rest/v1/projects.locations.functions
-        'type': 'gcp-types/cloudfunctions-v1:projects.locations.functions',
-        'properties': {
-            'parent': f'projects/{project_id}/locations/{region}',
-            'function': f'{prefix}-scanner',
-            'entryPoint': 'main',
-            'sourceArchiveUrl': f"gs://{properties['artifactBucket']}/gcp-scanner.zip",
-            'serviceAccountEmail': f'$(ref.{prefix}-scanner-service-account.email)',
-            'runtime': 'python38',
-            'availableMemoryMb': 2048,
-            'timeout': '120s',
-            'environmentVariables': {
-                'LD_LIBRARY_PATH': '/workspace:/workspace/lib',
-                'PATTERN_PATH': './patterns',
-                'PROJECT_ID': project_id,
-                'REGION': region,
-                'DEPLOYMENT_NAME': properties['deploymentName']
-            },
-            'secretEnvironmentVariables': [
-                {
-                    'key': 'SCANNER_SECRETS',
-                    'projectId': project_id,
-                    'secret': f'{properties["scannerSecretsName"]}',
-                    'version': 'latest'
-                }
-            ],
-            'eventTrigger': {
-                'eventType': 'providers/cloud.pubsub/eventTypes/topic.publish',
-                'resource': f"projects/{project_id}/topics/{scanner_topic['name']}",
-                'failurePolicy': {
-                    'retry': {}
-                }
-            }
-        },
-        'metadata': {
-            'dependsOn': [scanner_topic['name']]
-        }
-    }
-
     pattern_update_bucket_name = f'{prefix}-pattern-update-bucket'
     pattern_update_bucket= {
         'name': pattern_update_bucket_name,
@@ -176,6 +135,48 @@ def create_scanner_stack_resources(context):
         },
         'metadata': {
             'dependsOn': [pattern_updater_topic['name']]
+        }
+    }
+
+    scanner = {
+        'name': f'{prefix}-scanner',
+        # https://cloud.google.com/functions/docs/reference/rest/v1/projects.locations.functions
+        'type': 'gcp-types/cloudfunctions-v1:projects.locations.functions',
+        'properties': {
+            'parent': f'projects/{project_id}/locations/{region}',
+            'function': f'{prefix}-scanner',
+            'entryPoint': 'main',
+            'sourceArchiveUrl': f"gs://{properties['artifactBucket']}/gcp-scanner.zip",
+            'serviceAccountEmail': f'$(ref.{prefix}-scanner-service-account.email)',
+            'runtime': 'python38',
+            'availableMemoryMb': 2048,
+            'timeout': '120s',
+            'environmentVariables': {
+                'LD_LIBRARY_PATH': '/workspace:/workspace/lib',
+                'PATTERN_PATH': './patterns',
+                'PROJECT_ID': project_id,
+                'REGION': region,
+                'DEPLOYMENT_NAME': properties['deploymentName'],
+                'PATTERN_UPDATE_BUCKET': pattern_update_bucket['name']
+            },
+            'secretEnvironmentVariables': [
+                {
+                    'key': 'SCANNER_SECRETS',
+                    'projectId': project_id,
+                    'secret': f'{properties["scannerSecretsName"]}',
+                    'version': 'latest'
+                }
+            ],
+            'eventTrigger': {
+                'eventType': 'providers/cloud.pubsub/eventTypes/topic.publish',
+                'resource': f"projects/{project_id}/topics/{scanner_topic['name']}",
+                'failurePolicy': {
+                    'retry': {}
+                }
+            }
+        },
+        'metadata': {
+            'dependsOn': [scanner_topic['name']]
         }
     }
 
@@ -304,6 +305,12 @@ def create_scanner_stack_resources(context):
     },{
         'name': 'scannerSecretsName',
         'value': properties['scannerSecretsName']
+    },{
+        'name': 'patternUpdateSchedulerJobName',
+        'value': pattern_updater_scheduler['properties']['name']
+    },{
+        'name': 'patternUpdateBucket',
+        'value': '$(ref.{}.name)'.format(pattern_update_bucket['name'])
     }]
     return (resources, outputs)
 
