@@ -2,6 +2,23 @@
 
 The user that will make the deployment need to have specific permissions to execute the deployment. In the file [FSS-user-permissions.json](FSS-user-permissions.json) you can find the specific permissions that the user policy need to have to deploy the cloudformations templates. If your current user already have a more permissive policy such as `AdministratorAccess` the deployment will work, but we do recommend to apply the principle of least privilege.
 
+To add the policy:
+
+- Go to your `AWS account > IAM > Policies > Create policy`
+
+- Select `JSON` and copy and paste the whole content of the [FSS-user-permissions.json](FSS-user-permissions.json) file.
+
+- Add `Tags` to the policy (optional), give a `Name` to the policy (Required) and a `Description` (Optional). Your policy is ready to be use!
+
+
+To attach the policy to the user:
+
+- Go to your desired user on `IAM > Users`
+- Click on `Add permissions`
+- Select `Attach existing policies directly`
+- Mark the polcy that we've just created and click on `Next > Add permission`.
+
+
 # Permissions required by the templates
 
 The templates will create a few IAM roles and policies in order to work properly.
