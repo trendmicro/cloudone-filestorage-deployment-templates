@@ -1,3 +1,7 @@
+# User permissions for deployment
+
+The user that will make the deployment need to have specific permissions to execute the deployment. In the file [FSS-user-permissions.json](FSS-user-permissions.json) you can find the specific permissions that the user policy need to have to deploy the cloudformations templates. If your current user already have a more permissive policy such as `AdministratorAccess` the deployment will work, but we do recommend to apply the principle of least privilege.
+
 # Permissions required by the templates
 
 The templates will create a few IAM roles and policies in order to work properly.

@@ -1,0 +1,145 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+      {
+          "Sid": "SQSQueuePermissions",
+          "Action": [
+              "sqs:TagQueue",
+              "sqs:DeleteQueue",
+              "sqs:GetQueueAttributes",
+              "sqs:CreateQueue",
+              "sqs:SetQueueAttributes"
+          ],
+          "Effect": "Allow",
+          "Resource": "arn:aws:sqs:*:*:*"
+      },
+      {
+          "Sid": "cloudformationStackPermissions",
+          "Action": [
+              "cloudformation:CreateStack",
+              "cloudformation:DeleteStack",
+              "cloudformation:UpdateStack",
+              "cloudformation:ListStacks",
+              "cloudformation:GetTemplateSummary"
+          ],
+          "Effect": "Allow",
+          "Resource": "*"
+      },
+      {
+          "Sid": "CloudwatchLogPermissions",
+          "Action": [
+              "logs:DescribeLogGroups",
+              "logs:DeleteLogGroup",
+              "logs:PutRetentionPolicy",
+              "logs:CreateLogGroup"
+          ],
+          "Effect": "Allow",
+          "Resource": "arn:aws:logs:*:*:log-group:*"
+      },
+      {
+          "Sid": "IAMRolePermissions",
+          "Action": [
+              "iam:GetRole",
+              "iam:PassRole",
+              "iam:DetachRolePolicy",
+              "iam:DeleteRolePolicy",
+              "iam:TagRole",
+              "iam:CreateRole",
+              "iam:DeleteRole",
+              "iam:AttachRolePolicy",
+              "iam:PutRolePolicy",
+              "iam:GetRolePolicy"
+          ],
+          "Effect": "Allow",
+          "Resource": "arn:aws:iam::*:role/*"
+      },
+      {
+          "Sid": "LambdaFunctionPermissions",
+          "Action": [
+              "lambda:CreateFunction",
+              "lambda:UpdateFunctionCode",
+              "lambda:CreateAlias",
+              "lambda:InvokeFunction",
+              "lambda:GetLayerVersion",
+              "lambda:GetEventSourceMapping",
+              "lambda:TagResource",
+              "lambda:GetFunction",
+              "lambda:PublishVersion",
+              "lambda:PublishLayerVersion",
+              "lambda:ListVersionsByFunction",
+              "lambda:GetFunctionConfiguration",
+              "lambda:UpdateFunctionConfiguration",
+              "lambda:CreateEventSourceMapping",
+              "lambda:UpdateEventSourceMapping",
+              "lambda:AddPermission",
+              "lambda:DeleteLayerVersion",
+              "lambda:DeleteFunction",
+              "lambda:DeleteAlias",
+              "lambda:DeleteEventSourceMapping",
+              "lambda:RemovePermission"
+          ],
+          "Effect": "Allow",
+          "Resource": "*"
+      },
+      {
+          "Sid": "EC2Permissions",
+          "Action": [
+              "ec2:DescribeVpcs",
+              "ec2:DescribeSubnets",
+              "ec2:DescribeSecurityGroups"
+          ],
+          "Effect": "Allow",
+          "Resource": "*"
+      },
+      {
+          "Sid": "S3BucketPermissions",
+          "Action": [
+              "s3:DeleteBucket"
+          ],
+          "Effect": "Allow",
+          "Resource": "arn:aws:s3:::*"
+      },
+      {
+          "Sid": "S3AccessPointPermissions",
+          "Action": [
+              "s3:CreateAccessPoint",
+              "s3:DeleteAccessPoint",
+              "s3:GetAccessPoint",
+              "s3:GetAccessPointPolicy",
+              "s3:CreateAccessPointForObjectLambda",
+              "s3:DeleteAccessPointForObjectLambda",
+              "s3:GetAccessPointForObjectLambda",
+              "s3:GetAccessPointConfigurationForObjectLambda",
+              "s3:GetAccessPointPolicyStatusForObjectLambda"
+          ],
+          "Effect": "Allow",
+          "Resource": [
+              "arn:aws:s3:*:*:accesspoint/*",
+              "arn:aws:s3-object-lambda:*:*:accesspoint/*"
+          ]
+      },
+      {
+          "Sid": "S3ObjectPermissions",
+          "Action": [
+              "s3:GetObject"
+          ],
+          "Effect": "Allow",
+          "Resource": "arn:aws:s3:::*/*"
+      },
+      {
+          "Sid": "SNSTopicPermissions",
+          "Action": [
+              "sns:TagResource",
+              "sns:GetTopicAttributes",
+              "sns:DeleteTopic",
+              "sns:CreateTopic",
+              "sns:SetTopicAttributes",
+              "sns:Subscribe",
+              "sns:Unsubscribe",
+              "sns:ListSubscriptionsByTopic"
+          ],
+          "Effect": "Allow",
+          "Resource": "arn:aws:sns:*:*:*"
+      }
+  ]
+}
