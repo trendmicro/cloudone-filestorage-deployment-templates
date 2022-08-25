@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-while getopts s:d:r:u:k:m:c:a: args
+while getopts s:d:r:u:k:m:c:a:f: args
 do
   case "${args}" in
     s) SCANNING_BUCKET_NAME=${OPTARG};;
@@ -12,6 +12,7 @@ do
     m) MANAGEMENT_SERVICE_ACCOUNT=${OPTARG};;
     c) CLOUD_ONE_REGION=${OPTARG};;
     a) CLOUD_ONE_ACCOUNT=${OPTARG};;
+    f) FUNCTION_AUTO_UPDATE=${OPTARG};;
   esac
 done
 
@@ -33,13 +34,17 @@ if [ -z "$CLOUD_ONE_REGION" ]; then
   CLOUD_ONE_REGION='us-1'
 fi
 
-if [ -z "$CLOUD_ONE_ACCOUNT" ]; then
-  bash deployment-script-scanner.sh -d $DEPLOYMENT_NAME_SCANNER -r $REGION -m $MANAGEMENT_SERVICE_ACCOUNT -u $PACKAGE_URL -c $CLOUD_ONE_REGION
-else
-  bash deployment-script-scanner.sh -d $DEPLOYMENT_NAME_SCANNER -r $REGION -m $MANAGEMENT_SERVICE_ACCOUNT -u $PACKAGE_URL -c $CLOUD_ONE_REGION -a $CLOUD_ONE_ACCOUNT
+if [ -z "$FUNCTION_AUTO_UPDATE" ]; then
+  FUNCTION_AUTO_UPDATE='True'
 fi
 
-bash deployment-script-storage.sh -s $SCANNING_BUCKET_NAME -d $DEPLOYMENT_NAME_STORAGE -r $REGION -m $MANAGEMENT_SERVICE_ACCOUNT -i "$(cat $DEPLOYMENT_NAME_SCANNER-info.json)" -u $PACKAGE_URL -k $REPORT_OBJECT_KEY
+if [ -z "$CLOUD_ONE_ACCOUNT" ]; then
+  bash deployment-script-scanner.sh -d $DEPLOYMENT_NAME_SCANNER -r $REGION -m $MANAGEMENT_SERVICE_ACCOUNT -u $PACKAGE_URL -c $CLOUD_ONE_REGION -f $FUNCTION_AUTO_UPDATE
+else
+  bash deployment-script-scanner.sh -d $DEPLOYMENT_NAME_SCANNER -r $REGION -m $MANAGEMENT_SERVICE_ACCOUNT -u $PACKAGE_URL -c $CLOUD_ONE_REGION -a $CLOUD_ONE_ACCOUNT -f $FUNCTION_AUTO_UPDATE
+fi
+
+bash deployment-script-storage.sh -s $SCANNING_BUCKET_NAME -d $DEPLOYMENT_NAME_STORAGE -r $REGION -m $MANAGEMENT_SERVICE_ACCOUNT -i "$(cat $DEPLOYMENT_NAME_SCANNER-info.json)" -u $PACKAGE_URL -k $REPORT_OBJECT_KEY -f $FUNCTION_AUTO_UPDATE
 
 echo "The stacks have been deployed successfully. Below is the content required to configure on File Storage Security console."
 

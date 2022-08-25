@@ -17,7 +17,7 @@ The permissions that File Storage Security management roles will have after it h
 * <walkthrough-editor-open-file filePath="management_roles.py">Management roles</walkthrough-editor-open-file>
 * <walkthrough-editor-open-file filePath="storage/storage_stack_roles.py">Storage stack management roles</walkthrough-editor-open-file>
 
-### Backend updates (coming soon)
+### Backend updates
 
 For automatic backend updates that will be pushed, see [Update components](https://cloudone.trendmicro.com/docs/file-storage-security/component-update-gcp/).
 
@@ -40,9 +40,10 @@ Specify the following fields and execute the deployment script in the Cloud Shel
 1. **Region:** Specify the region of your bucket. For the list of supported GCP regions, please see [Supported GCP Regions](https://cloudone.trendmicro.com/docs/file-storage-security/supported-gcp/#GCPRegion).
 1. **Scanner information JSON:** Copy and paste the scanner information from the File Storage Security console.
 1. **Service account:** Copy and paste the service account information from the File Storage Security console.
+1. **Function auto update:** Enable or disable automatic remote code update. The default value is `True`. Allow values: `True`, `False`.
 
 ```sh
-./deployment-script-storage.sh -s <SCANNING_BUCKET_NAME> -d <DEPLOYMENT_NAME> -r <REGION> -i <SCANNER_INFORMATION> -m <SERVICE_ACCOUNT>
+./deployment-script-storage.sh -s <SCANNING_BUCKET_NAME> -d <DEPLOYMENT_NAME> -r <REGION> -i <SCANNER_INFORMATION> -m <SERVICE_ACCOUNT> -f <FUNCTION_AUTO_UPDATE>
 ```
 
 ## Configure JSON in File Storage Security console

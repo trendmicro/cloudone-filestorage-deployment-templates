@@ -37,3 +37,5 @@ outputs:
     value: $(ref.scanner-stack-roles.fssPatternUpdaterRoleID)
   - name: patternUpdateScannerRoleID
     value: $(ref.scanner-stack-roles.fssPatternUpdateScannerRoleID)
+  - name: sourceCodeSetRoleID
+    value: $(ref.management-roles.fssSourceCodeSetRoleID)

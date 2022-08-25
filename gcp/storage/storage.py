@@ -132,6 +132,16 @@ def create_storage_stack_resources(context):
         }
     }
 
+    storage_stack_function_update_role_binding = {
+        'name':'storage-stack-function-update-role-binding',
+        'type': 'gcp-types/cloudresourcemanager-v1:virtual.projects.iamMemberBinding',
+        'properties': {
+            'resource': project_id,
+            'role': role.get_role_name_ref(project_id, management_roles.SOURCE_CODE_SET_ROLE),
+            'member': f'serviceAccount:{management_service_account_id}'
+        }
+    }
+
     resources = [
         bucket_listener,
         bucket_listener_management_account_role_binding,
@@ -141,6 +151,10 @@ def create_storage_stack_resources(context):
         post_action_tag_service_account_binding,
         scan_result_topic,
     ]
+
+    if properties['functionAutoUpdate']:
+        resources.append(storage_stack_function_update_role_binding)
+
     outputs = [
         {
             'name': 'storageProjectID',
@@ -173,6 +187,10 @@ def create_storage_stack_resources(context):
         {
             'name': storage_stack_roles.get_role(storage_stack_roles.POST_ACTION_TAG_ROLE)['key'],
             'value': role.get_role_id(storage_stack_roles.POST_ACTION_TAG_ROLE)
+        },
+        {
+            'name': 'functionAutoUpdate',
+            'value': properties['functionAutoUpdate']
         }
     ]
     return (resources, outputs)

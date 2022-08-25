@@ -25,6 +25,7 @@ resources:
     artifactBucket: <ARTIFACT_BUCKET_NAME>
     scannerSecretsName: <SCANNER_SECRETS>
     managementServiceAccountID: <MANAGEMENT_SERVICE_ACCOUNT_ID>
+    functionAutoUpdate: <FUNCTION_AUTO_UPDATE>
 
 outputs:
   - name: region
@@ -49,3 +50,5 @@ outputs:
     value: $(ref.scanner-stack.patternUpdateSchedulerJobName)
   - name: patternUpdateBucket
     value: $(ref.scanner-stack.patternUpdateBucket)
+  - name: functionAutoUpdate
+    value: $(ref.scanner-stack.functionAutoUpdate)
