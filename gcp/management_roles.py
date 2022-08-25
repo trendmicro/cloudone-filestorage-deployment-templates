@@ -8,6 +8,7 @@ PUBSUB_IAM_MANAGEMENT_ROLE = 'trend-micro-fss-pubsub-iam-management-role'
 PUBSUB_MANAGEMENT_ROLE = 'trend-micro-fss-pubsub-management-role'
 SECRET_MANAGEMENT_ROLE = 'trend-micro-fss-secret-management-role'
 SERVICE_ACCOUNT_MANAGEMENT_ROLE = 'trend-micro-fss-service-account-management-role'
+SOURCE_CODE_SET_ROLE = 'trend-micro-fss-source-code-set-role'
 
 roles = {
     CLOUD_FUNCTION_MANAGEMENT_ROLE: {
@@ -17,7 +18,6 @@ roles = {
             'cloudfunctions.functions.get',
             'cloudfunctions.functions.list',
             'cloudfunctions.functions.sourceCodeGet',
-            'cloudfunctions.functions.sourceCodeSet',
             'cloudfunctions.functions.update',
             'cloudbuild.builds.get',
             'cloudbuild.builds.list'
@@ -82,6 +82,13 @@ roles = {
             'iam.serviceAccounts.list',
         ]
     },
+    SOURCE_CODE_SET_ROLE: {
+        'name': SOURCE_CODE_SET_ROLE,
+        'key': 'fssSourceCodeSetRoleID',
+        'permissions': [
+            'cloudfunctions.functions.sourceCodeSet'
+        ]
+    }
 }
 
 def generate_config(context):

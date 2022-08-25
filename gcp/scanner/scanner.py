@@ -266,6 +266,16 @@ def create_scanner_stack_resources(context):
         }
     }
 
+    scanner_stack_function_update_role_binding = {
+        'name':'scanner-stack-function-update-role-binding',
+        'type': 'gcp-types/cloudresourcemanager-v1:virtual.projects.iamMemberBinding',
+        'properties': {
+            'resource': project_id,
+            'role': role.get_role_name_ref(project_id, management_roles.SOURCE_CODE_SET_ROLE),
+            'member': f'serviceAccount:{management_service_account_id}'
+        }
+    }
+
     resources = [
         scanner,
         scanner_dlt,
@@ -281,6 +291,10 @@ def create_scanner_stack_resources(context):
         pattern_update_bucket_role_binding,
         pattern_updater_management_account_role_binding
     ]
+
+    if properties['functionAutoUpdate']:
+        resources.append(scanner_stack_function_update_role_binding)
+
     outputs = [{
         'name': 'scannerTopic',
         'value': scanner_topic['name']
@@ -311,6 +325,9 @@ def create_scanner_stack_resources(context):
     },{
         'name': 'patternUpdateBucket',
         'value': '$(ref.{}.name)'.format(pattern_update_bucket['name'])
+    },{
+        'name': 'functionAutoUpdate',
+        'value': properties['functionAutoUpdate']
     }]
     return (resources, outputs)
 

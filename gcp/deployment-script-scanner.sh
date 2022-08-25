@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-while getopts d:r:u:m:c:a: args
+while getopts d:r:u:m:c:a:f: args
 do
   case "${args}" in
     d) DEPLOYMENT_NAME_SCANNER=${OPTARG};;
@@ -10,6 +10,7 @@ do
     m) MANAGEMENT_SERVICE_ACCOUNT=${OPTARG};;
     c) CLOUD_ONE_REGION=${OPTARG};;
     a) CLOUD_ONE_ACCOUNT=${OPTARG};;
+    f) FUNCTION_AUTO_UPDATE=${OPTARG};;
   esac
 done
 
@@ -24,6 +25,7 @@ echo "Package URL: $PACKAGE_URL";
 echo "Management Service Account: $MANAGEMENT_SERVICE_ACCOUNT";
 echo "Cloud One Region: $CLOUD_ONE_REGION";
 echo "Cloud One Account: $CLOUD_ONE_ACCOUNT";
+echo "Function Auto Update: $FUNCTION_AUTO_UPDATE";
 echo "Will deploy file storage security protection unit scanner stack, Ctrl-C to cancel..."
 sleep 5
 
@@ -37,6 +39,10 @@ fi
 
 if [ -z "$CLOUD_ONE_ACCOUNT" ]; then
   CLOUD_ONE_ACCOUNT=''
+fi
+
+if [ -z "$FUNCTION_AUTO_UPDATE" ]; then
+  FUNCTION_AUTO_UPDATE='True'
 fi
 
 TEMPLATES_FILE='gcp-templates.zip'
@@ -85,6 +91,7 @@ sed -i.bak "s/<ARTIFACT_BUCKET_NAME>/$ARTIFACT_BUCKET_NAME/g" $SCANNER_YAML_PATH
 sed -i.bak "s/<DEPLOYMENT_NAME>/$DEPLOYMENT_NAME_SCANNER/g" $SCANNER_YAML_PATH
 sed -i.bak "s/<MANAGEMENT_SERVICE_ACCOUNT_ID>/$MANAGEMENT_SERVICE_ACCOUNT/g" $SCANNER_YAML_PATH
 sed -i.bak "s/<MANAGEMENT_SERVICE_ACCOUNT_ID>/$MANAGEMENT_SERVICE_ACCOUNT/g" $SCANNER_SA_YAML_PATH
+sed -i.bak "s/<FUNCTION_AUTO_UPDATE>/$FUNCTION_AUTO_UPDATE/g" $SCANNER_YAML_PATH
 
 cat $SCANNER_SA_YAML_PATH
 cat $SCANNER_YAML_PATH

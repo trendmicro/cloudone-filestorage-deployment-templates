@@ -29,6 +29,7 @@ resources:
     scannerServiceAccountID: <SCANNER_SERVICE_ACCOUNT_ID>
     reportObjectKey: '<REPORT_OBJECT_KEY>'
     managementServiceAccountID: <MANAGEMENT_SERVICE_ACCOUNT_ID>
+    functionAutoUpdate: <FUNCTION_AUTO_UPDATE>
 
 outputs:
   - name: region
@@ -51,3 +52,5 @@ outputs:
     value: $(ref.storage-stack.bucketListenerFunctionName)
   - name: postScanActionTagFunctionName
     value: $(ref.storage-stack.postScanActionTagFunctionName)
+  - name: functionAutoUpdate
+    value: $(ref.storage-stack.functionAutoUpdate)

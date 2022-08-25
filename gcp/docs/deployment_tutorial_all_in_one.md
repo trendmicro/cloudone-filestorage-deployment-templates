@@ -17,7 +17,7 @@ The permissions that File Storage Security management roles will have after it h
 * <walkthrough-editor-open-file filePath="management_roles.py">Management roles</walkthrough-editor-open-file>
 * <walkthrough-editor-open-file filePath="storage/storage_stack_roles.py">Storage stack management roles</walkthrough-editor-open-file>
 
-### Backend updates (coming soon)
+### Backend updates
 
 For automatic backend updates that will be pushed, see [Update components](https://cloudone.trendmicro.com/docs/file-storage-security/component-update-gcp/).
 
@@ -38,11 +38,12 @@ Specify the following fields and execute the deployment script in the Cloud Shel
 1. **Scanning bucket name:** Specify the existing bucket name that you wish to protect.
 1. **Deployment name prefix:** Specify the prefix of this deployment. Please keep it under 22 characters.
 1. **Region:** Specify the region of your bucket. For the list of supported GCP regions, please see [Supported GCP Regions](https://cloudone.trendmicro.com/docs/file-storage-security/supported-gcp/#GCPRegion).
-1. **Cloud One region:** Specify the region ID of your Trend Micro Cloud One account. For the list of supported Cloud One regions, see [supported Cloud One regions](https://cloudone.trendmicro.com/docs/identity-and-account-management/c1-regions/). The default region is `us-1`.
+1. **Cloud One region:** Specify the region ID of your Trend Micro Cloud One account. For the list of supported Cloud One regions, see [Trend Micro Cloud One regions](https://cloudone.trendmicro.com/docs/identity-and-account-management/c1-regions/). The default region is `us-1`.
 1. **Service account:** Copy and paste the service account information from the File Storage Security console.
+1. **Function auto update:** Enable or disable automatic remote code update. The default value is `True`. Allow values: `True`, `False`.
 
 ```sh
-./deployment-script.sh -s <SCANNING_BUCKET_NAME> -d <DEPLOYMENT_NAME_PREFIX> -r <REGION> -c <CLOUD_ONE_REGION> -m <SERVICE_ACCOUNT>
+./deployment-script.sh -s <SCANNING_BUCKET_NAME> -d <DEPLOYMENT_NAME_PREFIX> -r <REGION> -c <CLOUD_ONE_REGION> -m <SERVICE_ACCOUNT> -f <FUNCTION_AUTO_UPDATE>
 ```
 
 ## Configure JSON in File Storage Security console

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-while getopts s:d:r:i:u:k:m: args
+while getopts s:d:r:i:u:k:m:f: args
 do
   case "${args}" in
     s) SCANNING_BUCKET_NAME=${OPTARG};;
@@ -11,6 +11,7 @@ do
     u) PACKAGE_URL=${OPTARG};;
     k) REPORT_OBJECT_KEY=${OPTARG};;
     m) MANAGEMENT_SERVICE_ACCOUNT=${OPTARG};;
+    f) FUNCTION_AUTO_UPDATE=${OPTARG};;
   esac
 done
 
@@ -44,6 +45,10 @@ if [ -z "$REPORT_OBJECT_KEY" ]; then
 else
   REPORT_OBJECT_KEY=$(echo $REPORT_OBJECT_KEY | tr '[:upper:]' '[:lower:]')
   REPORT_OBJECT_KEY=$(echo ${REPORT_OBJECT_KEY:0:1} | tr '[a-z]' '[A-Z]')${REPORT_OBJECT_KEY:1}
+fi
+
+if [ -z "$FUNCTION_AUTO_UPDATE" ]; then
+  FUNCTION_AUTO_UPDATE='True'
 fi
 
 TEMPLATES_FILE='gcp-templates.zip'
@@ -93,6 +98,7 @@ sed -i.bak "s/<SCANNER_SERVICE_ACCOUNT_ID>/$SCANNER_SERVICE_ACCOUNT_ID/g" $STORA
 sed -i.bak "s/<DEPLOYMENT_NAME>/$DEPLOYMENT_NAME_STORAGE/g" $STORAGE_YAML_PATH
 sed -i.bak "s/<REPORT_OBJECT_KEY>/$REPORT_OBJECT_KEY/g" $STORAGE_YAML_PATH
 sed -i.bak "s/<MANAGEMENT_SERVICE_ACCOUNT_ID>/$MANAGEMENT_SERVICE_ACCOUNT/g" $STORAGE_YAML_PATH
+sed -i.bak "s/<FUNCTION_AUTO_UPDATE>/$FUNCTION_AUTO_UPDATE/g" $STORAGE_YAML_PATH
 
 cat $STORAGE_YAML_PATH
 
