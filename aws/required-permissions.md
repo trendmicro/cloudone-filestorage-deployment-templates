@@ -1,22 +1,22 @@
 # User permissions for deployment
 
-The user that will make the deployment need to have specific permissions to execute the deployment. In the file [deployment-role-policy.json](deployment-role-policy.json) you can find the specific permissions that the user policy need to have to deploy the cloudformations templates. If your current user already have a more permissive policy such as `AdministratorAccess` the deployment will work, but we do recommend to apply the principle of least privilege.
+Users need to have specific permissions to execute the deployment.The file [deployment-role-policy.json](deployment-role-policy.json) contains the specific permissions that the users needs to have to deploy the cloudformations templates. You can use a broad, permissive policy such as `AdministratorAccess`, and the deployment will work, but we recommend that roles are more restrictive and have only the permissions required.
 
 To add the policy:
 
-- Go to your `AWS account > IAM > Policies > Create policy`
+- Go to `AWS account > IAM > Policies > Create policy`.
 
 - Select `JSON` and copy and paste the whole content of the [deployment-role-policy.json](deployment-role-policy.json) file.
 
-- Add `Tags` to the policy (optional), give a `Name` to the policy (Required) and a `Description` (Optional). Your policy is ready to be use!
+- Add `Tags` to the policy (optional), give a `Name` to the policy (Required) and a `Description` (Optional). Your policy is ready to be use.
 
 
 To attach the policy to the user:
 
-- Go to your desired user on `IAM > Users`
-- Click on `Add permissions`
-- Select `Attach existing policies directly`
-- Mark the polcy that we've just created and click on `Next > Add permission`.
+- Go to `IAM > Users` and select the user.
+- Click `Add permissions`.
+- Select `Attach existing policies directly`.
+- Mark the policy that you just created and click on `Next > Add permission`.
 
 
 # Permissions required by the templates
