@@ -1,6 +1,6 @@
 # User permissions for deployment
 
-Users need to have specific permissions to execute the deployment.The file [deployment-role-policy.json](deployment-role-policy.json) contains the specific permissions that the users needs to have to deploy the cloudformations templates. You can use a broad, permissive policy such as `AdministratorAccess`, and the deployment will work, but we recommend that roles are more restrictive and have only the permissions required.
+Users need to have specific permissions to execute the deployment. The file [deployment-role-policy.json](deployment-role-policy.json) contains the specific permissions that the users need to deploy the cloudformations templates. You can use a broad, permissive policy such as `AdministratorAccess`, and the deployment will work, but we recommend that roles are restricted to only the permissions required.
 
 To add the policy:
 
@@ -16,12 +16,12 @@ To attach the policy to the user:
 - Go to `IAM > Users` and select the user.
 - Click `Add permissions`.
 - Select `Attach existing policies directly`.
-- Mark the policy that you just created and click on `Next > Add permission`.
+- Select the policy that you just created and click on `Next > Add permission`.
 
 
 # Permissions required by the templates
 
-The templates will create a few IAM roles and policies in order to work properly.
+The templates will create the required IAM roles and policies in order to work properly.
 Also, the templates will create management roles for Cloud One File Storage Security to manage the deployed resources.
 Check out the templates directly for more information.
 
