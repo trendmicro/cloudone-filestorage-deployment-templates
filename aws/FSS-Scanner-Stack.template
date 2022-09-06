@@ -625,11 +625,12 @@ Resources:
       ServiceToken: !GetAtt GetLambdaLastConfig.Arn
       LambdaARNOutputKey: ScannerLambdaARN
       LambdaAliasARNOutputKey: ScannerLambdaAliasARN
-      Modified: 20220531.1
+      Modified: 20220826.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
+      LambdaLayerPrefix: !Ref LambdaLayerPrefix
       NetworkProxy: !Ref NetworkProxy
       ScannerEphemeralStorage: !Ref ScannerEphemeralStorage
       SecurityGroupIDs: !Ref SecurityGroupIDs
@@ -641,11 +642,12 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20220531.1
+      Modified: 20220826.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
+      LambdaLayerPrefix: !Ref LambdaLayerPrefix
       NetworkProxy: !Ref NetworkProxy
       ScannerEphemeralStorage: !Ref ScannerEphemeralStorage
       SecurityGroupIDs: !Ref SecurityGroupIDs
