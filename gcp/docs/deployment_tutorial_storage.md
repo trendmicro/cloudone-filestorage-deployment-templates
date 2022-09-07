@@ -23,13 +23,87 @@ For automatic backend updates that will be pushed, see [Update components](https
 
 ## Project setup
 
-Select the project in which you want to deploy the storage stack, then copy and execute the script in the Cloud Shell:
+1. Select the project from the drop-down list.
+1. Copy and execute the script below in the Cloud Shell to complete the project setup.
 
 <walkthrough-project-setup></walkthrough-project-setup>
 
 ```sh
 gcloud config set project <walkthrough-project-id/>
 ```
+
+## Enable permissions for deployment
+
+You need the following permissions before deployment:
+
+### Step 1: Enable the following APIs:
+
+* Cloud Build API
+* Cloud Deployment Manager V2 API
+* Cloud Functions API
+* Cloud Pub/Sub API
+* Cloud Resource Manager API
+* Cloud Scheduler API
+* IAM Service Account Credentials API
+* Identity and Access Management API
+* Secret Manager API
+
+List the APIs that are enabled:
+
+```sh
+gcloud service list --enabled
+```
+
+Enable all the needed APIs at once:
+
+```sh
+gcloud services enable cloudbuild.googleapis.com deploymentmanager.googleapis.com cloudfunctions.googleapis.com pubsub.googleapis.com cloudresourcemanager.googleapis.com cloudscheduler.googleapis.com iamcredentials.googleapis.com iam.googleapis.com secretmanager.googleapis.com
+```
+
+--------------------------------
+
+### Step 2: Create a custom role containing the permissions below:
+
+* cloudfunctions.functions.setIamPolicy
+* iam.roles.create
+* iam.serviceAccounts.setIamPolicy
+* pubsub.topics.setIamPolicy
+* resourcemanager.projects.setIamPolicy
+
+Naming rules:
+
+1. **ROLE_ID length**: 3~64. ID can only include letters, numbers, periods and underscores.
+1. **ROLE_TITLE length**: 1~100.
+
+```sh
+gcloud iam roles create <ROLE_ID> --project=<walkthrough-project-id/> \
+    --title=<ROLE_TITLE> --description="Custom role for deployment" \
+    --permissions="cloudfunctions.functions.setIamPolicy,iam.roles.create,iam.serviceAccounts.setIamPolicy,pubsub.topics.setIamPolicy,resourcemanager.projects.setIamPolicy" --stage=GA
+```
+
+--------------------------------
+
+### Step 3: Bind the custom role to the service account:
+
+Bind the custom role to <GCP_PROJECT_NUMBER>@cloudservices.gserviceaccount.com. This service account is created by GCP, and its name is Google APIs Service Agent.
+
+1. Get project number:
+
+```sh
+gcloud projects list --filter=<walkthrough-project-id/> --format="value(PROJECT_NUMBER)"
+```
+
+2. Bind service account:
+
+```sh
+gcloud projects add-iam-policy-binding <walkthrough-project-id/> \
+    --member=serviceAccount:<PROJECT_NUMBER>@cloudservices.gserviceaccount.com
+    --role=<ROLE_ID>
+```
+
+--------------------------------
+
+For more information, see [Permissions for deployment](https://cloudone.trendmicro.com/docs/file-storage-security/gs-before-gcp/).
 
 ## Configure and deploy the stack
 
