@@ -371,8 +371,10 @@ Resources:
           import json
           import urllib.request
           import time
+          from collections import defaultdict
           SUCCESS = "SUCCESS"
           FAILED = "FAILED"
+          DEFAULT_ENV_VARIABLE_DICT = defaultdict(str, SCAN_CONFIG='{}')
           lambda_client = boto3.client('lambda')
           def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False):
               responseUrl = event['ResponseURL']
@@ -424,7 +426,7 @@ Resources:
               lambda_client.update_function_configuration(FunctionName=function, Environment=environments, Layers=layers)
           def replace_environments(env_vars_to_recover, last_env_vars, current_environments):
               for env_var in env_vars_to_recover:
-                  current_environments['Variables'][env_var] = last_env_vars.get(env_var, '')
+                  current_environments['Variables'][env_var] = last_env_vars.get(env_var, DEFAULT_ENV_VARIABLE_DICT[env_var])
               return current_environments
           def find_recover_layer_arn(layers, keyword):
               found_arns = [layer_arn for layer_arn in layers if keyword in layer_arn]
@@ -608,6 +610,7 @@ Resources:
           queueURL: !Ref ScannerQueue
           stackARN: !Ref AWS::StackId
           HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
+          SCAN_CONFIG: '{}'
       MemorySize: 512
       Role: !GetAtt ScannerExecutionRole.Arn
       Runtime: python3.8
@@ -625,7 +628,7 @@ Resources:
       ServiceToken: !GetAtt GetLambdaLastConfig.Arn
       LambdaARNOutputKey: ScannerLambdaARN
       LambdaAliasARNOutputKey: ScannerLambdaAliasARN
-      Modified: 20220826.1
+      Modified: 20220906.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
@@ -642,7 +645,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20220826.1
+      Modified: 20220906.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
@@ -659,6 +662,7 @@ Resources:
       EnvVarsToRecover:
         - LICENSE
         - FSS_API_ENDPOINT
+        - SCAN_CONFIG
       LayersToRecover:
         # Find the layer pushed by FSS backend and replace the layer created by templates.
         # The layer name could be:
