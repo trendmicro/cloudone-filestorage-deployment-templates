@@ -1041,3 +1041,18 @@ Outputs:
   ScannerStackManagementRoleARN:
     Value: !GetAtt ManagementRole.Arn
     Description: The ARN of the IAM role for File Storage Security backend services to manage the deployed resources.
+  ScannerQueueDLQARN:
+    Value: !GetAtt ScannerDLQ.Arn
+    Description: The ARN of the Scanner SQS queue's DLQ.
+  ScannerDeadLetterLambdaARN:
+    Value: !GetAtt ScannerDeadLetterLambda.Arn
+    Description: The ARN of the Scanner DLQ Lambda function.
+  ScannerQueueARN:
+    Value: !GetAtt ScannerQueue.Arn
+    Description: The ARN of the Scanner SQS queue.
+  ScannerLogGroupARN:
+    Value: !GetAtt ScannerLogGroup.Arn
+    Description: The ARN of the CloudWatch Log Group for the Scanner Lambda function.
+  ScannerDeadLetterLogGroupARN:
+    Value: !GetAtt ScannerDeadLetterLogGroup.Arn
+    Description: The ARN of the CloudWatch Log Group for the Scanner DLQ Lambda function.
