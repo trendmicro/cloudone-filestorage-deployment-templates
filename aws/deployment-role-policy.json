@@ -23,7 +23,7 @@
         "cloudformation:GetTemplateSummary"
       ],
       "Effect": "Allow",
-      "Resource": "*"
+      "Resource": "arn:aws:cloudformation:*:*:stack/*/*"
     },
     {
       "Sid": "CloudwatchLogPermissions",
@@ -62,7 +62,6 @@
         "lambda:InvokeFunction",
         "lambda:GetLayerVersion",
         "lambda:GetEventSourceMapping",
-        "lambda:TagResource",
         "lambda:GetFunction",
         "lambda:PublishVersion",
         "lambda:PublishLayerVersion",
@@ -76,7 +75,10 @@
         "lambda:DeleteFunction",
         "lambda:DeleteAlias",
         "lambda:DeleteEventSourceMapping",
-        "lambda:RemovePermission"
+        "lambda:RemovePermission",
+        "lambda:ListTags",
+        "lambda:TagResource",
+        "lambda:UntagResource"
       ],
       "Effect": "Allow",
       "Resource": "*"
@@ -104,6 +106,7 @@
         "s3:DeleteAccessPoint",
         "s3:GetAccessPoint",
         "s3:GetAccessPointPolicy",
+        "s3:DeleteAccessPointPolicy",
         "s3:CreateAccessPointForObjectLambda",
         "s3:DeleteAccessPointForObjectLambda",
         "s3:GetAccessPointForObjectLambda",
