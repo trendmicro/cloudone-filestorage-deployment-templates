@@ -1038,6 +1038,14 @@ Outputs:
   ScannerQueueURL:
     Value: !Ref ScannerQueue
     Description: The SQS URL for storage stacks to publish events to.
+  ScannerQueueARN:
+    Value: !GetAtt ScannerQueue.Arn
+  ScannerQueueDLQARN:
+    Value: !GetAtt ScannerDLQ.Arn
   ScannerStackManagementRoleARN:
     Value: !GetAtt ManagementRole.Arn
     Description: The ARN of the IAM role for File Storage Security backend services to manage the deployed resources.
+  ScannerLambdaLogGroupName:
+    Value: !Ref ScannerLogGroup
+  ScannerDeadLetterLambdaLogGroupName:
+    Value: !Ref ScannerDeadLetterLogGroup
