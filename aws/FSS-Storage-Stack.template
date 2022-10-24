@@ -1181,6 +1181,8 @@ Outputs:
     Value: !GetAtt PostScanActionTagLambdaAlias.Arn
   PostScanActionTagLambdaARN:
     Value: !GetAtt PostScanActionTagLambda.Arn
+  PostScanActionTagRoleARN:
+    Value: !GetAtt PostScanActionTagExecutionRole.Arn
   ScanningBucket:
     Value: !Ref S3BucketToScan
   ScanOnGetObjectAccessPointARN:
