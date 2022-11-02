@@ -9,7 +9,7 @@ do
     u) PACKAGE_URL=${OPTARG};;
     m) MANAGEMENT_SERVICE_ACCOUNT=${OPTARG};;
     c) CLOUD_ONE_REGION=${OPTARG};;
-    a) CLOUD_ONE_ACCOUNT=${OPTARG};;
+    a) CLOUD_ONE_ACCOUNT=${OPTARG};; # deprecated
     f) FUNCTION_AUTO_UPDATE=${OPTARG};;
   esac
 done
@@ -24,7 +24,6 @@ echo "Region: $REGION";
 echo "Package URL: $PACKAGE_URL";
 echo "Management Service Account: $MANAGEMENT_SERVICE_ACCOUNT";
 echo "Cloud One Region: $CLOUD_ONE_REGION";
-echo "Cloud One Account: $CLOUD_ONE_ACCOUNT";
 echo "Function Auto Update: $FUNCTION_AUTO_UPDATE";
 echo "Will deploy file storage security protection unit scanner stack, Ctrl-C to cancel..."
 sleep 5
@@ -37,8 +36,8 @@ if [ -z "$CLOUD_ONE_REGION" ]; then
   CLOUD_ONE_REGION='us-1'
 fi
 
-if [ -z "$CLOUD_ONE_ACCOUNT" ]; then
-  CLOUD_ONE_ACCOUNT=''
+if [ ! -z "$CLOUD_ONE_ACCOUNT" ]; then
+  echo "Option -a has deprecated"
 fi
 
 if [ -z "$FUNCTION_AUTO_UPDATE" ]; then
@@ -110,8 +109,7 @@ SCANNER_SERVICE_ACCOUNT_ID=$(searchScannerJSONOutputs scannerServiceAccountID)
 
 SECRET_STRING=$( jq -n \
   --arg fssAPIEndpoint "https://filestorage.$CLOUD_ONE_REGION.cloudone.trendmicro.com/api/" \
-  --arg cloudOneAccount "$CLOUD_ONE_ACCOUNT" \
-  '{FSS_API_ENDPOINT: $fssAPIEndpoint, CLOUD_ONE_ACCOUNT: $cloudOneAccount}' )
+  '{FSS_API_ENDPOINT: $fssAPIEndpoint}' )
 
 # Create scanner secrets environment variable
 echo -n "$SECRET_STRING" | \
