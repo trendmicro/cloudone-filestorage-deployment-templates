@@ -1,0 +1,8 @@
+projectID = "gcp-project-id"
+scannerStacks = {
+    fss-scanner = {
+        region = "gcp-region"
+        managementServiceAccountProjectID = "gcp-project-id"
+        managementServiceAccountID = "fss-gcp-service-account"
+    }
+}
