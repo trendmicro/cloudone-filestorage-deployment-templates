@@ -1,0 +1,15 @@
+projectID = "gcp-project-id"
+storageStacks = {
+    fss-aio-storage = {
+        scanner = null
+        scanningBucketName = "scanning-cloud-storage-bucket-name",
+        region = "gcp-region"
+        managementServiceAccountProjectID = "cloud-one-service-account-gcp-project-id"
+        managementServiceAccountID = "cloud-one-service-account-id"
+        scannerProjectID = "fss-scanner-project-id"
+        scannerTopic = "fss-scanner-topic-name"
+        scannerServiceAccountID = "fss-scanner-service-account"
+        reportObjectKey = false
+        disableScanningBucketIAMBinding = false
+    }
+}
