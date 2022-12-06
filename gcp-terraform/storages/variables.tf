@@ -16,13 +16,13 @@ variable "storageStacks" {
 
   validation {
     condition = (
-      contains([for s in var.storageStacks : (
-          length(keys(var.storageStacks)) < 100 &&
-          lookup(s,"region", null) == null ? false : true &&
-          lookup(s,"scanningBucketName", null) == null ? false : true &&
-          lookup(s,"managementServiceAccountID", null) == null ? false : true &&
-          lookup(s,"managementServiceAccountProjectID", null) == null ? false : true
-      )], false) == true ? false : true
+      !contains([for s in var.storageStacks : (
+          (length(keys(var.storageStacks))) <= 20 &&
+          (lookup(s,"region", null) == null ? false : true) &&
+          (lookup(s,"scanningBucketName", null) == null ? false : true) &&
+          (lookup(s,"managementServiceAccountID", null) == null ? false : true) &&
+          (lookup(s,"managementServiceAccountProjectID", null) == null ? false : true)
+      )], false)
     )
     error_message = "Input validation failed."
   }

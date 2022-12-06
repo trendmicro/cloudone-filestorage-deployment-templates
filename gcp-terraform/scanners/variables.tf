@@ -9,12 +9,12 @@ variable "scannerStacks" {
 
   validation {
     condition = (
-      contains([for s in var.scannerStacks : (
-          length(keys(var.scannerStacks)) < 100 &&
-          lookup(s,"region", null) == null ? false : true &&
-          lookup(s,"managementServiceAccountProjectID", null) == null ? false : true &&
-          lookup(s,"managementServiceAccountID", null) == null ? false : true
-      )], false) == true ? false : true
+      !contains([for s in var.scannerStacks : (
+          (length(keys(var.scannerStacks)) <= 20) &&
+          (lookup(s,"region", null) == null ? false : true) &&
+          (lookup(s,"managementServiceAccountProjectID", null) == null ? false : true) &&
+          (lookup(s,"managementServiceAccountID", null) == null ? false : true)
+      )], false)
     )
     error_message = "Input validation failed."
   }
