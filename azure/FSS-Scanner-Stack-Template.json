@@ -61,6 +61,8 @@
         "scannerQueueAPIVersion": "2017-04-01",
         "scannerLicenseKeyVaultName": "[concat('tmsl0', variables('stackUID'))]",
         "scannerLicenseSecretName": "scanner-license",
+        "scannerConfigKeyVaultName": "[concat('tmsc0', variables('stackUID'))]",
+        "scannerConfigSecretName": "scanner-config",
         "scanResultTopicName": "scan-result-topic",
         "resourceManagementRoleName": "[guid(variables('stackUID'), 'resourceManagementRoleName')]",
         "resourceManagementRoleAssignmentUID": "[guid(variables('stackUID'), 'resourceManagementRoleAssignment', parameters('FileStorageSecurityServicePrincipalID'))]",
@@ -71,9 +73,13 @@
         "scannerLicenseManagementRoleName": "[guid(variables('stackUID'), 'scannerLicenseManagementRoleName')]",
         "scannerLicenseManagementRoleAssignmentUID": "[guid(variables('stackUID'), 'scannerLicenseManagementRoleAssignment', parameters('FileStorageSecurityServicePrincipalID'))]",
         "scannerLicenseManagementRoleDefinitionName": "[concat('FSS-ScannerLicenseManagementRole-', variables('scannerLicenseManagementRoleName'))]",
+        "scannerConfigManagementRoleName": "[guid(variables('stackUID'), 'scannerConfigManagementRoleName')]",
+        "scannerConfigManagementRoleAssignmentUID": "[guid(variables('stackUID'), 'scannerConfigManagementRoleAssignment', parameters('FileStorageSecurityServicePrincipalID'))]",
+        "scannerConfigManagementRoleDefinitionName": "[concat('FSS-ScannerConfigManagementRole-', variables('scannerConfigManagementRoleName'))]",
         "resourcesReaderRoleAssignmentUID": "[guid(resourceGroup().id, 'ResourcesReaderRoleAssignment')]",
         "resourcesReaderRoleID": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
         "scannerLicenseReaderRoleAssignmentUID": "[guid(resourceGroup().id, 'scannerLicenseReaderRoleAssignment')]",
+        "scannerConfigReaderRoleAssignmentUID": "[guid(resourceGroup().id, 'scannerConfigReaderRoleAssignment')]",
         "keyVaultSecretsUserRoleID": "4633458b-17de-408a-b874-0445c86b69e6",
         "functionsWorkerProcessCount": "1",
         "fssAPIEndpoint": "[format('https://filestorage.{0}.cloudone.trendmicro.com/api/', parameters('CloudOneRegion'))]"
@@ -305,6 +311,10 @@
                             "value": "[concat('@Microsoft.KeyVault(VaultName=', variables('scannerLicenseKeyVaultName'), ';SecretName=', variables('scannerLicenseSecretName'), ')')]"
                         },
                         {
+                            "name": "SCAN_CONFIG",
+                            "value": "[concat('@Microsoft.KeyVault(VaultName=', variables('scannerConfigKeyVaultName'), ';SecretName=', variables('scannerConfigSecretName'), ')')]"
+                        },
+                        {
                             "name": "BUS_QUEUE_CONNECTION_STR",
                             "value": "[listkeys(variables('scannerQueueAuthRuleResourceId'), variables('scannerQueueAPIVersion')).primaryConnectionString]"
                         },
@@ -398,6 +408,33 @@
                 "enabledForDiskEncryption": false,
                 "enabledForTemplateDeployment": false,
                 "enableRbacAuthorization": true,
+                "enableSoftDelete": true,
+                "enablePurgeProtection": true,
+                "softDeleteRetentionInDays": 7,
+                "tenantId": "[subscription().tenantId]",
+                "sku": {
+                    "name": "Standard",
+                    "family": "A"
+                },
+                "networkAcls": {
+                    "defaultAction": "Allow",
+                    "bypass": "AzureServices"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('scannerConfigKeyVaultName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "enabledForDeployment": false,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": false,
+                "enableRbacAuthorization": true,
+                "enableSoftDelete": true,
+                "enablePurgeProtection": true,
+                "softDeleteRetentionInDays": 7,
                 "tenantId": "[subscription().tenantId]",
                 "sku": {
                     "name": "Standard",
@@ -417,6 +454,20 @@
                 "[resourceId('Microsoft.KeyVault/vaults', variables('scannerLicenseKeyVaultName'))]"
             ],
             "scope": "[resourceId('Microsoft.KeyVault/vaults', variables('scannerLicenseKeyVaultName'))]",
+            "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('keyVaultSecretsUserRoleID'))]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('scannerFunctionAppName')), variables('scannerFunctionAppAPIVersion'), 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2018-09-01-preview",
+            "name": "[variables('scannerConfigReaderRoleAssignmentUID')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', variables('scannerConfigKeyVaultName'))]"
+            ],
+            "scope": "[resourceId('Microsoft.KeyVault/vaults', variables('scannerConfigKeyVaultName'))]",
             "properties": {
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('keyVaultSecretsUserRoleID'))]",
                 "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('scannerFunctionAppName')), variables('scannerFunctionAppAPIVersion'), 'full').identity.principalId]",
@@ -546,7 +597,8 @@
                 "permissions": [
                     {
                         "dataActions": [
-                            "Microsoft.KeyVault/vaults/secrets/setSecret/action"
+                            "Microsoft.KeyVault/vaults/secrets/setSecret/action",
+                            "Microsoft.KeyVault/vaults/secrets/getSecret/action"
                         ]
                     }
                 ],
@@ -567,6 +619,44 @@
             "scope": "[resourceId('Microsoft.KeyVault/vaults', variables('scannerLicenseKeyVaultName'))]",
             "properties": {
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('scannerLicenseManagementRoleName'))]",
+                "principalId": "[parameters('FileStorageSecurityServicePrincipalID')]",
+                "principalType": "ServicePrincipal"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleDefinitions",
+            "apiVersion": "2022-04-01",
+            "name": "[variables('scannerConfigManagementRoleName')]",
+            "properties": {
+                "roleName": "[variables('scannerConfigManagementRoleDefinitionName')]",
+                "description": "FSS scanner configuration key vault management role",
+                "type": "customRole",
+                "isCustom": true,
+                "permissions": [
+                    {
+                        "dataActions": [
+                            "Microsoft.KeyVault/vaults/secrets/getSecret/action",
+                            "Microsoft.KeyVault/vaults/secrets/setSecret/action"
+                        ]
+                    }
+                ],
+                "assignableScopes": [
+                    "[resourceGroup().id]"
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2018-09-01-preview",
+            "name": "[variables('scannerConfigManagementRoleAssignmentUID')]",
+            "condition": "[not(empty(parameters('FileStorageSecurityServicePrincipalID')))]",
+            "dependsOn": [
+                "[variables('scannerConfigManagementRoleName')]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('scannerConfigKeyVaultName'))]"
+            ],
+            "scope": "[resourceId('Microsoft.KeyVault/vaults', variables('scannerConfigKeyVaultName'))]",
+            "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('scannerConfigManagementRoleName'))]",
                 "principalId": "[parameters('FileStorageSecurityServicePrincipalID')]",
                 "principalType": "ServicePrincipal"
             }
@@ -604,6 +694,10 @@
         "ScannerLicenseKeyVaultURI": {
             "type": "string",
             "value": "[reference(resourceId('Microsoft.KeyVault/vaults', variables('scannerLicenseKeyVaultName'))).vaultUri]"
+        },
+        "ScannerConfigKeyVaultURI": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.KeyVault/vaults', variables('scannerConfigKeyVaultName'))).vaultUri]"
         }
     }
 }
