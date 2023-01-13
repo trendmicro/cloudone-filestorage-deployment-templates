@@ -103,7 +103,7 @@ To complete the deployment process, once the stacks are deployed, follow the ste
 > **Tip**:
 > You can get Terraform output by the command.
 > ```sh
-> terraform output
+> terraform -chdir=scanners output
 > ```
 
 --------------------------------
