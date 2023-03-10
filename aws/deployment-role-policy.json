@@ -31,7 +31,8 @@
         "logs:DescribeLogGroups",
         "logs:DeleteLogGroup",
         "logs:PutRetentionPolicy",
-        "logs:CreateLogGroup"
+        "logs:CreateLogGroup",
+        "logs:TagResource"
       ],
       "Effect": "Allow",
       "Resource": "arn:aws:logs:*:*:log-group:*"
@@ -129,6 +130,7 @@
       "Sid": "SNSTopicPermissions",
       "Action": [
         "sns:TagResource",
+        "sns:UntagResource",
         "sns:GetTopicAttributes",
         "sns:DeleteTopic",
         "sns:CreateTopic",
