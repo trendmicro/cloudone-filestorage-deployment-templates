@@ -45,7 +45,7 @@
 
         "stackUID": "[uniqueString(resourceGroup().id)]",
         "scannerFunctionAppName": "[concat('tmsf0', variables('stackUID'))]",
-        "scannerFunctionAppAPIVersion": "2018-11-01",
+        "scannerFunctionAppAPIVersion": "2022-03-01",
         "scannerServerFarmName": "[concat('tmssf0', variables('stackUID'))]",
         "scannerStorageAccountName": "[concat('tmsa0', toLower(variables('stackUID')))]",
         "location": "[resourceGroup().location]",
@@ -101,7 +101,7 @@
         },
         {
             "type": "Microsoft.ServiceBus/namespaces",
-            "apiVersion": "2018-01-01-preview",
+            "apiVersion": "2022-10-01-preview",
             "name": "[variables('scannerQueueNamespaceName')]",
             "location": "[variables('location')]",
             "sku": {
@@ -109,12 +109,13 @@
                 "tier": "Basic"
             },
             "properties": {
-                "zoneRedundant": false
+                "zoneRedundant": false,
+                "minimumTlsVersion": "1.2"
             },
             "resources": [
                 {
                     "type": "Microsoft.ServiceBus/namespaces/queues",
-                    "apiVersion": "2018-01-01-preview",
+                    "apiVersion": "2022-10-01-preview",
                     "name": "[variables('scannerBusQueueName')]",
                     "location": "[variables('location')]",
                     "dependsOn": [
@@ -353,7 +354,8 @@
                         }
                     ],
                     "use32BitWorkerProcess": false,
-                    "linuxFxVersion": "PYTHON|3.8"
+                    "linuxFxVersion": "PYTHON|3.8",
+                    "minTlsVersion": "1.2"
                 },
                 "scmSiteAlsoStopped": false,
                 "clientAffinityEnabled": false,
