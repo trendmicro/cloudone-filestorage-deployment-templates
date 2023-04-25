@@ -106,6 +106,7 @@ resource "google_project_iam_custom_role" "trend_micro_fss_service_account_manag
   description = "Trend Micro File Storage Security Service Account Management Role"
   title = "${local.custom_role_title_prefix}trend-micro-fss-service-account-management-role"
   permissions = [
+    "iam.serviceAccounts.actAs",
     "iam.serviceAccounts.get",
     "iam.serviceAccounts.getIamPolicy",
     "iam.serviceAccounts.list"
