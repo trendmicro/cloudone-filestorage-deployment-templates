@@ -84,3 +84,23 @@ resource "google_project_iam_binding" "bucket_listener_sign_blob_iam_binding" {
     expression  = "(resource.type == \"storage.googleapis.com/Bucket\" && resource.name.startsWith(\"projects/_/buckets/${each.value.scanningBucketName}\")) || (resource.type != \"storage.googleapis.com/Bucket\")"
   }
 }
+
+resource "google_service_account_iam_binding" "post_action_tag_service_account_iam" {
+  for_each = local.storage_stacks
+  service_account_id = google_service_account.post_action_tag_service_account[each.key].name
+  role               = "projects/${var.projectID}/roles/${local.custom_role_prefix}trend_micro_fss_service_account_management_role"
+
+  members = [
+    "serviceAccount:${data.google_service_account.management_service_account[each.key].email}"
+  ]
+}
+
+resource "google_service_account_iam_binding" "bucket_listener_service_account_iam" {
+  for_each = local.storage_stacks
+  service_account_id = google_service_account.bucket_listener_service_account[each.key].name
+  role               = "projects/${var.projectID}/roles/${local.custom_role_prefix}trend_micro_fss_service_account_management_role"
+
+  members = [
+    "serviceAccount:${data.google_service_account.management_service_account[each.key].email}"
+  ]
+}
