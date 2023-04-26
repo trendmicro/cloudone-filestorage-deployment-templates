@@ -76,6 +76,9 @@
         "scannerConfigManagementRoleName": "[guid(variables('stackUID'), 'scannerConfigManagementRoleName')]",
         "scannerConfigManagementRoleAssignmentUID": "[guid(variables('stackUID'), 'scannerConfigManagementRoleAssignment', parameters('FileStorageSecurityServicePrincipalID'))]",
         "scannerConfigManagementRoleDefinitionName": "[concat('FSS-ScannerConfigManagementRole-', variables('scannerConfigManagementRoleName'))]",
+        "scannerUpdaterRoleName": "[guid(variables('stackUID'), 'scannerUpdaterRoleName', parameters('FileStorageSecurityServicePrincipalID'))]",
+        "scannerUpdaterRoleAssignmentUID": "[guid(variables('stackUID'), 'scannerUpdaterRoleAssignment')]",
+        "scannerUpdaterRoleDefinitionName": "[concat('FSS-ScannerUpdaterRole-', variables('scannerUpdaterRoleName'))]",
         "resourcesReaderRoleAssignmentUID": "[guid(resourceGroup().id, 'ResourcesReaderRoleAssignment')]",
         "resourcesReaderRoleID": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
         "scannerLicenseReaderRoleAssignmentUID": "[guid(resourceGroup().id, 'scannerLicenseReaderRoleAssignment')]",
@@ -87,7 +90,7 @@
     "resources": [
         {
             "type": "Microsoft.Authorization/roleAssignments",
-            "apiVersion": "2018-09-01-preview",
+            "apiVersion": "2022-04-01",
             "name": "[variables('resourcesReaderRoleAssignmentUID')]",
             "dependsOn": [
                 "[variables('scannerFunctionAppName')]"
@@ -160,54 +163,6 @@
             "properties": {
                 "minimumTlsVersion": "TLS1_2",
                 "allowBlobPublicAccess": false
-            }
-        },
-        {
-            "type": "Microsoft.Resources/deploymentScripts",
-            "apiVersion": "2020-10-01",
-            "name": "downloadPatterns",
-            "location": "[resourceGroup().location]",
-            "kind": "AzureCLI",
-            "dependsOn": [
-                "[variables('scannerFunctionAppName')]"
-            ],
-            "properties": {
-                "forceUpdateTag": "20210331",
-                "azCliVersion": "2.3.1",
-                "storageAccountSettings": {
-                    "storageAccountName": "[variables('scannerStorageAccountName')]",
-                    "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('scannerStorageAccountName')), '2019-06-01').keys[0].value]"
-                },
-                "environmentVariables": [
-                    {
-                        "name": "AZURE_STORAGE_ACCOUNT",
-                        "value": "[variables('scannerStorageAccountName')]"
-                    },
-                    {
-                        "name": "AZURE_STORAGE_KEY",
-                        "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('scannerStorageAccountName')), '2019-06-01').keys[0].value]"
-                    },
-                    {
-                        "name": "RESOURCE_GROUP_NAME",
-                        "value": "[resourceGroup().name]"
-                    },
-                    {
-                        "name": "FUNCTION_APP_NAME",
-                        "value": "[variables('scannerFunctionAppName')]"
-                    },
-                    {
-                        "name": "PATTERN_ROOT_FOLDER",
-                        "value": "[variables('scannerPatternRootFolder')]"
-                    },
-                    {
-                        "name": "PATTERN_PATH",
-                        "value": "[variables('scannerPatternPath')]"
-                    }
-                ],
-                "scriptContent": "set -x \n az storage directory create --share-name $FUNCTION_APP_NAME --name $PATTERN_ROOT_FOLDER \n az storage directory create --share-name $FUNCTION_APP_NAME --name $PATTERN_PATH \n wget https://file-storage-security.s3.amazonaws.com/latest/patterns/pattern-icrc-269.zip -O pattern.zip \n unzip pattern.zip \n az storage file upload-batch --destination $FUNCTION_APP_NAME/$PATTERN_PATH --source ./patterns",
-                "timeout": "PT10M",
-                "cleanupPreference": "OnSuccess",
-                "retentionInterval": "P1D"
             }
         },
         {
@@ -306,7 +261,7 @@
                         },
                         {
                             "name": "PATTERN_UPDATE_SCHEDULE",
-                            "value": "01:00:00"
+                            "value": "00:01:00"
                         },
                         {
                             "name": "LICENSE",
@@ -351,6 +306,10 @@
                         {
                             "name": "FSS_API_ENDPOINT",
                             "value": "[variables('fssAPIEndpoint')]"
+                        },
+                        {
+                            "name": "RESOURCE_GROUP_NAME",
+                            "value": "[resourceGroup().name]"
                         }
                     ],
                     "use32BitWorkerProcess": false,
@@ -479,7 +438,47 @@
         },
         {
             "type": "Microsoft.Authorization/roleDefinitions",
-            "apiVersion": "2018-07-01",
+            "apiVersion": "2022-04-01",
+            "name": "[variables('scannerUpdaterRoleName')]",
+            "properties": {
+                "roleName": "[variables('scannerUpdaterRoleDefinitionName')]",
+                "description": "FSS pattern updater role",
+                "type": "customRole",
+                "isCustom": true,
+                "permissions": [
+                    {
+                        "actions": [
+                            "Microsoft.Web/sites/Read",
+                            "Microsoft.Web/sites/config/list/action",
+                            "Microsoft.Web/sites/config/Read",
+                            "Microsoft.Web/sites/config/Write",
+                            "Microsoft.Web/sites/restart/Action"
+                        ]
+                    }
+                ],
+                "assignableScopes": [
+                    "[resourceGroup().id]"
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[variables('scannerUpdaterRoleAssignmentUID')]",
+            "dependsOn": [
+                "[variables('scannerUpdaterRoleName')]",
+                "[variables('scannerFunctionAppName')]"
+            ],
+            "scope": "[resourceId('Microsoft.Web/sites', variables('scannerFunctionAppName'))]",
+            "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('scannerUpdaterRoleName'))]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('scannerFunctionAppName')), variables('scannerFunctionAppAPIVersion'), 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleDefinitions",
+            "apiVersion": "2022-04-01",
             "name": "[variables('resourceManagementRoleName')]",
             "properties": {
                 "roleName": "[variables('resourceManagementRoleDefinitionName')]",
@@ -552,7 +551,7 @@
         },
         {
             "type": "Microsoft.Authorization/roleDefinitions",
-            "apiVersion": "2018-07-01",
+            "apiVersion": "2022-04-01",
             "name": "[variables('scannerQueueManagementRoleName')]",
             "properties": {
                 "roleName": "[variables('scannerQueueManagementRoleDefinitionName')]",
@@ -590,7 +589,7 @@
         },
         {
             "type": "Microsoft.Authorization/roleDefinitions",
-            "apiVersion": "2018-07-01",
+            "apiVersion": "2022-04-01",
             "name": "[variables('scannerLicenseManagementRoleName')]",
             "properties": {
                 "roleName": "[variables('scannerLicenseManagementRoleDefinitionName')]",
