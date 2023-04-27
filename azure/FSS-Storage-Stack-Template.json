@@ -94,6 +94,62 @@
             "metadata": {
                 "description": "Warning: Do not modify the field. Modifications may cause your deployment to fail."
             }
+        },
+        "VNETResourceID": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />This field requires the resource ID of the existing virtual network (VNet) that the deployed resource will be associated with. If you wish to deploy the resource into a VNet, please see <a href='https://cloudone.trendmicro.com/docs/file-storage-security/azure-vnet-deployment/'>Deploy in VNet</a> for detailed instructions and ensure that the required resources have been created.<br /> If a VNet is not required, please leave this field blank."
+            }
+        },
+        "VNETBlobListenerSubnetName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />The name of the subnet used by the BlobListener Function App."
+            }
+        },
+        "VNETPostScanActionTagSubnetName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />The name of the subnet used by the Post Scan Action Tag Function App."
+            }
+        },
+        "VNETPrivateEndpointsSubnetName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />Provide the name of the subnet used to create private endpoints for other resources such as Service Bus and Storage Account."
+            }
+        },
+        "VNETFilePrivateDNSZoneResourceID": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />To connect to stack resources via private endpoints, use the Private DNS zone resource ID for the storage account file.<br/>For example:<br/><b>/subscriptions/1234abcd-3c6d-4347-9019-123456789012/resourceGroups/resource-group-name/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net</b><br/>Please confirm the Private DNS zone name is correct and refer to <a href='https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns'>Azure Private Endpoint DNS configuration</a>.<br/> If a VNet is not required, please leave this field blank."
+            }
+        },
+        "VNETBlobPrivateDNSZoneResourceID": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />To connect to stack resources via private endpoints, use the Private DNS zone resource ID for the storage account blob.<br/>For example:<br/><b>/subscriptions/1234abcd-3c6d-4347-9019-123456789012/resourceGroups/resource-group-name/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net</b><br/>Please confirm the Private DNS zone name is correct and refer to <a href='https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns'>Azure Private Endpoint DNS configuration</a>.<br/> If a VNet is not required, please leave this field blank."
+            }
+        },
+        "VNETServiceBusPrivateDNSZoneResourceID": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />To connect to stack resources via private endpoints, use the Private DNS zone resource ID for the service bus.<br/>For example:<br/><b>/subscriptions/1234abcd-3c6d-4347-9019-123456789012/resourceGroups/resource-group-name/providers/Microsoft.Network/privateDnsZones/privatelink.servicebus.windows.net</b><br/>Please confirm the Private DNS zone name is correct and refer to <a href='https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns'>Azure Private Endpoint DNS configuration</a>.<br/> If a VNet is not required, please leave this field blank."
+            }
+        },
+        "VNETRestrictedAccessForApplicationInsights": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />Indicates whether to restrict public access to Application Insights. If set to true, it means that Application Insights can only be accessed through Azure Monitor Private Link Scope. If you don't add the Application Insight to the Azure Monitor Private Link Scope, you won't be able to ingest or query data. For more information on how to configure Private Link for Application Insights, please see <a href='https://cloudone.trendmicro.com/docs/file-storage-security/azure-vnet-deployment/'>Restrict access to Application Insights'</a>. If VNet is not required, please choose false."
+            }
         }
     },
     "variables": {
@@ -103,6 +159,7 @@
         "actionTagFunctionPackageLink": "[concat(parameters('StackPackageLocation'), '/', variables('functionPackageLinkPrefix'), '/azure-action-tag.zip', variables('unifiedSAS'))]",
 
         "stackUID": "[uniqueString(resourceGroup().id)]",
+        "functionContentShareName": "function-content-share",
         "blobStorageAccountResourceIdSplits": "[split(parameters('BlobStorageAccountResourceID'), '/')]",
         "blobSubscriptionID": "[variables('blobStorageAccountResourceIdSplits')[2]]",
         "blobResourceGroupName": "[variables('blobStorageAccountResourceIdSplits')[4]]",
@@ -114,6 +171,11 @@
         "blobListenerApplicationInsightsID": "[guid(variables('blobListenerApplicationInsightsName'))]",
         "blobListenerServerFarmName": "[concat('tmblsf0', variables('stackUID'))]",
         "blobListenerStorageAccountName": "[concat('tmblsa0', variables('stackUID'))]",
+        "blobListenerStorageAccountFileNICName": "[concat('tmblsani0', variables('stackUID'))]",
+        "blobListenerStorageAccountBlobNICName": "[concat('tmblsani1', variables('stackUID'))]",
+        "blobListenerStorageAccountFilePEName": "[concat('tmblsape0', variables('stackUID'))]",
+        "blobListenerStorageAccountBlobPEName": "[concat('tmblsape1', variables('stackUID'))]",
+        "blobListenerStorageAccountFileShareName": "[format('{0}/default/{1}', variables('blobListenerStorageAccountName'), variables('functionContentShareName'))]",
         "blobEventsDeadLetterContainer": "blob-events-dead-letter",
         "actionTagAppName": "[concat('tmat0', variables('stackUID'))]",
         "actionTagAppAPIVersion": "2022-03-01",
@@ -121,25 +183,38 @@
         "actionTagApplicationInsightsID": "[guid(variables('actionTagApplicationInsightsName'))]",
         "actionTagServerFarmName": "[concat('tmatsf0', variables('stackUID'))]",
         "actionTagStorageAccountName": "[concat('tmatsa0', variables('stackUID'))]",
+        "actionTagStorageAccountFileNICName": "[concat('tmatsani0', variables('stackUID'))]",
+        "actionTagStorageAccountBlobNICName": "[concat('tmatsani1', variables('stackUID'))]",
+        "actionTagStorageAccountFilePEName": "[concat('tmatsape0', variables('stackUID'))]",
+        "actionTagStorageAccountBlobPEName": "[concat('tmatsape1', variables('stackUID'))]",
+        "actionTagStorageAccountFileShareName": "[format('{0}/default/{1}', variables('actionTagStorageAccountName'), variables('functionContentShareName'))]",
         "location": "[resourceGroup().location]",
         "serviceBusDataSenderRoleID": "69a216fc-b8fb-44d8-bc22-1f3c2cd27a39",
         "scannerQueueNamespace": "[concat(parameters('ScannerQueueNamespace'), '.servicebus.windows.net')]",
-        "blobStorageAccountAPIVersion": "2019-06-01",
-        "scanResultTopicAPIVersion": "2022-10-01-preview",
-        "scanResultTopicNamespaceName": "[concat('tmsrt0', variables('stackUID'))]",
-        "scanResultTopicNamespace": "[concat(variables('scanResultTopicNamespaceName'), '.servicebus.windows.net')]",
+
+        "storageServiceBusAPIVersion": "2017-04-01",
+        "storageServiceBusNamespaceName": "[concat('tmsrt0', variables('stackUID'))]",
+        "storageServiceBusNamespace": "[concat(variables('storageServiceBusNamespaceName'), '.servicebus.windows.net')]",
+        "storageServiceBusSASKeyName": "RootManageSharedAccessKey",
+        "storageServiceBusAuthRuleResourceID": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', variables('storageServiceBusNamespaceName'), variables('storageServiceBusSASKeyName'))]",
+        "storageServiceBusNamespacePEName": "[concat('tmssbpe0', toLower(variables('stackUID')))]",
+        "storageServiceBusNamespaceNICName": "[concat('tmssbni0', toLower(variables('stackUID')))]",
         "scanResultTopicName": "scan-result-topic",
         "scanResultTopicSubscriptionName": "scan-result",
-        "scanResultSASKeyName": "RootManageSharedAccessKey",
-        "scanResultAuthRuleResourceID": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', variables('scanResultTopicNamespaceName'), variables('scanResultSASKeyName'))]",
+        "bloblistenerQueueName": "blob_listener_queue",
+        "blobListenerBusQueueName": "[concat(variables('storageServiceBusNamespaceName'), '/', variables('bloblistenerQueueName'))]",
+
+        "blobStorageAccountAPIVersion": "2019-06-01",
         "blobActionTagRoleDefinitionName": "[guid(variables('stackUID'), 'blobActionTagRoleName')]",
         "blobListenerRoleDefinitionName": "[guid(variables('stackUID'), 'blobListenerRoleName')]",
         "blobSystemTopicSubscriptionName": "[concat(variables('blobListenerAppName'), '-trigger')]",
+        "blobSystemTopicServiceBusQueueSubscriptionName": "[concat(variables('blobListenerAppName'), '-service-bus-queue-trigger')]",
         "blobActionTagRoleAssignmentUID": "[guid(resourceGroup().id, 'BlobActionTagRoleAssignment')]",
         "blobListenerRoleAssignmentUID": "[guid(resourceGroup().id, 'BlobListenerRoleAssignment')]",
         "blobActionTagRoleName": "[concat('FSS-BlobActionTagRole-', uniqueString(string(variables('blobActionTagDataActions')), variables('stackUID')))]",
         "blobListenerRoleName": "[concat('FSS-BlobListenerRole-', uniqueString(string(variables('blobListenerActions')), string(variables('blobListenerDataActions')), variables('stackUID')))]",
         "blobSystemTopicSubscriptionID": "[concat('/subscriptions/', variables('blobSubscriptionID'), '/resourcegroups/', variables('blobResourceGroupName'), '/providers/Microsoft.EventGrid/systemTopics/', parameters('BlobSystemTopicName'), '/eventSubscriptions/', variables('blobSystemTopicSubscriptionName'))]",
+        "blobSystemTopicServiceBusQueueSubscriptionID": "[concat('/subscriptions/', variables('blobSubscriptionID'), '/resourcegroups/', variables('blobResourceGroupName'), '/providers/Microsoft.EventGrid/systemTopics/', parameters('BlobSystemTopicName'), '/eventSubscriptions/', variables('blobSystemTopicServiceBusQueueSubscriptionName'))]",
         "managementRoleName": "[guid(variables('stackUID'), 'ManagementRole')]",
         "managementRoleAssignmentUID": "[guid(variables('stackUID'), 'ManagementRoleAssignment', parameters('FileStorageSecurityServicePrincipalID'))]",
         "functionsWorkerProcessCount": "10",
@@ -162,7 +237,31 @@
         "blobActionTagDataActions": "[if(equals(parameters('UpdateScanResultToBlobMetadata'), 'Yes'), variables('blobDataActions'), variables('blobIndexTagDataActions'))]",
         "updateScanResultToBlobMetadata": "[if(equals(parameters('UpdateScanResultToBlobMetadata'), 'Yes'), 'True', 'False')]",
         "reportObjectKey": "[if(equals(parameters('ReportObjectKey'), 'Yes'), 'True', 'False')]",
-        "functionsWarmupLogicAppName": "functionsWarmUpLogicApp"
+        "functionsWarmupLogicAppName": "functionsWarmUpLogicApp",
+        "withVNet": "[not(empty(parameters('VNETResourceID')))]",
+        "privateEndpointSubnetID": "[concat(parameters('VNETResourceID'), '/subnets/', parameters('VNETPrivateEndpointsSubnetName'))]",
+        "serviceBusTier": "[if(variables('withVNet'), 'Premium', 'Standard')]",
+        "functionAppSKUMap": {
+            "Y1": {
+                "name": "Y1",
+                "tier": "Dynamic",
+                "size": "Y1",
+                "family": "Y"
+            },
+            "EP1": {
+                "name": "EP1",
+                "tier": "ElasticPremium",
+                "size": "EP1",
+                "family": "EP"
+            }
+        },
+        "functionAppSKU": "[variables('functionAppSkuMap')[if(variables('withVNet'), 'EP1', 'Y1')]]",
+        "storageAccountType": "[if(variables('withVNet'), 'StorageV2', 'Storage')]",
+        "publicNetworkAccess": "[if(variables('withVNet'), 'Disabled', 'Enabled')]",
+        "filePrivateZoneGroupName": "filePrivateDnsZoneGroup",
+        "blobPrivateZoneGroupName": "blobPrivateDnsZoneGroup",
+        "serviceBusPrivateZoneGroupName": "serviceBusPrivateDnsZoneGroup",
+        "appInsightPublicAccess": "[if(parameters('VNETRestrictedAccessForApplicationInsights'), 'Disabled', 'Enabled')]"
     },
     "resources": [
         {
@@ -252,13 +351,13 @@
             }
         },
         {
-            "apiVersion": "[variables('scanResultTopicAPIVersion')]",
-            "name": "[variables('scanResultTopicNamespaceName')]",
+            "apiVersion": "[variables('storageServiceBusAPIVersion')]",
+            "name": "[variables('storageServiceBusNamespaceName')]",
             "type": "Microsoft.ServiceBus/Namespaces",
             "location": "[variables('location')]",
             "kind": "Messaging",
             "sku": {
-                "name": "Standard"
+                "name": "[variables('serviceBusTier')]"
             },
             "properties": {
                 "zoneRedundant": false,
@@ -266,18 +365,18 @@
             },
             "resources": [
                 {
-                    "apiVersion": "[variables('scanResultTopicAPIVersion')]",
+                    "apiVersion": "[variables('storageServiceBusAPIVersion')]",
                     "name": "[variables('scanResultTopicName')]",
                     "type": "Topics",
                     "dependsOn": [
-                        "[resourceId('Microsoft.ServiceBus/namespaces/', variables('scanResultTopicNamespaceName'))]"
+                        "[resourceId('Microsoft.ServiceBus/namespaces/', variables('storageServiceBusNamespaceName'))]"
                     ],
                     "properties": {
                         "path": "[variables('scanResultTopicName')]"
                     },
                     "resources": [
                         {
-                            "apiVersion": "[variables('scanResultTopicAPIVersion')]",
+                            "apiVersion": "[variables('storageServiceBusAPIVersion')]",
                             "name": "[variables('scanResultTopicSubscriptionName')]",
                             "type": "Subscriptions",
                             "dependsOn": [
@@ -292,17 +391,86 @@
                             }
                         }
                     ]
+                },
+                {
+                    "type": "Microsoft.ServiceBus/namespaces/queues",
+                    "condition": "[variables('withVNet')]",
+                    "apiVersion": "2018-01-01-preview",
+                    "name": "[variables('blobListenerBusQueueName')]",
+                    "location": "[variables('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.ServiceBus/namespaces/', variables('storageServiceBusNamespaceName'))]"
+                    ],
+                    "properties": {
+                        "lockDuration": "PT3M",
+                        "maxSizeInMegabytes": 1024,
+                        "requiresDuplicateDetection": false,
+                        "requiresSession": false,
+                        "defaultMessageTimeToLive": "P1D",
+                        "deadLetteringOnMessageExpiration": true,
+                        "enableBatchedOperations": false,
+                        "maxDeliveryCount": 5,
+                        "status": "Active",
+                        "enablePartitioning": false,
+                        "enableExpress": false
+                    }
                 }
             ]
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2022-07-01",
+            "name": "[variables('storageServiceBusNamespacePEName')]",
+            "location": "[resourceGroup().location]",
+            "condition": "[variables('withVNet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('storageServiceBusNamespaceName'))]"
+            ],
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('storageServiceBusNamespacePEName')]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.ServiceBus/namespaces', variables('storageServiceBusNamespaceName'))]",
+                            "groupIds": [
+                                "namespace"
+                            ]
+                        }
+                    }
+                ],
+                "customNetworkInterfaceName": "[variables('storageServiceBusNamespaceNICName')]",
+                "subnet": {
+                    "id": "[variables('privateEndpointSubnetID')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2022-07-01",
+            "name": "[concat(variables('storageServiceBusNamespacePEName'), '/', variables('serviceBusPrivateZoneGroupName'))]",
+            "condition": "[and(not(empty(parameters('VNETServiceBusPrivateDNSZoneResourceID'))), variables('withVNet'))]",
+            "dependsOn": [
+                "[variables('storageServiceBusNamespacePEName')]"
+            ],
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "[variables('serviceBusPrivateZoneGroupName')]",
+                        "properties": {
+                            "privateDnsZoneId": "[parameters('VNETServiceBusPrivateDNSZoneResourceID')]"
+                        }
+                    }
+                ]
+            }
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2018-09-01-preview",
             "name": "[guid(resourceGroup().id, parameters('ScannerIdentityPrincipalID'), 'ServiceBusDataSenderRoleAssignment')]",
             "dependsOn": [
-                "[resourceId('Microsoft.ServiceBus/namespaces/Topics', variables('scanResultTopicNamespaceName'), variables('scanResultTopicName'))]"
+                "[resourceId('Microsoft.ServiceBus/namespaces/Topics', variables('storageServiceBusNamespaceName'), variables('scanResultTopicName'))]"
             ],
-            "scope": "[concat('Microsoft.ServiceBus/namespaces/', variables('scanResultTopicNamespaceName'), '/topics/', variables('scanResultTopicName'))]",
+            "scope": "[concat('Microsoft.ServiceBus/namespaces/', variables('storageServiceBusNamespaceName'), '/topics/', variables('scanResultTopicName'))]",
             "properties": {
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('serviceBusDataSenderRoleID'))]",
                 "principalId": "[parameters('ScannerIdentityPrincipalID')]",
@@ -312,25 +480,32 @@
         {
             "name": "[variables('blobListenerApplicationInsightsName')]",
             "type": "microsoft.insights/components",
+            "kind": "web",
             "location": "[variables('location')]",
-            "apiVersion": "2014-08-01",
+            "apiVersion": "2020-02-02",
             "properties": {
                 "Application_Type": "web",
-                "ApplicationId": "[variables('blobListenerApplicationInsightsID')]"
+                "publicNetworkAccessForIngestion": "[variables('appInsightPublicAccess')]",
+                "publicNetworkAccessForQuery": "[variables('appInsightPublicAccess')]"
             }
         },
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2021-04-01",
+            "apiVersion": "2022-09-01",
             "name": "[variables('blobListenerStorageAccountName')]",
             "location": "[variables('location')]",
             "sku": {
                 "name": "Standard_LRS"
             },
-            "kind": "Storage",
+            "kind": "[variables('storageAccountType')]",
             "properties": {
                 "minimumTlsVersion": "TLS1_2",
-                "allowBlobPublicAccess": false
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [],
+                    "ipRules": [],
+                    "defaultAction": "[if(variables('withVNet'), 'Deny', 'Allow')]"
+                }
             },
             "resources": [
                 {
@@ -347,6 +522,107 @@
             ]
         },
         {
+            "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+            "apiVersion": "2022-05-01",
+            "name": "[variables('blobListenerStorageAccountFileShareName')]",
+            "condition": "[variables('withVNet')]",
+            "dependsOn": [
+              "[resourceId('Microsoft.Storage/storageAccounts', variables('blobListenerStorageAccountName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2022-07-01",
+            "name": "[variables('blobListenerStorageAccountFilePEName')]",
+            "location": "[resourceGroup().location]",
+            "condition": "[variables('withVNet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('blobListenerStorageAccountName'))]"
+            ],
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('blobListenerStorageAccountFilePEName')]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('blobListenerStorageAccountName'))]",
+                            "groupIds": [
+                                "file"
+                            ]
+                        }
+                    }
+                ],
+                "customNetworkInterfaceName": "[variables('blobListenerStorageAccountFileNICName')]",
+                "subnet": {
+                    "id": "[variables('privateEndpointSubnetID')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2022-07-01",
+            "name": "[concat(variables('blobListenerStorageAccountFilePEName'), '/', variables('filePrivateZoneGroupName'))]",
+            "condition": "[and(not(empty(parameters('VNETFilePrivateDNSZoneResourceID'))), variables('withVNet'))]",
+            "dependsOn": [
+                "[variables('blobListenerStorageAccountFilePEName')]"
+            ],
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "[variables('filePrivateZoneGroupName')]",
+                        "properties": {
+                            "privateDnsZoneId": "[parameters('VNETFilePrivateDNSZoneResourceID')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2022-07-01",
+            "name": "[variables('blobListenerStorageAccountBlobPEName')]",
+            "location": "[resourceGroup().location]",
+            "condition": "[variables('withVNet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('blobListenerStorageAccountName'))]"
+            ],
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('blobListenerStorageAccountBlobPEName')]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('blobListenerStorageAccountName'))]",
+                            "groupIds": [
+                                "blob"
+                            ]
+                        }
+                    }
+                ],
+                "customNetworkInterfaceName": "[variables('blobListenerStorageAccountBlobNICName')]",
+                "subnet": {
+                    "id": "[variables('privateEndpointSubnetID')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2022-07-01",
+            "name": "[concat(variables('blobListenerStorageAccountBlobPEName'), '/', variables('blobPrivateZoneGroupName'))]",
+            "condition": "[and(not(empty(parameters('VNETBlobPrivateDNSZoneResourceID'))), variables('withVNet'))]",
+            "dependsOn": [
+                "[variables('blobListenerStorageAccountBlobPEName')]"
+            ],
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "[variables('blobPrivateZoneGroupName')]",
+                        "properties": {
+                            "privateDnsZoneId": "[parameters('VNETBlobPrivateDNSZoneResourceID')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2020-06-01",
             "name": "[variables('blobListenerServerFarmName')]",
@@ -355,12 +631,7 @@
                 "reserved": true
             },
             "location": "[variables('location')]",
-            "sku": {
-                "name": "Y1",
-                "tier": "Dynamic",
-                "size": "Y1",
-                "family": "Y"
-            }
+            "sku": "[variables('functionAppSKU')]"
         },
         {
             "type": "Microsoft.Web/sites",
@@ -373,7 +644,8 @@
             },
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', variables('blobListenerServerFarmName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('blobListenerStorageAccountName'))]"
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('blobListenerStorageAccountName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/fileServices/shares', split(variables('blobListenerStorageAccountFileShareName'), '/')[0], split(variables('blobListenerStorageAccountFileShareName'), '/')[1], split(variables('blobListenerStorageAccountFileShareName'), '/')[2])]"
             ],
             "properties": {
                 "enabled": true,
@@ -393,6 +665,9 @@
                 "reserved": true,
                 "isXenon": false,
                 "hyperV": false,
+                "publicNetworkAccess": "[variables('publicNetworkAccess')]",
+                "virtualNetworkSubnetId": "[if(variables('withVNet'), concat(parameters('VNETResourceID'), '/subnets/', parameters('VNETBlobListenerSubnetName')), json('null'))]",
+                "vnetRouteAllEnabled": "[variables('withVNet')]",
                 "siteConfig": {
                     "appSettings": [
                         {
@@ -416,16 +691,28 @@
                             "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('blobListenerStorageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('blobListenerStorageAccountName')), '2019-06-01').keys[0].value)]"
                         },
                         {
+                            "name": "BUS_QUEUE_CONNECTION_STR",
+                            "value": "[if(variables('withVNet'), listkeys(variables('storageServiceBusAuthRuleResourceID'), variables('storageServiceBusAPIVersion')).primaryConnectionString, '')]"
+                        },
+                        {
+                            "name": "BLOB_LISTENER_QUEUE_NAME",
+                            "value": "[variables('bloblistenerQueueName')]"
+                        },
+                        {
                             "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
                             "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('blobListenerStorageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('blobListenerStorageAccountName')), '2019-06-01').keys[0].value)]"
                         },
                         {
                             "name": "WEBSITE_CONTENTSHARE",
-                            "value": "[toLower(variables('blobListenerAppName'))]"
+                            "value": "[if(variables('withVNet'), variables('functionContentShareName'), variables('blobListenerAppName'))]"
                         },
                         {
                             "name": "WEBSITE_RUN_FROM_PACKAGE",
                             "value": "[variables('blobListenerFunctionPackageLink')]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTOVERVNET",
+                            "value": "[if(variables('withVNet'), '1', '0')]"
                         },
                         {
                             "name": "SCANNER_QUEUE_NAMESPACE",
@@ -433,7 +720,7 @@
                         },
                         {
                             "name": "SCAN_RESULT_TOPIC_NAMESPACE",
-                            "value": "[variables('scanResultTopicNamespace')]"
+                            "value": "[variables('storageServiceBusNamespace')]"
                         },
                         {
                             "name": "STORAGE_STACK_NAME",
@@ -446,6 +733,18 @@
                         {
                             "name": "REPORT_OBJECT_KEY",
                             "value": "[variables('reportObjectKey')]"
+                        },
+                        {
+                            "name": "AzureWebJobs.BlobListener.Disabled",
+                            "value": "[variables('withVNet')]"
+                        },
+                        {
+                            "name": "AzureWebJobs.BlobListenerServiceBusTrigger.Disabled",
+                            "value": "[not(variables('withVNet'))]"
+                        },
+                        {
+                            "name": "AzureWebJobs.BlobListenerServiceBusDLQTrigger.Disabled",
+                            "value": "[not(variables('withVNet'))]"
                         }
                     ],
                     "use32BitWorkerProcess": false,
@@ -465,25 +764,128 @@
         {
             "name": "[variables('actionTagApplicationInsightsName')]",
             "type": "microsoft.insights/components",
+            "kind": "web",
             "location": "[variables('location')]",
-            "apiVersion": "2014-08-01",
+            "apiVersion": "2020-02-02",
             "properties": {
                 "Application_Type": "web",
-                "ApplicationId": "[variables('actionTagApplicationInsightsID')]"
+                "publicNetworkAccessForIngestion": "[variables('appInsightPublicAccess')]",
+                "publicNetworkAccessForQuery": "[variables('appInsightPublicAccess')]"
             }
         },
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2019-06-01",
+            "apiVersion": "2022-09-01",
             "name": "[variables('actionTagStorageAccountName')]",
             "location": "[variables('location')]",
             "sku": {
                 "name": "Standard_LRS"
             },
-            "kind": "Storage",
+            "kind": "[variables('storageAccountType')]",
             "properties": {
                 "minimumTlsVersion": "TLS1_2",
-                "allowBlobPublicAccess": false
+                "publicNetworkAccess": "[variables('publicNetworkAccess')]"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+            "apiVersion": "2022-05-01",
+            "name": "[variables('actionTagStorageAccountFileShareName')]",
+            "condition": "[variables('withVNet')]",
+            "dependsOn": [
+              "[resourceId('Microsoft.Storage/storageAccounts', variables('actionTagStorageAccountName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2022-07-01",
+            "name": "[variables('actionTagStorageAccountFilePEName')]",
+            "location": "[resourceGroup().location]",
+            "condition": "[variables('withVNet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('actionTagStorageAccountName'))]"
+            ],
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('actionTagStorageAccountFilePEName')]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('actionTagStorageAccountName'))]",
+                            "groupIds": [
+                                "file"
+                            ]
+                        }
+                    }
+                ],
+                "customNetworkInterfaceName": "[variables('actionTagStorageAccountFileNICName')]",
+                "subnet": {
+                    "id": "[variables('privateEndpointSubnetID')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2022-07-01",
+            "name": "[concat(variables('actionTagStorageAccountFilePEName'), '/', variables('filePrivateZoneGroupName'))]",
+            "condition": "[and(not(empty(parameters('VNETFilePrivateDNSZoneResourceID'))), variables('withVNet'))]",
+            "dependsOn": [
+                "[variables('actionTagStorageAccountFilePEName')]"
+            ],
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "[variables('filePrivateZoneGroupName')]",
+                        "properties": {
+                            "privateDnsZoneId": "[parameters('VNETFilePrivateDNSZoneResourceID')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2022-07-01",
+            "name": "[variables('actionTagStorageAccountBlobPEName')]",
+            "location": "[resourceGroup().location]",
+            "condition": "[variables('withVNet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('actionTagStorageAccountName'))]"
+            ],
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('actionTagStorageAccountBlobPEName')]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('actionTagStorageAccountName'))]",
+                            "groupIds": [
+                                "blob"
+                            ]
+                        }
+                    }
+                ],
+                "customNetworkInterfaceName": "[variables('actionTagStorageAccountBlobNICName')]",
+                "subnet": {
+                    "id": "[variables('privateEndpointSubnetID')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2022-07-01",
+            "name": "[concat(variables('actionTagStorageAccountBlobPEName'), '/', variables('blobPrivateZoneGroupName'))]",
+            "condition": "[and(not(empty(parameters('VNETBlobPrivateDNSZoneResourceID'))), variables('withVNet'))]",
+            "dependsOn": [
+                "[variables('actionTagStorageAccountBlobPEName')]"
+            ],
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "[variables('blobPrivateZoneGroupName')]",
+                        "properties": {
+                            "privateDnsZoneId": "[parameters('VNETBlobPrivateDNSZoneResourceID')]"
+                        }
+                    }
+                ]
             }
         },
         {
@@ -495,12 +897,7 @@
                 "reserved": true
             },
             "location": "[variables('location')]",
-            "sku": {
-                "name": "Y1",
-                "tier": "Dynamic",
-                "size": "Y1",
-                "family": "Y"
-            }
+            "sku": "[variables('functionAppSKU')]"
         },
         {
             "type": "Microsoft.Web/sites",
@@ -513,7 +910,8 @@
             },
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', variables('actionTagServerFarmName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('actionTagStorageAccountName'))]"
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('actionTagStorageAccountName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/fileServices/shares', split(variables('actionTagStorageAccountFileShareName'), '/')[0], split(variables('actionTagStorageAccountFileShareName'), '/')[1], split(variables('actionTagStorageAccountFileShareName'), '/')[2])]"
             ],
             "properties": {
                 "enabled": true,
@@ -533,6 +931,9 @@
                 "reserved": true,
                 "isXenon": false,
                 "hyperV": false,
+                "publicNetworkAccess": "[variables('publicNetworkAccess')]",
+                "virtualNetworkSubnetId": "[if(variables('withVNet'), concat(parameters('VNETResourceID'), '/subnets/', parameters('VNETPostScanActionTagSubnetName')), json('null'))]",
+                "vnetRouteAllEnabled": "[variables('withVNet')]",
                 "siteConfig": {
                     "appSettings": [
                         {
@@ -561,15 +962,19 @@
                         },
                         {
                             "name": "WEBSITE_CONTENTSHARE",
-                            "value": "[toLower(variables('actionTagAppName'))]"
+                            "value": "[if(variables('withVNet'), variables('functionContentShareName'), variables('actionTagAppName'))]"
                         },
                         {
                             "name": "WEBSITE_RUN_FROM_PACKAGE",
                             "value": "[variables('actionTagFunctionPackageLink')]"
                         },
                         {
+                            "name": "WEBSITE_CONTENTOVERVNET",
+                            "value": "[if(variables('withVNet'), '1', '0')]"
+                        },
+                        {
                             "name": "BUS_TOPIC_CONNECTION_STR",
-                            "value": "[listkeys(variables('scanResultAuthRuleResourceID'), variables('scanResultTopicAPIVersion')).primaryConnectionString]"
+                            "value": "[listkeys(variables('storageServiceBusAuthRuleResourceID'), variables('storageServiceBusAPIVersion')).primaryConnectionString]"
                         },
                         {
                             "name": "SCAN_RESULT_TOPIC_NAME",
@@ -607,6 +1012,7 @@
             "apiVersion": "2019-05-01",
             "name": "[variables('functionsWarmupLogicAppName')]",
             "location": "[variables('location')]",
+            "condition": "[not(variables('withVNet'))]",
             "properties": {
                 "state": "Enabled",
                 "definition": {
@@ -647,7 +1053,8 @@
             "apiVersion": "2017-05-10",
             "name": "BlobSystemTopicTemplate",
             "dependsOn": [
-                "[resourceId('Microsoft.Logic/workflows', variables('functionsWarmupLogicAppName'))]"
+                "[resourceId('Microsoft.Logic/workflows', variables('functionsWarmupLogicAppName'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/', variables('storageServiceBusNamespaceName'))]"
             ],
             "type": "Microsoft.Resources/deployments",
             "resourceGroup": "[variables('blobResourceGroupName')]",
@@ -673,6 +1080,44 @@
                         },
                         {
                             "type": "Microsoft.EventGrid/systemTopics/eventSubscriptions",
+                            "condition": "[variables('withVNet')]",
+                            "apiVersion": "2020-04-01-preview",
+                            "name": "[concat(parameters('BlobSystemTopicName'), '/', variables('blobSystemTopicServiceBusQueueSubscriptionName'))]",
+                            "dependsOn": [
+                                "[parameters('BlobSystemTopicName')]"
+                            ],
+                            "properties": {
+                                "destination": {
+                                    "properties": {
+                                        "resourceId": "[resourceId('Microsoft.ServiceBus/namespaces/queues', variables('storageServiceBusNamespaceName'), variables('bloblistenerQueueName'))]",
+                                        "maxEventsPerBatch": 1,
+                                        "preferredBatchSizeInKilobytes": 64
+                                    },
+                                    "endpointType": "ServiceBusQueue"
+                                },
+                                "filter": {
+                                    "includedEventTypes": [
+                                        "Microsoft.Storage.BlobCreated",
+                                        "Microsoft.Storage.BlobRenamed"
+                                    ]
+                                },
+                                "eventDeliverySchema": "EventGridSchema",
+                                "retryPolicy": {
+                                    "maxDeliveryAttempts": 5,
+                                    "eventTimeToLiveInMinutes": 1440
+                                },
+                                "deadletterdestination": {
+                                    "endpointType": "StorageBlob",
+                                    "properties": {
+                                        "resourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('blobListenerStorageAccountName'))]",
+                                        "blobContainerName": "[variables('blobEventsDeadLetterContainer')]"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "type": "Microsoft.EventGrid/systemTopics/eventSubscriptions",
+                            "condition": "[not(variables('withVNet'))]",
                             "apiVersion": "2020-04-01-preview",
                             "name": "[concat(parameters('BlobSystemTopicName'), '/', variables('blobSystemTopicSubscriptionName'))]",
                             "dependsOn": [
@@ -799,7 +1244,7 @@
         },
         "ScanResultTopicResourceID": {
             "type": "string",
-            "value": "[resourceId('Microsoft.ServiceBus/namespaces/topics', variables('scanResultTopicNamespaceName'), variables('scanResultTopicName'))]"
+            "value": "[resourceId('Microsoft.ServiceBus/namespaces/topics', variables('storageServiceBusNamespaceName'), variables('scanResultTopicName'))]"
         },
         "BlobListenerResourceID": {
             "type": "string",
@@ -831,7 +1276,7 @@
         },
         "BlobSystemTopicSubscriptionID": {
             "type": "string",
-            "value": "[variables('blobSystemTopicSubscriptionID')]"
+            "value": "[if(variables('withVNet'), variables('blobSystemTopicServiceBusQueueSubscriptionID'), variables('blobSystemTopicSubscriptionID'))]"
         },
         "BlobSystemTopicDeadLetterStorageID": {
             "type": "string",
@@ -839,7 +1284,19 @@
         },
         "BlobScanResultSubscriptionDeadLetterQueueID": {
             "type": "string",
-            "value": "[concat(resourceId('Microsoft.ServiceBus/Namespaces/Topics/Subscriptions', variables('scanResultTopicNamespaceName'), variables('scanResultTopicName'), variables('scanResultTopicSubscriptionName')), '/$DeadLetterQueue')]"
+            "value": "[concat(resourceId('Microsoft.ServiceBus/Namespaces/Topics/Subscriptions', variables('storageServiceBusNamespaceName'), variables('scanResultTopicName'), variables('scanResultTopicSubscriptionName')), '/$DeadLetterQueue')]"
+        },
+        "WithVNet": {
+            "type": "bool",
+            "value": "[variables('withVNet')]"
+        },
+        "BlobListenerApplicationInsightsResourceID": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Insights/components', variables('blobListenerApplicationInsightsName'))]"
+        },
+        "ActionTagApplicationInsightsResourceID": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Insights/components', variables('actionTagApplicationInsightsName'))]"
         }
     }
 }
