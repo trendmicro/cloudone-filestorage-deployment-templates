@@ -100,6 +100,76 @@
             "metadata": {
                 "description": "Warning: Do not modify the field. Modifications may cause your deployment to fail."
             }
+        },
+        "VNETResourceID": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />This field requires the resource ID of the existing virtual network (VNet) that the deployed resource will be associated with.<br/>For example:<br/><b>/subscriptions/1234abcd-3c6d-4347-9019-123456789012/resourceGroups/resource-group-name/providers/Microsoft.Network/virtualNetworks/vnet-name</b><br/>If you wish to deploy the resource into a VNet, please see <a href='https://cloudone.trendmicro.com/docs/file-storage-security/azure-vnet/'>Deploy in VNet</a> for detailed instructions and ensure that the required resources have been created.<br /> If a VNet is not required, please leave this field blank."
+            }
+        },
+        "VNETScannerSubnetName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />The name of the subnet used by the Scanner Function App."
+            }
+        },
+        "VNETBlobListenerSubnetName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />The name of the subnet used by the BlobListener Function App."
+            }
+        },
+        "VNETPostScanActionTagSubnetName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />The name of the subnet used by the Post Scan Action Tag Function App."
+            }
+        },
+        "VNETPrivateEndpointsSubnetName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />Provide the name of the subnet used to create private endpoints for other resources such as Service Bus and Storage Account."
+            }
+        },
+        "VNETFilePrivateDNSZoneResourceID": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />To connect to stack resources via private endpoints, use the Private DNS zone resource ID for the storage account file.<br/>For example:<br/><b>/subscriptions/1234abcd-3c6d-4347-9019-123456789012/resourceGroups/resource-group-name/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net</b><br/>Please confirm the Private DNS zone name is correct and refer to <a href='https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns'>Azure Private Endpoint DNS configuration</a>.<br/> If a VNet is not required, please leave this field blank."
+            }
+        },
+        "VNETBlobPrivateDNSZoneResourceID": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />To connect to stack resources via private endpoints, use the Private DNS zone resource ID for the storage account blob.<br/>For example:<br/><b>/subscriptions/1234abcd-3c6d-4347-9019-123456789012/resourceGroups/resource-group-name/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net</b><br/>Please confirm the Private DNS zone name is correct and refer to <a href='https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns'>Azure Private Endpoint DNS configuration</a>.<br/> If a VNet is not required, please leave this field blank."
+            }
+        },
+        "VNETTablePrivateDNSZoneResourceID": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />To connect to stack resources via private endpoints, use the Private DNS zone resource ID for the storage account table.<br/>For example:<br/><b>/subscriptions/1234abcd-3c6d-4347-9019-123456789012/resourceGroups/resource-group-name/providers/Microsoft.Network/privateDnsZones/privatelink.table.core.windows.net</b><br/>Please confirm the Private DNS zone name is correct and refer to <a href='https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns'>Azure Private Endpoint DNS configuration</a>.<br/> If a VNet is not required, please leave this field blank."
+            }
+        },
+        "VNETServiceBusPrivateDNSZoneResourceID": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />To connect to stack resources via private endpoints, use the Private DNS zone resource ID for the service bus.<br/>For example:<br/><b>/subscriptions/1234abcd-3c6d-4347-9019-123456789012/resourceGroups/resource-group-name/providers/Microsoft.Network/privateDnsZones/privatelink.servicebus.windows.net</b><br/>Please confirm the Private DNS zone name is correct and refer to <a href='https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns'>Azure Private Endpoint DNS configuration</a>.<br/> If a VNet is not required, please leave this field blank."
+            }
+        },
+        "VNETRestrictedAccessForApplicationInsights": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />Indicates whether to restrict public access to Application Insights. If set to true, it means that Application Insights can only be accessed through Azure Monitor Private Link Scope. If you don't add the Application Insight to the Azure Monitor Private Link Scope, you won't be able to ingest or query data. For more information on how to configure Private Link for Application Insights, please see <a href='https://cloudone.trendmicro.com/docs/file-storage-security/azure-vnet/'>Restrict access to Application Insights'</a>. If VNet is not required, please choose false."
+            }
         }
     },
     "variables": {
@@ -151,6 +221,30 @@
                     },
                     "SharedAccessSignature": {
                         "value": "[parameters('SharedAccessSignature')]"
+                    },
+                    "VNETResourceID": {
+                        "value": "[parameters('VNETResourceID')]"
+                    },
+                    "VNETScannerSubnetName": {
+                        "value": "[parameters('VNETScannerSubnetName')]"
+                    },
+                    "VNETPrivateEndpointsSubnetName": {
+                        "value": "[parameters('VNETPrivateEndpointsSubnetName')]"
+                    },
+                    "VNETFilePrivateDNSZoneResourceID": {
+                        "value": "[parameters('VNETFilePrivateDNSZoneResourceID')]"
+                    },
+                    "VNETBlobPrivateDNSZoneResourceID": {
+                        "value": "[parameters('VNETBlobPrivateDNSZoneResourceID')]"
+                    },
+                    "VNETTablePrivateDNSZoneResourceID": {
+                        "value": "[parameters('VNETTablePrivateDNSZoneResourceID')]"
+                    },
+                    "VNETServiceBusPrivateDNSZoneResourceID": {
+                        "value": "[parameters('VNETServiceBusPrivateDNSZoneResourceID')]"
+                    },
+                    "VNETRestrictedAccessForApplicationInsights": {
+                        "value": "[parameters('VNETRestrictedAccessForApplicationInsights')]"
                     }
                 }
             }
@@ -205,6 +299,30 @@
                     },
                     "SharedAccessSignature": {
                         "value": "[parameters('SharedAccessSignature')]"
+                    },
+                    "VNETResourceID": {
+                        "value": "[parameters('VNETResourceID')]"
+                    },
+                    "VNETBlobListenerSubnetName": {
+                        "value": "[parameters('VNETBlobListenerSubnetName')]"
+                    },
+                    "VNETPostScanActionTagSubnetName": {
+                        "value": "[parameters('VNETPostScanActionTagSubnetName')]"
+                    },
+                    "VNETPrivateEndpointsSubnetName": {
+                        "value": "[parameters('VNETPrivateEndpointsSubnetName')]"
+                    },
+                    "VNETFilePrivateDNSZoneResourceID": {
+                        "value": "[parameters('VNETFilePrivateDNSZoneResourceID')]"
+                    },
+                    "VNETBlobPrivateDNSZoneResourceID": {
+                        "value": "[parameters('VNETBlobPrivateDNSZoneResourceID')]"
+                    },
+                    "VNETServiceBusPrivateDNSZoneResourceID": {
+                        "value": "[parameters('VNETServiceBusPrivateDNSZoneResourceID')]"
+                    },
+                    "VNETRestrictedAccessForApplicationInsights": {
+                        "value": "[parameters('VNETRestrictedAccessForApplicationInsights')]"
                     }
                 }
             }

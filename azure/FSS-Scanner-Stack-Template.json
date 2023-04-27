@@ -36,6 +36,62 @@
             "metadata": {
                 "description": "Warning: Do not modify the field. Modifications may cause your deployment to fail."
             }
+        },
+        "VNETResourceID": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />This field requires the resource ID of the existing virtual network (VNet) that the deployed resource will be associated with. If you wish to deploy the resource into a VNet, please see <a href='https://cloudone.trendmicro.com/docs/file-storage-security/azure-vnet/'>Deploy in VNet</a> for detailed instructions and ensure that the required resources have been created.<br /> If a VNet is not required, please leave this field blank."
+            }
+        },
+        "VNETScannerSubnetName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />The name of the subnet used by the Scanner Function App."
+            }
+        },
+        "VNETPrivateEndpointsSubnetName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />Provide the name of the subnet used to create private endpoints for other resources such as Service Bus and Storage Account."
+            }
+        },
+        "VNETFilePrivateDNSZoneResourceID": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />To connect to stack resources via private endpoints, use the Private DNS zone resource ID for the storage account file.<br/>For example:<br/><b>/subscriptions/1234abcd-3c6d-4347-9019-123456789012/resourceGroups/resource-group-name/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net</b><br/>Please confirm the Private DNS zone name is correct and refer to <a href='https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns'>Azure Private Endpoint DNS configuration</a>.<br/> If a VNet is not required, please leave this field blank."
+            }
+        },
+        "VNETBlobPrivateDNSZoneResourceID": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />To connect to stack resources via private endpoints, use the Private DNS zone resource ID for the storage account blob.<br/>For example:<br/><b>/subscriptions/1234abcd-3c6d-4347-9019-123456789012/resourceGroups/resource-group-name/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net</b><br/>Please confirm the Private DNS zone name is correct and refer to <a href='https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns'>Azure Private Endpoint DNS configuration</a>.<br/> If a VNet is not required, please leave this field blank."
+            }
+        },
+        "VNETTablePrivateDNSZoneResourceID": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />To connect to stack resources via private endpoints, use the Private DNS zone resource ID for the storage account table.<br/>For example:<br/><b>/subscriptions/1234abcd-3c6d-4347-9019-123456789012/resourceGroups/resource-group-name/providers/Microsoft.Network/privateDnsZones/privatelink.table.core.windows.net</b><br/>Please confirm the Private DNS zone name is correct and refer to <a href='https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns'>Azure Private Endpoint DNS configuration</a>.<br/> If a VNet is not required, please leave this field blank."
+            }
+        },
+        "VNETServiceBusPrivateDNSZoneResourceID": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />To connect to stack resources via private endpoints, use the Private DNS zone resource ID for the service bus.<br/>For example:<br/><b>/subscriptions/1234abcd-3c6d-4347-9019-123456789012/resourceGroups/resource-group-name/providers/Microsoft.Network/privateDnsZones/privatelink.servicebus.windows.net</b><br/>Please confirm the Private DNS zone name is correct and refer to <a href='https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns'>Azure Private Endpoint DNS configuration</a>.<br/> If a VNet is not required, please leave this field blank."
+            }
+        },
+        "VNETRestrictedAccessForApplicationInsights": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "<b>[VNet Only]</b><br />Indicates whether to restrict public access to Application Insights. If set to true, it means that Application Insights can only be accessed through Azure Monitor Private Link Scope. If you don't add the Application Insight to the Azure Monitor Private Link Scope, you won't be able to ingest or query data. For more information on how to configure Private Link for Application Insights, please see <a href='https://cloudone.trendmicro.com/docs/file-storage-security/azure-vnet/'>Restrict access to Application Insights'</a>. If VNet is not required, please choose false."
+            }
         }
     },
     "variables": {
@@ -44,10 +100,18 @@
         "scannerFunctionPackageLink": "[concat(parameters('StackPackageLocation'), '/', variables('functionPackageLinkPrefix'), '/azure-scanner.zip', variables('unifiedSAS'))]",
 
         "stackUID": "[uniqueString(resourceGroup().id)]",
+        "functionContentShareName": "function-content-share",
         "scannerFunctionAppName": "[concat('tmsf0', variables('stackUID'))]",
         "scannerFunctionAppAPIVersion": "2022-03-01",
         "scannerServerFarmName": "[concat('tmssf0', variables('stackUID'))]",
         "scannerStorageAccountName": "[concat('tmsa0', toLower(variables('stackUID')))]",
+        "scannerStorageAccountFileNICName": "[concat('tmsani0', variables('stackUID'))]",
+        "scannerStorageAccountBlobNICName": "[concat('tmsani1', variables('stackUID'))]",
+        "scannerStorageAccountTableNICName": "[concat('tmsani2', variables('stackUID'))]",
+        "scannerStorageAccountFilePEName": "[concat('tmsape0', variables('stackUID'))]",
+        "scannerStorageAccountBlobPEName": "[concat('tmsape1', variables('stackUID'))]",
+        "scannerStorageAccountTablePEName": "[concat('tmsape2', variables('stackUID'))]",
+        "scannerStorageAccountFileShareName": "[format('{0}/default/{1}', variables('scannerStorageAccountName'), variables('functionContentShareName'))]",
         "location": "[resourceGroup().location]",
         "scannerApplicationInsightsName": "[concat('tmai0', toLower(variables('stackUID')))]",
         "scannerApplicationInsightsID": "[guid(concat('tmai0', toLower(variables('stackUID'))))]",
@@ -59,6 +123,8 @@
         "scannerQueueSASKeyName": "RootManageSharedAccessKey",
         "scannerQueueAuthRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', variables('scannerQueueNamespaceName'), variables('scannerQueueSASKeyName'))]",
         "scannerQueueAPIVersion": "2017-04-01",
+        "scannerQueueNamespacePEName": "[concat('tmsbqpe0', toLower(variables('stackUID')))]",
+        "scannerQueueNamespaceNICName": "[concat('tmsbqni0', toLower(variables('stackUID')))]",
         "scannerLicenseKeyVaultName": "[concat('tmsl0', variables('stackUID'))]",
         "scannerLicenseSecretName": "scanner-license",
         "scannerConfigKeyVaultName": "[concat('tmsc0', variables('stackUID'))]",
@@ -85,7 +151,17 @@
         "scannerConfigReaderRoleAssignmentUID": "[guid(resourceGroup().id, 'scannerConfigReaderRoleAssignment')]",
         "keyVaultSecretsUserRoleID": "4633458b-17de-408a-b874-0445c86b69e6",
         "functionsWorkerProcessCount": "1",
-        "fssAPIEndpoint": "[format('https://filestorage.{0}.cloudone.trendmicro.com/api/', parameters('CloudOneRegion'))]"
+        "fssAPIEndpoint": "[format('https://filestorage.{0}.cloudone.trendmicro.com/api/', parameters('CloudOneRegion'))]",
+        "withVNet": "[not(empty(parameters('VNETResourceID')))]",
+        "privateEndpointSubnetID": "[concat(parameters('VNETResourceID'), '/subnets/', parameters('VNETPrivateEndpointsSubnetName'))]",
+        "serviceBusTier": "[if(variables('withVNet'), 'Premium', 'Basic')]",
+        "storageAccountType": "[if(variables('withVNet'), 'StorageV2', 'Storage')]",
+        "publicNetworkAccess": "[if(variables('withVNet'), 'Disabled', 'Enabled')]",
+        "filePrivateZoneGroupName": "filePrivateDnsZoneGroup",
+        "blobPrivateZoneGroupName": "blobPrivateDnsZoneGroup",
+        "tablePrivateZoneGroupName": "tablePrivateDnsZoneGroup",
+        "serviceBusPrivateZoneGroupName": "serviceBusPrivateDnsZoneGroup",
+        "appInsightPublicAccess": "[if(parameters('VNETRestrictedAccessForApplicationInsights'), 'Disabled', 'Enabled')]"
     },
     "resources": [
         {
@@ -108,12 +184,13 @@
             "name": "[variables('scannerQueueNamespaceName')]",
             "location": "[variables('location')]",
             "sku": {
-                "name": "Basic",
-                "tier": "Basic"
+                "name": "[variables('serviceBusTier')]",
+                "tier": "[variables('serviceBusTier')]"
             },
             "properties": {
                 "zoneRedundant": false,
-                "minimumTlsVersion": "1.2"
+                "minimumTlsVersion": "1.2",
+                "publicNetworkAccess": "[variables('publicNetworkAccess')]"
             },
             "resources": [
                 {
@@ -141,28 +218,222 @@
             ]
         },
         {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2022-07-01",
+            "name": "[variables('scannerQueueNamespacePEName')]",
+            "location": "[resourceGroup().location]",
+            "condition": "[variables('withVNet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('scannerQueueNamespaceName'))]"
+            ],
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('scannerQueueNamespacePEName')]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.ServiceBus/namespaces', variables('scannerQueueNamespaceName'))]",
+                            "groupIds": [
+                                "namespace"
+                            ]
+                        }
+                    }
+                ],
+                "customNetworkInterfaceName": "[variables('scannerQueueNamespaceNICName')]",
+                "subnet": {
+                    "id": "[variables('privateEndpointSubnetID')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2022-07-01",
+            "name": "[concat(variables('scannerQueueNamespacePEName'), '/', variables('serviceBusPrivateZoneGroupName'))]",
+            "condition": "[and(not(empty(parameters('VNETServiceBusPrivateDNSZoneResourceID'))), variables('withVNet'))]",
+            "dependsOn": [
+                "[variables('scannerQueueNamespacePEName')]"
+            ],
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "[variables('serviceBusPrivateZoneGroupName')]",
+                        "properties": {
+                            "privateDnsZoneId": "[parameters('VNETServiceBusPrivateDNSZoneResourceID')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
             "name": "[variables('scannerApplicationInsightsName')]",
             "type": "microsoft.insights/components",
             "kind": "web",
             "location": "[variables('location')]",
-            "apiVersion": "2015-05-01",
+            "apiVersion": "2020-02-02",
             "properties": {
                 "Application_Type": "web",
-                "ApplicationId": "[variables('scannerApplicationInsightsID')]"
+                "publicNetworkAccessForIngestion": "[variables('appInsightPublicAccess')]",
+                "publicNetworkAccessForQuery": "[variables('appInsightPublicAccess')]"
             }
         },
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2019-06-01",
+            "apiVersion": "2022-09-01",
             "name": "[variables('scannerStorageAccountName')]",
             "location": "[variables('location')]",
             "sku": {
                 "name": "Standard_LRS"
             },
-            "kind": "Storage",
+            "kind": "[variables('storageAccountType')]",
             "properties": {
                 "minimumTlsVersion": "TLS1_2",
-                "allowBlobPublicAccess": false
+                "publicNetworkAccess": "[variables('publicNetworkAccess')]"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+            "apiVersion": "2022-05-01",
+            "name": "[variables('scannerStorageAccountFileShareName')]",
+            "condition": "[variables('withVNet')]",
+            "dependsOn": [
+              "[resourceId('Microsoft.Storage/storageAccounts', variables('scannerStorageAccountName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2022-07-01",
+            "name": "[variables('scannerStorageAccountFilePEName')]",
+            "location": "[resourceGroup().location]",
+            "condition": "[variables('withVNet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('scannerStorageAccountName'))]"
+            ],
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('scannerStorageAccountFilePEName')]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('scannerStorageAccountName'))]",
+                            "groupIds": [
+                                "file"
+                            ]
+                        }
+                    }
+                ],
+                "customNetworkInterfaceName": "[variables('scannerStorageAccountFileNICName')]",
+                "subnet": {
+                    "id": "[variables('privateEndpointSubnetID')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2022-07-01",
+            "name": "[concat(variables('scannerStorageAccountFilePEName'), '/', variables('filePrivateZoneGroupName'))]",
+            "condition": "[and(not(empty(parameters('VNETFilePrivateDNSZoneResourceID'))), variables('withVNet'))]",
+            "dependsOn": [
+                "[variables('scannerStorageAccountFilePEName')]"
+            ],
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "[variables('filePrivateZoneGroupName')]",
+                        "properties": {
+                            "privateDnsZoneId": "[parameters('VNETFilePrivateDNSZoneResourceID')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2022-07-01",
+            "name": "[variables('scannerStorageAccountBlobPEName')]",
+            "location": "[resourceGroup().location]",
+            "condition": "[variables('withVNet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('scannerStorageAccountName'))]"
+            ],
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('scannerStorageAccountBlobPEName')]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('scannerStorageAccountName'))]",
+                            "groupIds": [
+                                "blob"
+                            ]
+                        }
+                    }
+                ],
+                "customNetworkInterfaceName": "[variables('scannerStorageAccountBlobNICName')]",
+                "subnet": {
+                    "id": "[variables('privateEndpointSubnetID')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2022-07-01",
+            "name": "[concat(variables('scannerStorageAccountBlobPEName'), '/', variables('blobPrivateZoneGroupName'))]",
+            "condition": "[and(not(empty(parameters('VNETBlobPrivateDNSZoneResourceID'))), variables('withVNet'))]",
+            "dependsOn": [
+                "[variables('scannerStorageAccountBlobPEName')]"
+            ],
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "[variables('blobPrivateZoneGroupName')]",
+                        "properties": {
+                            "privateDnsZoneId": "[parameters('VNETBlobPrivateDNSZoneResourceID')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2022-07-01",
+            "name": "[variables('scannerStorageAccountTablePEName')]",
+            "location": "[resourceGroup().location]",
+            "condition": "[variables('withVNet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('scannerStorageAccountName'))]"
+            ],
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('scannerStorageAccountTablePEName')]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('scannerStorageAccountName'))]",
+                            "groupIds": [
+                                "table"
+                            ]
+                        }
+                    }
+                ],
+                "customNetworkInterfaceName": "[variables('scannerStorageAccountTableNICName')]",
+                "subnet": {
+                    "id": "[variables('privateEndpointSubnetID')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2022-07-01",
+            "name": "[concat(variables('scannerStorageAccountTablePEName'), '/', variables('tablePrivateZoneGroupName'))]",
+            "condition": "[and(not(empty(parameters('VNETTablePrivateDNSZoneResourceID'))), variables('withVNet'))]",
+            "dependsOn": [
+                "[variables('scannerStorageAccountTablePEName')]"
+            ],
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "[variables('tablePrivateZoneGroupName')]",
+                        "properties": {
+                            "privateDnsZoneId": "[parameters('VNETTablePrivateDNSZoneResourceID')]"
+                        }
+                    }
+                ]
             }
         },
         {
@@ -193,7 +464,8 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', variables('scannerServerFarmName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('scannerStorageAccountName'))]",
-                "[resourceId('Microsoft.ServiceBus/namespaces/', variables('scannerQueueNamespaceName'))]"
+                "[resourceId('Microsoft.ServiceBus/namespaces/', variables('scannerQueueNamespaceName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/fileServices/shares', split(variables('scannerStorageAccountFileShareName'), '/')[0], split(variables('scannerStorageAccountFileShareName'), '/')[1], split(variables('scannerStorageAccountFileShareName'), '/')[2])]"
             ],
             "properties": {
                 "enabled": true,
@@ -213,6 +485,9 @@
                 "reserved": true,
                 "isXenon": false,
                 "hyperV": false,
+                "publicNetworkAccess": "[variables('publicNetworkAccess')]",
+                "virtualNetworkSubnetId": "[if(variables('withVNet'), concat(parameters('VNETResourceID'), '/subnets/', parameters('VNETScannerSubnetName')), json('null'))]",
+                "vnetRouteAllEnabled": "[variables('withVNet')]",
                 "siteConfig": {
                     "appSettings": [
                         {
@@ -241,11 +516,15 @@
                         },
                         {
                             "name": "WEBSITE_CONTENTSHARE",
-                            "value": "[toLower(variables('scannerFunctionAppName'))]"
+                            "value": "[if(variables('withVNet'), variables('functionContentShareName'), variables('scannerFunctionAppName'))]"
                         },
                         {
                             "name": "WEBSITE_RUN_FROM_PACKAGE",
                             "value": "[variables('scannerFunctionPackageLink')]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTOVERVNET",
+                            "value": "[if(variables('withVNet'), '1', '0')]"
                         },
                         {
                             "name": "LD_LIBRARY_PATH",
@@ -331,6 +610,7 @@
             "apiVersion": "2019-05-01",
             "name": "scannerWarmUpLogicApp",
             "location": "[variables('location')]",
+            "condition": "[not(variables('withVNet'))]",
             "properties": {
                 "state": "Enabled",
                 "definition": {
@@ -700,6 +980,18 @@
         "ScannerConfigKeyVaultURI": {
             "type": "string",
             "value": "[reference(resourceId('Microsoft.KeyVault/vaults', variables('scannerConfigKeyVaultName'))).vaultUri]"
+        },
+        "WithVNet": {
+            "type": "bool",
+            "value": "[variables('withVNet')]"
+        },
+        "ScannerStorageAccountName": {
+            "type": "string",
+            "value": "[variables('scannerStorageAccountName')]"
+        },
+        "ScannerApplicationInsightResourceID": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Insights/components', variables('scannerApplicationInsightsName'))]"
         }
     }
 }
