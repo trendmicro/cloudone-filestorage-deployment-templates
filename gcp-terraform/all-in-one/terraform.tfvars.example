@@ -18,5 +18,6 @@ storageStacks = {
         scannerServiceAccountID = null
         reportObjectKey = false
         disableScanningBucketIAMBinding = false
+        objectFilterPrefix = ""
     }
 }
