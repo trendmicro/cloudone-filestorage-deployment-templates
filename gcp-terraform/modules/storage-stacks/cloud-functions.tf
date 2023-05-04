@@ -76,6 +76,7 @@ resource "google_cloudfunctions_function" "bucket_listener_function" {
     "SCAN_RESULT_TOPIC": "projects/${var.projectID}/topics/${google_pubsub_topic.scan_result_topic[each.key].name}"
     "DEPLOYMENT_NAME": each.key,
     "REPORT_OBJECT_KEY": each.value.reportObjectKey
+    "OBJECT_FILTER_PREFIX": each.value.objectFilterPrefix
   }
 
   lifecycle {

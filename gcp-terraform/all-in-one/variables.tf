@@ -31,6 +31,7 @@ variable "storageStacks" {
     managementServiceAccountID = string
     reportObjectKey = bool
     disableScanningBucketIAMBinding = bool
+    objectFilterPrefix = string
   }))
 
   description = "File Storage Security Storage Stacks"

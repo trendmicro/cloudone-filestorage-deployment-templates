@@ -71,6 +71,7 @@ Storage stack:
 7. **scannerServiceAccountID**: Copy and paste the service account information from the File Storage Security console.
 8. **scannerTopic**: Copy and paste the service account information from the File Storage Security console.
 9. **reportObjectKey**: Select `true` to report the object keys of the scanned objects to File Storage Security backend services. File Storage Security can then display the object keys of the malicious objects in the response of events API. Allows values `true`, `true`.
+10. **objectFilterPrefix**: Limit the scan to objects whose name starts with the specified characters. Specify `""` to scan without filters.
 
 > **Tips**:
  `scanner` is only required in all-in-one deployment, so the default value should be `null`. `disableScanningBucketIAMBinding` is required by converting from the GCP Deployment Manager's deployment, if it's a new deployment should be `false`.
@@ -90,7 +91,8 @@ Storage stack:
       "scannerServiceAccountID": "<SCANNER_STACK_SERVICE_ACCOUNT_ID>",
       "reportObjectKey": false,
       "disableScanningBucketIAMBinding": false,
-      "scanner": null
+      "scanner": null,
+      "objectFilterPrefix": ""
     }
   }
 }

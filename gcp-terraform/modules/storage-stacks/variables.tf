@@ -10,6 +10,7 @@ variable "storageStacks" {
     managementServiceAccountID = string
     reportObjectKey = string
     disableScanningBucketIAMBinding = bool
+    objectFilterPrefix = string
   }))
 }
 

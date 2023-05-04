@@ -11,5 +11,6 @@ storageStacks = {
         scannerServiceAccountID = "fss-scanner-service-account"
         reportObjectKey = false
         disableScanningBucketIAMBinding = false
+        objectFilterPrefix = ""
     }
 }

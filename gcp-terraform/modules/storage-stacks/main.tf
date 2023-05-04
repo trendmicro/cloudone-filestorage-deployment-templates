@@ -41,6 +41,7 @@ locals {
       reportObjectKey = v.reportObjectKey ? "True" : "False"
       disableScanningBucketIAMBinding = v.disableScanningBucketIAMBinding
       prefix = substr(trimsuffix(deployment_name, "-storage"), 0, 17)
+      objectFilterPrefix = v.objectFilterPrefix == null ? "" : v.objectFilterPrefix
     }
   }
 }
