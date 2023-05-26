@@ -593,7 +593,8 @@
                     ],
                     "use32BitWorkerProcess": false,
                     "linuxFxVersion": "PYTHON|3.8",
-                    "minTlsVersion": "1.2"
+                    "minTlsVersion": "1.2",
+                    "functionsRuntimeScaleMonitoringEnabled": "[variables('withVNet')]"
                 },
                 "scmSiteAlsoStopped": false,
                 "clientAffinityEnabled": false,
