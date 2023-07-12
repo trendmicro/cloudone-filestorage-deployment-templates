@@ -1,0 +1,1278 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Trend Micro File Storage Security account scanner stack
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "[ Customizable section ]"
+        Parameters:
+          - KMSKeyARNForDLQSSE
+          - KMSKeyARNForTopicSSE
+          - KMSKeyARNsForBucketSSE
+          - ReportObjectKey
+          - ObjectCreatedEventFilter
+          - ScannerEphemeralStorage
+          - QuarantineBucket
+      - Label:
+          default: "[ Warning: Do not modify the fields below. Modifications may cause your deployment to fail. ]"
+        Parameters:
+          - FSSBucketName
+          - FSSKeyPrefix
+          - TrendMicroManagementAccount
+          - CloudOneRegion
+          - ExternalID
+
+    ParameterLabels:
+      CloudOneRegion:
+        default: Trend Micro Cloud One region
+      ExternalID:
+        default: ExternalID
+      FSSBucketName:
+        default: Stack package location
+      FSSKeyPrefix:
+        default: Version
+      KMSKeyARNForDLQSSE:
+        default: KMSKeyARNForDLQSSE
+      KMSKeyARNForTopicSSE:
+        default: KMSKeyARNForTopicSSE
+      KMSKeyARNsForBucketSSE:
+        default: KMSKeyARNsForBucketSSE
+      ReportObjectKey:
+        default: ReportObjectKey
+      ObjectCreatedEventFilter:
+        default: ObjectCreatedEventFilter
+      ScannerEphemeralStorage:
+        default: "ScannerEphemeralStorage [ In Preview ]"
+      TrendMicroManagementAccount:
+        default: File Storage Security management account
+      QuarantineBucket:
+        default: Malicious files quarantine destination
+
+Parameters:
+  CloudOneRegion:
+    Description: The region of the Trend Micro Cloud One services.
+    Type: String
+    Default: us-1
+  ExternalID:
+    Description: "The External ID is for future use with updating Lambdas and also to address and prevent the 'confused deputy' problem."
+    Type: String
+  FSSBucketName:
+    ConstraintDescription:
+      File Storage Security bucket name can include numbers, lowercase
+      letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Default: file-storage-security
+    Description: ''
+    Type: String
+  FSSKeyPrefix:
+    ConstraintDescription:
+      The File Storage Security key prefix can include numbers, lowercase letters,
+      uppercase letters, hyphens (-), and forward slash (/).
+    Default: latest/
+    Description: ''
+    Type: String
+  ObjectCreatedEventFilter:
+    Type: String
+    Description: The event pattern to filter the object created event. Please provide a JSON string of event pattern detail. For example, {"bucket":{"name":[{"prefix":"bucket_prefix_to_scan"}]},"object":{"key":[{"prefix":"object_key_prefix_to_scan"}]}}.
+    Default: ''
+  KMSKeyARNForDLQSSE:
+    Default: ''
+    Description: The ARN for the KMS master key used to encrypt messages in SQS. Leave it blank if you haven't used your own CMK for SQS server-side encryption.
+    Type: String
+  KMSKeyARNForTopicSSE:
+    Default: ''
+    Description: The ARN for the KMS master keys used to encrypt messages in SNS scanResultTopic. Leave it blank if you haven't used your own CMK for SNS server-side encryption.
+    Type: String
+  KMSKeyARNsForBucketSSE:
+    Default: ''
+    Description: A comma-separated list of ARNs for the KMS master keys used to encrypt S3 bucket objects. Leave it blank if you haven't enabled SSE-KMS for the buckets.
+    Type: CommaDelimitedList
+  ReportObjectKey:
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: |-
+      Enable this to report the object keys of the scanned objects to File Storage Security backend services.
+      File Storage Security can then display the object keys of the malicious objects in the response of events API.
+    Type: String
+  ScannerEphemeralStorage:
+    Default: 512
+    Description: |
+      The size of the scanner lambda function's temp directory in MB. The default value is 512, but it can be any whole number between 512 and 2048 MB.
+      Configure a large ephemeral storage to scan larger files in zip files.
+      For more information, see https://docs.aws.amazon.com/lambda/latest/dg/configuration-function-common.html#configuration-ephemeral-storage
+    Type: Number
+    MinValue: 512
+    MaxValue: 2048
+  EnableCrossAccountScanning:
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: Enable cross account scanning within the same organization.
+    Type: String
+  TrendMicroManagementAccount:
+    ConstraintDescription: AWS account ID.
+    Default: 415485722356
+    Description: This account will be given permission to modify the stacks for upgrades and troubleshooting purposes.
+    Type: String
+  QuarantineBucket:
+    Default: ''
+    Description: |
+      [Optional] The bucket to quarantine malicious files. The bucket region should be the same region as the account scanner stack.
+      Leave the bucket blank to disable quarantining
+    Type: String
+
+Conditions:
+  IsObjectCreatedEventFilterEnabled:
+    !Not [!Equals ['', !Ref ObjectCreatedEventFilter]]
+  IsDLQSSEKMSEnabled:
+    !Not [!Equals ['', !Ref KMSKeyARNForDLQSSE]]
+  IsTopicSSEKMSEnabled:
+    !Not [!Equals ['', !Ref KMSKeyARNForTopicSSE]]
+  IsBucketSSEKMSEnabled:
+    !Not [!Equals ['', !Select [0, !Ref KMSKeyARNsForBucketSSE]]]
+  IsReportObjectKey:
+    !Equals ['true', !Ref ReportObjectKey]
+  IsEnableCrossAccountScanning:
+    !Equals ['true', !Ref EnableCrossAccountScanning]
+  IsQuarantineEnabled:
+    !Not [!Equals ['', !Ref QuarantineBucket]]
+  IsQuarantineAndBucketSSEKMSEnabled: !And
+      - !Not [!Equals ['', !Select [0, !Ref KMSKeyARNsForBucketSSE]]]
+      - !Not [!Equals ['', !Ref QuarantineBucket]]
+
+Resources:
+  OnS3ObjectCreatedRule:
+    Type: AWS::Events::Rule
+    Properties:
+      EventBusName: !Sub arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:event-bus/default
+      EventPattern: !If
+        - IsObjectCreatedEventFilterEnabled
+        - !Sub '{"detail-type":["Object Created"],"source":["aws.s3"],"detail":${ObjectCreatedEventFilter}}'
+        - '{"detail-type":["Object Created"],"source":["aws.s3"]}'
+      State: ENABLED
+      Targets:
+        - Id: onS3ObjectCreatedHandler
+          Arn: !GetAtt ScannerLambdaAlias.Arn
+          RetryPolicy:
+            MaximumRetryAttempts: 2
+            MaximumEventAgeInSeconds: 300
+          DeadLetterConfig:
+            Arn: !GetAtt ScannerDLQ.Arn
+
+  CrossAccountEventBusPolicy:
+    Type: AWS::Events::EventBusPolicy
+    Condition: IsEnableCrossAccountScanning
+    Properties:
+      StatementId: !Join ['', [cross-account-put-event-, !Ref AWS::StackName]]
+      Statement:
+        Effect: Allow
+        Principal: '*'
+        Action: events:PutEvents
+        Resource: !Sub arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:event-bus/default
+        Condition:
+          StringEquals:
+            aws:PrincipalOrgID: !GetAtt GetOrganizationIDForPolicy.OrganizationID
+
+  OnS3ObjectCreatedPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ScannerLambdaAlias
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt OnS3ObjectCreatedRule.Arn
+
+  GetOrganizationID:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Get the AWS Organization ID of the current AWS account
+      Handler: index.handler
+      Runtime: python3.8
+      Role: !GetAtt GetOrganizationIDExecutionRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          import boto3
+          import traceback
+          import json
+          import urllib.request
+          SUCCESS = "SUCCESS"
+          FAILED = "FAILED"
+          organizations_client = boto3.client('organizations')
+          def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False):
+              responseUrl = event['ResponseURL']
+              print(responseUrl)
+              responseBody = {}
+              responseBody['Status'] = responseStatus
+              responseBody['Reason'] = 'See the details in CloudWatch Log Stream: ' + context.log_stream_name
+              responseBody['PhysicalResourceId'] = physicalResourceId or context.log_stream_name
+              responseBody['StackId'] = event['StackId']
+              responseBody['RequestId'] = event['RequestId']
+              responseBody['LogicalResourceId'] = event['LogicalResourceId']
+              responseBody['NoEcho'] = noEcho
+              responseBody['Data'] = responseData
+              json_responseBody = json.dumps(responseBody)
+              # Do not print response body cause it might contains license (JWT)
+              headers = {
+                  'content-type' : '',
+                  'content-length' : str(len(json_responseBody))
+              }
+              request = urllib.request.Request(responseUrl, headers=headers, data=json_responseBody.encode('utf-8'), method='PUT')
+              try:
+                  with urllib.request.urlopen(request) as response:
+                      print("Status code: " + response.reason)
+              except Exception as e:
+                  print("send(..) failed executing requests.put(..): " + str(e))
+          def handler(event, context):
+              print(event)
+              status = SUCCESS
+              response_data = { 'OrganizationID': ''}
+              try:
+                response = organizations_client.describe_organization()
+                organization_id = response['Organization']['Id']
+                response_data['OrganizationID'] = organization_id
+                print(response_data)
+              except Exception as ex:
+                  print('Unhandled exception: ' + str(ex))
+                  traceback.print_exc()
+                  status = FAILED
+              finally:
+                  send(event, context, status, response_data)
+  GetOrganizationIDExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: get-organization-id
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - organizations:DescribeOrganization
+                Resource: '*'
+  GetOrganizationIDForPolicy:
+    Type: Custom::GetOrganizationIDForPolicy
+    Properties:
+      ServiceToken: !GetAtt GetOrganizationID.Arn
+      Modified: 20230606.1
+
+  GetLambdaLastConfig:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Get Lambda config before creating/updating alias on Lambda function
+      Handler: index.handler
+      Runtime: python3.8
+      Role: !GetAtt GetLambdaLastConfigExecutionRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          import boto3
+          import traceback
+          import json
+          import urllib.request
+          SUCCESS = "SUCCESS"
+          FAILED = "FAILED"
+          lambda_client = boto3.client('lambda')
+          ssm_client = boto3.client('ssm')
+          def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False):
+              responseUrl = event['ResponseURL']
+              print(responseUrl)
+              responseBody = {}
+              responseBody['Status'] = responseStatus
+              responseBody['Reason'] = 'See the details in CloudWatch Log Stream: ' + context.log_stream_name
+              responseBody['PhysicalResourceId'] = physicalResourceId or context.log_stream_name
+              responseBody['StackId'] = event['StackId']
+              responseBody['RequestId'] = event['RequestId']
+              responseBody['LogicalResourceId'] = event['LogicalResourceId']
+              responseBody['NoEcho'] = noEcho
+              responseBody['Data'] = responseData
+              json_responseBody = json.dumps(responseBody)
+              # Do not print response body cause it might contains license (JWT)
+              headers = {
+                  'content-type' : '',
+                  'content-length' : str(len(json_responseBody))
+              }
+              request = urllib.request.Request(responseUrl, headers=headers, data=json_responseBody.encode('utf-8'), method='PUT')
+              try:
+                  with urllib.request.urlopen(request) as response:
+                      print("Status code: " + response.reason)
+              except Exception as e:
+                  print("send(..) failed executing requests.put(..): " + str(e))
+          def handler(event, context):
+              print(event)
+              status = SUCCESS
+              response_data = { 'Environment': {}, 'Layers': [] }
+              try:
+                  if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
+                      stack_id = event['StackId']
+                      parameter_store_name = event['ResourceProperties']['ParameterStoreName']
+                      lambda_arn_output_key = event['ResourceProperties']['LambdaARNOutputKey']
+                      lambda_alias_arn_output_key = event['ResourceProperties']['LambdaAliasARNOutputKey']
+
+                      function_arn = None
+                      ssm_response = ssm_client.get_parameter(Name=parameter_store_name)
+                      stack_outputs = json.loads(ssm_response['Parameter']['Value'])
+
+                      for output in stack_outputs:
+                          if output == lambda_alias_arn_output_key:
+                              function_arn = stack_outputs[output]
+                              break
+                          elif output == lambda_arn_output_key:
+                              function_arn = stack_outputs[output]
+
+                      if function_arn:
+                          function_config = lambda_client.get_function_configuration(FunctionName=function_arn)
+                          response_data['Environment'] = function_config['Environment']['Variables']
+                          response_data['Layers'] = function_config['Layers']
+              except ssm_client.exceptions.ParameterNotFound as ssm_ex:
+                  print('SSM client exception: ' + str(ssm_ex))
+              except Exception as ex:
+                  print('Unhandled exception: ' + str(ex))
+                  traceback.print_exc()
+                  status = FAILED
+              finally:
+                  send(event, context, status, response_data)
+  GetLambdaLastConfigExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: get-lambda-last-config
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource:
+                  !Join ['', [!Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/", !Ref AWS::StackName, '-OutputsParameter-' , !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
+              - Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                Resource: !Ref AWS::StackId
+              - Effect: Allow
+                Action:
+                  - lambda:GetFunctionConfiguration
+                Resource:
+                  - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:*ScannerLambda*
+                  - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:*ScannerDeadLetterLambda*
+  CreateLambdaAliasLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Create Lambda alias on Lambda function
+      Handler: index.handler
+      Runtime: python3.8
+      Role: !GetAtt CreateLambdaAliasExecutionRole.Arn
+      Timeout: 120
+      Code:
+        ZipFile: |
+          import boto3
+          import traceback
+          import json
+          import urllib.request
+          import time
+          from collections import defaultdict
+          SUCCESS = "SUCCESS"
+          FAILED = "FAILED"
+          DEFAULT_ENV_VARIABLE_DICT = defaultdict(str, SCAN_CONFIG='{}')
+          lambda_client = boto3.client('lambda')
+          def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False):
+              responseUrl = event['ResponseURL']
+              print(responseUrl)
+              responseBody = {}
+              responseBody['Status'] = responseStatus
+              responseBody['Reason'] = 'See the details in CloudWatch Log Stream: ' + context.log_stream_name
+              responseBody['PhysicalResourceId'] = physicalResourceId or context.log_stream_name
+              responseBody['StackId'] = event['StackId']
+              responseBody['RequestId'] = event['RequestId']
+              responseBody['LogicalResourceId'] = event['LogicalResourceId']
+              responseBody['NoEcho'] = noEcho
+              responseBody['Data'] = responseData
+              json_responseBody = json.dumps(responseBody)
+              print("Response body:\n" + json_responseBody)
+              headers = {
+                  'content-type' : '',
+                  'content-length' : str(len(json_responseBody))
+              }
+              request = urllib.request.Request(responseUrl, headers=headers, data=json_responseBody.encode('utf-8'), method='PUT')
+              try:
+                  with urllib.request.urlopen(request) as response:
+                      print("Status code: " + response.reason)
+              except Exception as e:
+                  print("send(..) failed executing requests.put(..): " + str(e))
+          def publish_version_with_retry(function, retry_attempts=6):
+              try:
+                  return lambda_client.publish_version(FunctionName=function)
+              except lambda_client.exceptions.ResourceConflictException as e:
+                  if retry_attempts > 0:
+                      print('publish_version failed with ResourceConflictException, retrying in 10 seconds...')
+                      time.sleep(10)
+                      return publish_version_with_retry(function, retry_attempts-1)
+                  else: raise e
+          def create_alias(function, name):
+              version_result = publish_version_with_retry(function)
+              return lambda_client.create_alias(FunctionName=function, Name=name, FunctionVersion=version_result['Version'])
+          def update_alias(function, name):
+              version_result = publish_version_with_retry(function)
+              return lambda_client.update_alias(FunctionName=function, Name=name, FunctionVersion=version_result['Version'], RoutingConfig={})
+          def delete_alias(function, name):
+              lambda_client.delete_alias(FunctionName=function, Name=name)
+          def get_function_configuration(function, qualifier=None):
+              if (qualifier is not None):
+                  return lambda_client.get_function_configuration(FunctionName=function, Qualifier=qualifier)
+              else:
+                  return lambda_client.get_function_configuration(FunctionName=function)
+          def update_function_configuration(function, environments, layers):
+              lambda_client.update_function_configuration(FunctionName=function, Environment=environments, Layers=layers)
+          def replace_environments(env_vars_to_recover, last_env_vars, current_environments):
+              for env_var in env_vars_to_recover:
+                  current_environments['Variables'][env_var] = last_env_vars.get(env_var, DEFAULT_ENV_VARIABLE_DICT[env_var])
+              return current_environments
+          def find_recover_layer_arn(layers, keyword):
+              found_arns = [layer_arn for layer_arn in layers if keyword in layer_arn]
+              return found_arns[0] if len(found_arns) > 0 else ''
+          def is_not_match_layer(layer_arn, keywords):
+              return len(list(filter(lambda keyword: keyword in layer_arn, keywords))) == 0
+          def replace_layers(layers_to_recover, last_layers, current_layers):
+              get_arn = lambda layer: layer['Arn']
+              old_layer_arns = list(map(get_arn, last_layers))
+              current_layer_arns = list(map(get_arn, current_layers))
+              for recover_layer, replacing_layers in layers_to_recover.items():
+                  recover_layer_arn = find_recover_layer_arn(old_layer_arns, recover_layer)
+                  if len(recover_layer_arn) == 0: break
+                  current_layer_arns = [layer_arn for layer_arn in current_layer_arns if is_not_match_layer(layer_arn, replacing_layers)]
+                  current_layer_arns.append(recover_layer_arn)
+              return current_layer_arns
+          def recover_lambda_function_config(current_function_name, last_env_vars, last_layers, env_vars_to_recover, layers_to_recover):
+              current_version_info = get_function_configuration(current_function_name)
+              new_environments = replace_environments(env_vars_to_recover, last_env_vars, current_version_info['Environment'])
+              new_layers = replace_layers(layers_to_recover, last_layers, current_version_info.get('Layers', []))
+              update_function_configuration(current_function_name, new_environments, new_layers)
+          def handler(event, context):
+              # Do not print LastEnvVars values cause it might contain license (JWT)
+              last_env_vars = event['ResourceProperties'].pop('LastEnvVars', {})
+              event.get('OldResourceProperties', {}).pop('LastEnvVars', None)
+              print(event)
+              print('ResourceProperties.LastEnvVars:', last_env_vars.keys())
+              status = SUCCESS
+              response_data = {}
+              try:
+                  if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
+                      function_name = event['ResourceProperties']['FunctionName']
+                      alias_name = event['ResourceProperties']['Name']
+                      last_layers = event['ResourceProperties'].get('LastLayers', [])
+                      env_vars_to_recover = event['ResourceProperties'].get('EnvVarsToRecover', [])
+                      layers_to_recover = event['ResourceProperties'].get('LayersToRecover', {})
+                      recover_lambda_function_config(function_name, last_env_vars, last_layers, env_vars_to_recover, layers_to_recover)
+                      if event['RequestType'] == 'Create':
+                          alias_result = create_alias(function_name, alias_name)
+                      else:
+                          old_function_name = event['OldResourceProperties']['FunctionName']
+                          old_alias_name = event['OldResourceProperties']['Name']
+                          if function_name == old_function_name and alias_name == old_alias_name:
+                              alias_result = update_alias(function_name, alias_name)
+                          else:
+                              alias_result = create_alias(function_name, alias_name)
+                              delete_alias(old_function_name, old_alias_name)
+                      response_data = {'Arn': alias_result['AliasArn']}
+              except Exception as ex:
+                  print('Unhandled exception: ' + str(ex))
+                  traceback.print_exc()
+                  status = FAILED
+              finally:
+                  send(event, context, status, response_data, response_data.get('Arn', None))
+  CreateLambdaAliasExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: create-lambda-function-version-alias
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:PublishVersion
+                  - lambda:CreateAlias
+                  - lambda:UpdateAlias
+                  - lambda:DeleteAlias
+                  - lambda:GetFunctionConfiguration
+                  - lambda:UpdateFunctionConfiguration
+                Resource:
+                  - !GetAtt ScannerLambda.Arn
+                  - !GetAtt ScannerDeadLetterLambda.Arn
+                  - !GetAtt PostScanActionLambda.Arn
+                  - !GetAtt PostScanActionDeadLetterLambda.Arn
+              - Effect: Allow
+                Action:
+                  - lambda:GetLayerVersion
+                Resource:
+                  - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${TrendMicroManagementAccount}:layer:Scanner*LambdaLayer*:*
+                  - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:Scanner*LambdaLayer:*
+
+  ScannerDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      DelaySeconds: 0
+      MaximumMessageSize: 262144
+      MessageRetentionPeriod: 3600
+      ReceiveMessageWaitTimeSeconds: 0
+      VisibilityTimeout: 720
+      KmsDataKeyReusePeriodSeconds: !If
+        - IsDLQSSEKMSEnabled
+        - 86400
+        - !Ref AWS::NoValue
+      KmsMasterKeyId: !If
+        - IsDLQSSEKMSEnabled
+        - !Ref KMSKeyARNForDLQSSE
+        - !Ref AWS::NoValue
+  ScannerDLQPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref ScannerDLQ
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowEventBridgeToSendMessages
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sqs:SendMessage
+            Resource: !GetAtt ScannerDLQ.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !GetAtt OnS3ObjectCreatedRule.Arn
+
+  ScannerLambda:
+    Type: AWS::Lambda::Function
+    DependsOn: ScannerLambdaLastConfig
+    Properties:
+      Code:
+        S3Bucket: !Sub ${FSSBucketName}-${AWS::Region}
+        S3Key: !Sub ${FSSKeyPrefix}lambda/scanner-lambda-python.zip
+      Handler: lambdas.handler.lambda_handler
+      Environment:
+        Variables:
+          stackARN: !Ref AWS::StackId
+          SCAN_RESULT_TOPIC: !Ref ScanResultTopic
+          SCAN_CONFIG: '{}'
+          REPORT_OBJECT_KEY: !If [IsReportObjectKey, 'True', 'False']
+          # For testing purpose
+          LICENSE: ''
+          FSS_API_ENDPOINT: 'https://filestorage.trend-us-1.dev-cloudone.trendmicro.com/api/'
+      MemorySize: 512
+      Role: !GetAtt ScannerExecutionRole.Arn
+      Runtime: python3.8
+      Timeout: 120
+      Layers:
+        - !Ref ScannerPatternLambdaLayer
+      EphemeralStorage:
+        Size: !Ref ScannerEphemeralStorage
+      DeadLetterConfig:
+        TargetArn: !GetAtt ScannerDLQ.Arn
+  ScannerLambdaLastConfig:
+    Type: Custom::ScannerLambdaLastConfig
+    Properties:
+      ServiceToken: !GetAtt GetLambdaLastConfig.Arn
+      ParameterStoreName: !Join ['', [!Ref AWS::StackName, '-OutputsParameter-' , !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
+      LambdaARNOutputKey: ScannerLambdaARN
+      LambdaAliasARNOutputKey: ScannerLambdaAliasARN
+      Modified: 20220906.1
+      # Template parameters
+      CloudOneRegion: !Ref CloudOneRegion
+      FSSBucketName: !Ref FSSBucketName
+      FSSKeyPrefix: !Ref FSSKeyPrefix
+      ReportObjectKey: !Ref ReportObjectKey
+      ScannerEphemeralStorage: !Ref ScannerEphemeralStorage
+      TrendMicroManagementAccount: !Ref TrendMicroManagementAccount
+  ScannerLambdaAlias:
+    Type: Custom::ScannerLambdaAlias
+    Properties:
+      ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
+      FunctionName: !GetAtt ScannerLambda.Arn
+      Name: TM-FSS-MANAGED
+      Modified: 20220906.1
+      # Template parameters
+      CloudOneRegion: !Ref CloudOneRegion
+      FSSBucketName: !Ref FSSBucketName
+      FSSKeyPrefix: !Ref FSSKeyPrefix
+      ReportObjectKey: !Ref ReportObjectKey
+      ScannerEphemeralStorage: !Ref ScannerEphemeralStorage
+      TrendMicroManagementAccount: !Ref TrendMicroManagementAccount
+      # Other inputs
+      LastEnvVars: !GetAtt ScannerLambdaLastConfig.Environment
+      LastLayers: !GetAtt ScannerLambdaLastConfig.Layers
+      EnvVarsToRecover:
+        - LICENSE
+        - FSS_API_ENDPOINT
+        - SCAN_CONFIG
+      LayersToRecover:
+        # Find the layer pushed by FSS backend and replace the layer created by templates.
+        # The layer name could be:
+        # 1. ScannerPatternLambdaLayer_xxxxxx (pushed by FSS backend)
+        # 2. ScannerPatternLambdaLayer (created by templates without prefix parameters)
+        # 3. <prefix>-ScannerPattern (created by templates with prefix parameters)
+        ScannerPatternLambdaLayer_:
+          - ScannerPattern
+  ScannerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join [/, [/aws/lambda, !Ref ScannerLambda]]
+      RetentionInDays: 90
+  ScannerPatternLambdaLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      Content:
+        S3Bucket: !Sub ${FSSBucketName}-${AWS::Region}
+        S3Key: !Sub ${FSSKeyPrefix}patterns/pattern-icrc-269.zip
+      Description: Anti-Malware pattern layer for scanner lambda function.
+
+  ScannerDeadLetterLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub ${FSSBucketName}-${AWS::Region}
+        S3Key: !Sub ${FSSKeyPrefix}lambda/scanner-dlq-lambda-python.zip
+      Handler: lambdas.scanner_dlq_handler.lambda_handler
+      Environment:
+        Variables:
+          stackARN: !Ref AWS::StackId
+          SCAN_RESULT_TOPIC: !Ref ScanResultTopic
+      MemorySize: 128
+      Role: !GetAtt ScannerDeadLetterExecutionRole.Arn
+      Runtime: python3.8
+      Timeout: 60
+  ScannerDeadLetterLambdaAlias:
+    Type: Custom::ScannerDeadLetterLambdaAlias
+    Properties:
+      ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
+      FunctionName: !GetAtt ScannerDeadLetterLambda.Arn
+      Name: TM-FSS-MANAGED
+      Modified: 20210708.1
+      # Template parameters
+      FSSBucketName: !Ref FSSBucketName
+      FSSKeyPrefix: !Ref FSSKeyPrefix
+  ScannerDeadLetterLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join [/, [/aws/lambda, !Ref ScannerDeadLetterLambda]]
+      RetentionInDays: 90
+  ScannerDeadLetterEventSourceFromDLQ:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 1
+      Enabled: true
+      EventSourceArn: !GetAtt ScannerDLQ.Arn
+      FunctionName: !GetAtt ScannerDeadLetterLambdaAlias.Arn
+
+  ScannerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub arn:${AWS::Partition}:s3:::*/*
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource:
+                  - !Ref ScanResultTopic
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                Resource:
+                  - !GetAtt ScannerDLQ.Arn
+  ScannerExecutionRoleKMSDecryptPolicyForSQS:
+    Type: AWS::IAM::Policy
+    Condition: IsDLQSSEKMSEnabled
+    Properties:
+      PolicyName: kms-permission-for-sqs
+      Roles:
+        - !Ref ScannerExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey
+            Resource: !Ref KMSKeyARNForDLQSSE
+  ScannerExecutionRoleKMSDecryptPolicyForSNS:
+    Type: AWS::IAM::Policy
+    Condition: IsTopicSSEKMSEnabled
+    Properties:
+      PolicyName: kms-permission-for-sns
+      Roles:
+        - !Ref ScannerExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kms:GenerateDataKey*
+              - kms:Decrypt
+            Resource: !Ref KMSKeyARNForTopicSSE
+  ScannerExecutionRoleKMSDecryptPolicyForBuckets:
+    Type: AWS::IAM::Policy
+    Condition: IsBucketSSEKMSEnabled
+    Properties:
+      PolicyName: kms-permission-for-buckets
+      Roles:
+        - !Ref ScannerExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kms:Decrypt
+            Resource: !Ref KMSKeyARNsForBucketSSE
+
+  ScannerDeadLetterExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                Resource: !GetAtt ScannerDLQ.Arn
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource:
+                  - !Ref ScanResultTopic
+
+  ScannerDeadLetterExecutionRoleKMSDecryptPolicyForSQS:
+    Type: AWS::IAM::Policy
+    Condition: IsDLQSSEKMSEnabled
+    Properties:
+      PolicyName: kms-permission-for-scanner-dlq
+      Roles:
+        - !Ref ScannerDeadLetterExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kms:Decrypt
+            Resource: !Ref KMSKeyARNForDLQSSE
+  ScannerDeadLetterExecutionRoleKMSDecryptPolicyForSNS:
+    Type: AWS::IAM::Policy
+    Condition: IsTopicSSEKMSEnabled
+    Properties:
+      PolicyName: kms-permission-for-sns
+      Roles:
+        - !Ref ScannerDeadLetterExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kms:GenerateDataKey*
+              - kms:Decrypt
+            Resource: !Ref KMSKeyARNForTopicSSE
+
+  ScanResultTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: S3 Scanning Results
+      KmsMasterKeyId: !If [IsTopicSSEKMSEnabled, !Ref KMSKeyARNForTopicSSE, !Ref AWS::NoValue]
+  ScanResultTopicSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: lambda
+      Endpoint: !GetAtt PostScanActionLambdaAlias.Arn
+      TopicArn: !Ref ScanResultTopic
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt PostScanActionDLQ.Arn
+      FilterPolicyScope: MessageAttributes
+      FilterPolicy:
+        type:
+          - scan-result
+  PostScanActionLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub ${FSSBucketName}-${AWS::Region}
+        S3Key: !Sub ${FSSKeyPrefix}lambda/post-scan-action.zip
+      Handler: handler.lambda_handler
+      Environment:
+        Variables:
+          stackARN: !Ref AWS::StackId
+          SCAN_RESULT_TOPIC: !Ref ScanResultTopic
+          QUARANTINE_BUCKET: !Ref QuarantineBucket
+      MemorySize: 128
+      Role: !GetAtt PostScanActionExecutionRole.Arn
+      Runtime: python3.8
+      Timeout: 15
+      DeadLetterConfig:
+        TargetArn: !GetAtt  PostScanActionDLQ.Arn
+  PostScanActionLambdaAlias:
+    Type: Custom::PostScanActionLambdaAlias
+    Properties:
+      ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
+      FunctionName: !GetAtt PostScanActionLambda.Arn
+      Name: TM-FSS-MANAGED
+      Modified: 20211019.1
+      # Template parameters
+      FSSBucketName: !Ref FSSBucketName
+      FSSKeyPrefix: !Ref FSSKeyPrefix
+      QuarantineBucket: !Ref QuarantineBucket
+  PostScanActionExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectTagging
+                  - s3:PutObjectTagging
+                Resource: !Sub arn:${AWS::Partition}:s3:::*/*
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                Resource:
+                  - !GetAtt PostScanActionDLQ.Arn
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource:
+                  - !Ref ScanResultTopic
+  PostScanActionExecutionRoleForQuarantine:
+    Type: AWS::IAM::Policy
+    Condition: IsQuarantineEnabled
+    Properties:
+      PolicyName: s3-permission-for-quarantine
+      Roles:
+        - !Ref PostScanActionExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:DeleteObject
+            Resource: !Sub arn:${AWS::Partition}:s3:::*/*
+  PostScanActionExecutionRoleKMSDecryptPolicyForBuckets:
+    Type: AWS::IAM::Policy
+    Condition: IsQuarantineAndBucketSSEKMSEnabled
+    Properties:
+      PolicyName: kms-permission-for-buckets
+      Roles:
+        - !Ref PostScanActionExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kms:Decrypt
+            Resource: !Ref KMSKeyARNsForBucketSSE
+  PostScanActionExecutionRoleKMSDecryptPolicyForSNS:
+    Type: AWS::IAM::Policy
+    Condition: IsTopicSSEKMSEnabled
+    Properties:
+      PolicyName: kms-permission-for-sns
+      Roles:
+        - !Ref PostScanActionExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kms:GenerateDataKey*
+              - kms:Decrypt
+            Resource: !Ref KMSKeyARNForTopicSSE
+  PostScanActionInvokePermissionOfScanResultTopic:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt PostScanActionLambdaAlias.Arn
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref ScanResultTopic
+  PostScanActionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join [/, [/aws/lambda, !Ref PostScanActionLambda]]
+      RetentionInDays: 90
+
+  PostScanActionDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      DelaySeconds: 0
+      MaximumMessageSize: 262144
+      MessageRetentionPeriod: 3600
+      ReceiveMessageWaitTimeSeconds: 0
+      VisibilityTimeout: 720
+      KmsDataKeyReusePeriodSeconds: !If
+        - IsDLQSSEKMSEnabled
+        - 86400
+        - !Ref AWS::NoValue
+      KmsMasterKeyId: !If
+        - IsDLQSSEKMSEnabled
+        - !Ref KMSKeyARNForDLQSSE
+        - !Ref AWS::NoValue
+  PostScanActionDLQPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref PostScanActionDLQ
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowSNSTopicToSendMessages
+            Effect: Allow
+            Principal:
+              Service: sns.amazonaws.com
+            Action: sqs:SendMessage
+            Resource: !GetAtt PostScanActionDLQ.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref ScanResultTopic
+  PostScanActionDeadLetterLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub ${FSSBucketName}-${AWS::Region}
+        S3Key: !Sub ${FSSKeyPrefix}lambda/post-scan-action-dlq.zip
+      Handler: dlq_handler.lambda_handler
+      Environment:
+        Variables:
+          stackARN: !Ref AWS::StackId
+      MemorySize: 128
+      Role: !GetAtt PostScanActionDeadLetterExecutionRole.Arn
+      Runtime: python3.8
+      Timeout: 60
+  PostScanActionDeadLetterLambdaAlias:
+    Type: Custom::ScannerDeadLetterLambdaAlias
+    Properties:
+      ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
+      FunctionName: !GetAtt PostScanActionDeadLetterLambda.Arn
+      Name: TM-FSS-MANAGED
+      Modified: 20210708.1
+      # Template parameters
+      FSSBucketName: !Ref FSSBucketName
+      FSSKeyPrefix: !Ref FSSKeyPrefix
+  PostScanActionDeadLetterExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                Resource: !GetAtt PostScanActionDLQ.Arn
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource:
+                  - !Ref ScanResultTopic
+  PostScanActionDeadLetterExecutionRoleKMSDecryptPolicyForSQS:
+      Type: AWS::IAM::Policy
+      Condition: IsDLQSSEKMSEnabled
+      Properties:
+        PolicyName: kms-permission-for-postscan-action-dlq
+        Roles:
+          - !Ref PostScanActionDeadLetterExecutionRole
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+              Resource: !Ref KMSKeyARNForDLQSSE
+  PostScanActionDeadLetterExecutionRoleKMSDecryptPolicyForSNS:
+      Type: AWS::IAM::Policy
+      Condition: IsTopicSSEKMSEnabled
+      Properties:
+        PolicyName: kms-permission-for-sns
+        Roles:
+          - !Ref PostScanActionDeadLetterExecutionRole
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - kms:GenerateDataKey*
+                - kms:Decrypt
+              Resource: !Ref KMSKeyARNForTopicSSE
+  PostScanActionDeadLetterLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join [/, [/aws/lambda, !Ref PostScanActionDeadLetterLambda]]
+      RetentionInDays: 90
+  PostScanActionDeadLetterEventSourceFromDLQ:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 1
+      Enabled: true
+      EventSourceArn: !GetAtt PostScanActionDLQ.Arn
+      FunctionName: !GetAtt PostScanActionDeadLetterLambdaAlias.Arn
+
+  OutputsParameterStore:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Join ['', [!Ref AWS::StackName, '-OutputsParameter-' , !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
+      Type: String
+      Value: !Sub |
+        {
+          "CloudOneRegion": "${CloudOneRegion}",
+          "ScannerLambdaARN": "${ScannerLambda.Arn}",
+          "ScannerLambdaAliasARN": "${ScannerLambdaAlias.Arn}",
+          "ScannerExecutionRoleARN": "${ScannerExecutionRole.Arn}",
+          "ScannerQueueDLQARN": "${ScannerDLQ.Arn}",
+          "ScannerDeadLetterLambdaARN": "${ScannerDeadLetterLambda.Arn}",
+          "ScannerDeadLetterLambdaAliasARN": "${ScannerDeadLetterLambdaAlias.Arn}",
+          "ScannerLambdaLogGroupName": "${ScannerLogGroup}",
+          "ScannerDeadLetterLambdaLogGroupName": "${ScannerDeadLetterLogGroup}",
+          "PostScanActionLambdaAliasARN": "${PostScanActionLambdaAlias.Arn}",
+          "PostScanActionLambdaARN": "${PostScanActionLambda.Arn}",
+          "PostScanActionRoleARN": "${PostScanActionExecutionRole.Arn}",
+          "PostScanActionDeadLetterLambdaAliasARN": "${PostScanActionDeadLetterLambdaAlias.Arn}",
+          "PostScanActionDeadLetterLambdaARN": "${PostScanActionDeadLetterLambda.Arn}",
+          "ScanResultTopicARN": "${ScanResultTopic}"
+        }
+
+  ManagementRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref TrendMicroManagementAccount
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                sts:ExternalId: !Ref ExternalID
+      Policies:
+        - PolicyName: stack-management
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:ListStackResources
+                  - cloudformation:DescribeStacks
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:DescribeStackResources
+                  - cloudformation:DescribeStackResource
+                  - cloudformation:DetectStackDrift
+                  - cloudformation:DetectStackResourceDrift
+                  - cloudformation:DescribeStackResourceDrifts
+                  - cloudformation:GetStackPolicy
+                  - cloudformation:GetTemplate
+                Resource: !Ref AWS::StackId
+        - PolicyName: queue-management
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:SetQueueAttributes
+                  - sqs:GetQueueAttributes
+                  - sqs:ListDeadLetterSourceQueues
+                Resource:
+                  - !GetAtt ScannerDLQ.Arn
+                  - !GetAtt PostScanActionDLQ.Arn
+        - PolicyName: lambda-management
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:UpdateFunctionCode
+                  - lambda:UpdateFunctionConfiguration
+                  - lambda:GetFunctionConfiguration
+                  - lambda:PublishVersion
+                  - lambda:ListVersionsByFunction
+                  - lambda:CreateAlias
+                  - lambda:UpdateAlias
+                  - lambda:DeleteAlias
+                  - lambda:ListAliases
+                  - lambda:GetAlias
+                  - lambda:GetFunction
+                  - lambda:ListProvisionedConcurrencyConfigs
+                  - lambda:GetProvisionedConcurrencyConfig
+                  - lambda:GetFunctionConcurrency
+                Resource:
+                  - !GetAtt ScannerLambda.Arn
+                  - !GetAtt ScannerDeadLetterLambda.Arn
+                  - !GetAtt PostScanActionLambda.Arn
+                  - !GetAtt PostScanActionDeadLetterLambda.Arn
+                  - !Sub ${ScannerLambda.Arn}:*
+                  - !Sub ${ScannerDeadLetterLambda.Arn}:*
+                  - !Sub ${PostScanActionLambda.Arn}:*
+                  - !Sub ${PostScanActionDeadLetterLambda.Arn}:*
+              - Effect: Allow
+                Action:
+                  - lambda:GetEventSourceMapping
+                Resource:
+                  - !Sub
+                    - arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:event-source-mapping:${MappingID}
+                    - MappingID: !Ref ScannerDeadLetterEventSourceFromDLQ
+                  - !Sub
+                    - arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:event-source-mapping:${MappingID}
+                    - MappingID: !Ref PostScanActionDeadLetterEventSourceFromDLQ
+              - Effect: Allow
+                Action:
+                  - lambda:GetLayerVersion
+                Resource:
+                  - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${TrendMicroManagementAccount}:layer:Scanner*LambdaLayer*:*
+                  - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:Scanner*LambdaLayer:*
+        - PolicyName: lambda-logs-access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:DescribeLogStreams
+                  - logs:GetLogEvents
+                  - logs:StartQuery
+                  - logs:StopQuery
+                  - logs:GetQueryResults
+                  - logs:FilterLogEvents
+                Resource:
+                  - !GetAtt ScannerLogGroup.Arn
+                  - !GetAtt ScannerDeadLetterLogGroup.Arn
+                  - !GetAtt PostScanActionLogGroup.Arn
+                  - !GetAtt PostScanActionDeadLetterLogGroup.Arn
+        - PolicyName: ssm-access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource:
+                  !Join ['', [!Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/", !Ref OutputsParameterStore]]
+
+  ManagementRoleGetRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: role-management
+      Roles:
+        - !Ref ManagementRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - iam:GetRolePolicy
+            Resource: !GetAtt ManagementRole.Arn
+
+Outputs:
+  AccountScannerStackManagementRoleARN:
+    Value: !GetAtt ManagementRole.Arn
+    Description: The ARN of the IAM role for File Storage Security backend services to manage the deployed resources.
+  ScannerExecutionRoleARN:
+    Value: !GetAtt ScannerExecutionRole.Arn
+    Description: The ARN of the IAM role for the scanner Lambda function in the account scanner stack.
+  ScannerDeadLetterExecutionRoleARN:
+    Value: !GetAtt ScannerDeadLetterExecutionRole.Arn
+    Description: The ARN of the IAM role for the scanner dead-letter Lambda function in the account scanner stack.
+  PostScanActionExecutionRoleARN:
+    Value: !GetAtt PostScanActionExecutionRole.Arn
+    Description: The ARN of the IAM role for the post-scan-action Lambda function in the account scanner stack.
+  PostScanActionDeadLetterExecutionRoleARN:
+    Value: !GetAtt PostScanActionDeadLetterExecutionRole.Arn
+    Description: The ARN of the IAM role for the post-scan-action dead-letter Lambda function in the account scanner stack.
