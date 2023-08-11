@@ -114,7 +114,6 @@
         "scannerStorageAccountFileShareName": "[format('{0}/default/{1}', variables('scannerStorageAccountName'), variables('functionContentShareName'))]",
         "location": "[resourceGroup().location]",
         "scannerApplicationInsightsName": "[concat('tmai0', toLower(variables('stackUID')))]",
-        "scannerApplicationInsightsID": "[guid(concat('tmai0', toLower(variables('stackUID'))))]",
         "scannerPatternRootFolder": "data",
         "scannerPatternPath": "[concat(variables('scannerPatternRootFolder'), '/patterns')]",
         "scannerQueueNamespaceName": "[concat('tmsbq0', toLower(variables('stackUID')))]",
@@ -286,6 +285,8 @@
             "kind": "[variables('storageAccountType')]",
             "properties": {
                 "minimumTlsVersion": "TLS1_2",
+                "supportsHttpsTrafficOnly": true,
+                "allowBlobPublicAccess": false,
                 "publicNetworkAccess": "[variables('publicNetworkAccess')]"
             }
         },

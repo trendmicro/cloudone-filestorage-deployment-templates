@@ -500,6 +500,8 @@
             "kind": "[variables('storageAccountType')]",
             "properties": {
                 "minimumTlsVersion": "TLS1_2",
+                "supportsHttpsTrafficOnly": true,
+                "allowBlobPublicAccess": false,
                 "networkAcls": {
                     "bypass": "AzureServices",
                     "virtualNetworkRules": [],
@@ -784,6 +786,8 @@
             "kind": "[variables('storageAccountType')]",
             "properties": {
                 "minimumTlsVersion": "TLS1_2",
+                "supportsHttpsTrafficOnly": true,
+                "allowBlobPublicAccess": false,
                 "publicNetworkAccess": "[variables('publicNetworkAccess')]"
             }
         },
