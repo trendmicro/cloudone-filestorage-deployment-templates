@@ -947,6 +947,21 @@ Resources:
             Action:
               - kms:Decrypt
             Resource: !Ref KMSKeyARNsForBucketSSE
+  PostScanActionExecutionRoleKMSDecryptPolicyForSQS:
+    Type: AWS::IAM::Policy
+    Condition: IsDLQSSEKMSEnabled
+    Properties:
+      PolicyName: kms-permission-for-sqs
+      Roles:
+        - !Ref PostScanActionExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey
+            Resource: !Ref KMSKeyARNForDLQSSE
   PostScanActionExecutionRoleKMSDecryptPolicyForSNS:
     Type: AWS::IAM::Policy
     Condition: IsTopicSSEKMSEnabled
