@@ -49,7 +49,8 @@
         "iam:DeleteRole",
         "iam:AttachRolePolicy",
         "iam:PutRolePolicy",
-        "iam:GetRolePolicy"
+        "iam:GetRolePolicy",
+        "iam:UpdateAssumeRolePolicy"
       ],
       "Effect": "Allow",
       "Resource": "arn:aws:iam::*:role/*"
