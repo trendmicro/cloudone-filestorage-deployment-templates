@@ -90,7 +90,7 @@
             "type": "bool",
             "defaultValue": false,
             "metadata": {
-                "description": "<b>[VNet Only]</b><br />Indicates whether to restrict public access to Application Insights. If set to true, it means that Application Insights can only be accessed through Azure Monitor Private Link Scope. If you don't add the Application Insight to the Azure Monitor Private Link Scope, you won't be able to ingest or query data. For more information on how to configure Private Link for Application Insights, please see <a href='https://cloudone.trendmicro.com/docs/file-storage-security/azure-vnet-deployment/'>Restrict access to Application Insights'</a>. If VNet is not required, please choose false."
+                "description": "<b>[VNet Only]</b><br />Indicates whether to restrict public access to Application Insights. If set to true, Application Insights can only be accessed through Azure Monitor Private Link Scope. If you don't add the Application Insight to the Azure Monitor Private Link Scope, you won't be able to ingest or query data. For more information on how to configure Private Link for Application Insights, see <a href='https://cloudone.trendmicro.com/docs/file-storage-security/azure-vnet-deployment/'>Restrict access to Application Insights'</a>. If VNet is not required, choose false."
             }
         }
     },

@@ -148,7 +148,18 @@
             "type": "bool",
             "defaultValue": false,
             "metadata": {
-                "description": "<b>[VNet Only]</b><br />Indicates whether to restrict public access to Application Insights. If set to true, it means that Application Insights can only be accessed through Azure Monitor Private Link Scope. If you don't add the Application Insight to the Azure Monitor Private Link Scope, you won't be able to ingest or query data. For more information on how to configure Private Link for Application Insights, please see <a href='https://cloudone.trendmicro.com/docs/file-storage-security/azure-vnet-deployment/'>Restrict access to Application Insights'</a>. If VNet is not required, please choose false."
+                "description": "<b>[VNet Only]</b><br />Indicates whether to restrict public access to Application Insights. If set to true, Application Insights can only be accessed through Azure Monitor Private Link Scope. If you don't add the Application Insight to the Azure Monitor Private Link Scope, you won't be able to ingest or query data. For more information on how to configure Private Link for Application Insights, see <a href='https://cloudone.trendmicro.com/docs/file-storage-security/azure-vnet-deployment/'>Restrict access to Application Insights'</a>. If VNet is not required, choose false."
+            }
+        },
+        "StorageStackFunctionAppServicePlan": {
+            "type": "string",
+            "defaultValue": "Y1",
+            "allowedValues": [
+                "Y1",
+                "EP1"
+            ],
+            "metadata": {
+                "description": "Warning: this field is only used when creating a resource group. Changing it when updating will cause your deployment to fail.<br />The function app's service plan for Azure functions is in the storage stack. Choose 'EP1' to use the premium hosting plan to boost performance. This setting only takes effect when the deployment is not integrated with the VNet solution."
             }
         }
     },
@@ -255,7 +266,7 @@
                 "family": "EP"
             }
         },
-        "functionAppSKU": "[variables('functionAppSkuMap')[if(variables('withVNet'), 'EP1', 'Y1')]]",
+        "functionAppSKU": "[variables('functionAppSkuMap')[if(variables('withVNet'), 'EP1', parameters('StorageStackFunctionAppServicePlan'))]]",
         "storageAccountType": "[if(variables('withVNet'), 'StorageV2', 'Storage')]",
         "publicNetworkAccess": "[if(variables('withVNet'), 'Disabled', 'Enabled')]",
         "filePrivateZoneGroupName": "filePrivateDnsZoneGroup",
