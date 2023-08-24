@@ -301,6 +301,9 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
       PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundary , !Ref AWS::NoValue ]
       ManagedPolicyArns: !Split
         - ','
@@ -495,6 +498,9 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
       PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundary , !Ref AWS::NoValue ]
       ManagedPolicyArns: !Split
         - ','
@@ -759,6 +765,9 @@ Resources:
                 - lambda.amazonaws.com
             Action:
               - sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
       Path: /
       PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundary , !Ref AWS::NoValue ]
       ManagedPolicyArns: !Split
@@ -846,6 +855,9 @@ Resources:
                 - lambda.amazonaws.com
             Action:
               - sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
       Path: /
       ManagedPolicyArns: !Split
         - ','
