@@ -552,7 +552,7 @@ Resources:
       MaximumMessageSize: 262144
       MessageRetentionPeriod: 3600
       ReceiveMessageWaitTimeSeconds: 0
-      VisibilityTimeout: 720
+      VisibilityTimeout: 240
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt ScannerDLQ.Arn
         maxReceiveCount: 2
@@ -589,7 +589,7 @@ Resources:
       MaximumMessageSize: 262144
       MessageRetentionPeriod: 3600
       ReceiveMessageWaitTimeSeconds: 0
-      VisibilityTimeout: 720
+      VisibilityTimeout: 240
       KmsDataKeyReusePeriodSeconds: !If
         - IsQueueSSEKMSEnabled
         - 86400
