@@ -555,7 +555,7 @@ Resources:
       MaximumMessageSize: 262144
       MessageRetentionPeriod: 3600
       ReceiveMessageWaitTimeSeconds: 0
-      VisibilityTimeout: 720
+      VisibilityTimeout: 240
       KmsDataKeyReusePeriodSeconds: !If
         - IsDLQSSEKMSEnabled
         - 86400
@@ -1015,7 +1015,7 @@ Resources:
       MaximumMessageSize: 262144
       MessageRetentionPeriod: 3600
       ReceiveMessageWaitTimeSeconds: 0
-      VisibilityTimeout: 720
+      VisibilityTimeout: 240
       KmsDataKeyReusePeriodSeconds: !If
         - IsDLQSSEKMSEnabled
         - 86400
