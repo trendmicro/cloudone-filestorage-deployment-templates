@@ -15,6 +15,7 @@ Metadata:
           - ObjectCreatedEventFilter
           - ScannerEphemeralStorage
           - QuarantineBucket
+          - ExclusiveBucketList
       - Label:
           default: "[ Warning: Do not modify the fields below. Modifications may cause your deployment to fail. ]"
         Parameters:
@@ -43,6 +44,8 @@ Metadata:
         default: ReportObjectKey
       ObjectCreatedEventFilter:
         default: ObjectCreatedEventFilter
+      ExclusiveBucketList:
+        default: ExclusiveBucketList
       ScannerEphemeralStorage:
         default: "ScannerEphemeralStorage [ In Preview ]"
       TrendMicroManagementAccount:
@@ -76,6 +79,10 @@ Parameters:
   ObjectCreatedEventFilter:
     Type: String
     Description: The event pattern to filter the object created event. Please provide a JSON string of event pattern detail. For example, {"bucket":{"name":[{"prefix":"bucket_prefix_to_scan"}]},"object":{"key":[{"prefix":"object_key_prefix_to_scan"}]}}.
+    Default: ''
+  ExclusiveBucketList:
+    Type: CommaDelimitedList
+    Description: A comma-separated list of names of the S3 buckets that you want to prevent from scanning. Leave it blank if you have no S3 buckets to exclude.
     Default: ''
   KMSKeyARNForDLQSSE:
     Default: ''
@@ -144,16 +151,28 @@ Conditions:
   IsQuarantineAndBucketSSEKMSEnabled: !And
       - !Not [!Equals ['', !Select [0, !Ref KMSKeyARNsForBucketSSE]]]
       - !Not [!Equals ['', !Ref QuarantineBucket]]
+  IsQuarantineOrExclusiveBucketListEnabled: !Or
+      - !Condition IsQuarantineEnabled
+      - !Not [!Equals ['', !Select [0, !Ref ExclusiveBucketList]]]
 
 Resources:
   OnS3ObjectCreatedRule:
     Type: AWS::Events::Rule
     Properties:
       EventBusName: !Sub arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:event-bus/default
-      EventPattern: !If
-        - IsObjectCreatedEventFilterEnabled
-        - !Sub '{"detail-type":["Object Created"],"source":["aws.s3"],"detail":${ObjectCreatedEventFilter}}'
-        - '{"detail-type":["Object Created"],"source":["aws.s3"]}'
+      EventPattern: !Join
+        - ''
+        - - !If
+            - IsObjectCreatedEventFilterEnabled
+            - !Sub '{"detail-type":["Object Created"],"source":["aws.s3"],"detail":${ObjectCreatedEventFilter}'
+            - '{"detail-type":["Object Created"],"source":["aws.s3"]'
+          - !If
+            - IsQuarantineOrExclusiveBucketListEnabled
+            - !Sub
+              - ',"resources":[{"anything-but":[${ExclusiveBucketARNList}]}]'
+              - ExclusiveBucketARNList: !GetAtt ExclusiveBuckets.ARNList
+            - ''
+          - '}'
       State: ENABLED
       Targets:
         - Id: onS3ObjectCreatedHandler
@@ -1295,6 +1314,97 @@ Resources:
             Action:
               - iam:GetRolePolicy
             Resource: !GetAtt ManagementRole.Arn
+
+  ExclusiveBuckets:
+    Type: Custom::ExclusiveBuckets
+    Properties:
+      ServiceToken: !GetAtt TransformToBucketARN.Arn
+      AWSPartition: !Sub ${AWS::Partition}
+      ExclusiveBucketList: !Split
+        - ','
+        - !Join [',', [!Join [',', !Ref ExclusiveBucketList], !Ref QuarantineBucket]]
+
+  TransformToBucketARN:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Transform bucket name list to bucket ARN list
+      Handler: index.handler
+      Runtime: python3.8
+      Role: !GetAtt TransformToBucketARNExecutionRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          import boto3
+          import traceback
+          import json
+          import urllib.request
+          SUCCESS = "SUCCESS"
+          FAILED = "FAILED"
+          organizations_client = boto3.client('organizations')
+          def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False):
+              responseUrl = event['ResponseURL']
+              print(responseUrl)
+              responseBody = {}
+              responseBody['Status'] = responseStatus
+              responseBody['Reason'] = 'See the details in CloudWatch Log Stream: ' + context.log_stream_name
+              responseBody['PhysicalResourceId'] = physicalResourceId or context.log_stream_name
+              responseBody['StackId'] = event['StackId']
+              responseBody['RequestId'] = event['RequestId']
+              responseBody['LogicalResourceId'] = event['LogicalResourceId']
+              responseBody['NoEcho'] = noEcho
+              responseBody['Data'] = responseData
+              json_responseBody = json.dumps(responseBody)
+              # Do not print response body cause it might contains license (JWT)
+              headers = {
+                  'content-type' : '',
+                  'content-length' : str(len(json_responseBody))
+              }
+              request = urllib.request.Request(responseUrl, headers=headers, data=json_responseBody.encode('utf-8'), method='PUT')
+              try:
+                  with urllib.request.urlopen(request) as response:
+                      print("Status code: " + response.reason)
+              except Exception as e:
+                  print("send(..) failed executing requests.put(..): " + str(e))
+          def transform_to_bucket_arns(event):
+              aws_partition = event.get('ResourceProperties', {}).get('AWSPartition', 'aws')
+              exclusive_bucket_list = event.get('ResourceProperties', {}).get('ExclusiveBucketList', [])
+              bucket_list = []
+              if exclusive_bucket_list:
+                  bucket_list = exclusive_bucket_list
+              bucket_list = list(filter(None, set(bucket_list)))
+              return ','.join([f'"arn:{aws_partition}:s3:::{bucket_name}"' for bucket_name in bucket_list])
+          def handler(event, context):
+              print(event)
+              if event['RequestType'] == 'Delete':
+                  send(event, context, SUCCESS, {})
+                  return
+              status = SUCCESS
+              response_data = {}
+              try:
+                bucket_arn_list = transform_to_bucket_arns(event)
+                response_data['ARNList'] = bucket_arn_list
+              except Exception as ex:
+                  print('Unhandled exception: ' + str(ex))
+                  traceback.print_exc()
+                  status = FAILED
+              finally:
+                  send(event, context, status, response_data)
+
+  TransformToBucketARNExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
 Outputs:
   AccountScannerStackManagementRoleARN:
