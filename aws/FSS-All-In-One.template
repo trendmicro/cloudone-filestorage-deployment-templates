@@ -17,6 +17,7 @@ Metadata:
           - TriggerWithObjectCreatedEvent
           - ReportObjectKey
           - ScanOnGetObject
+          - ScanResultTagFormat
       - Label:
           default: "[ Optional: Permissions control ]"
         Parameters:
@@ -98,6 +99,8 @@ Metadata:
         default: "ScannerEphemeralStorage [ In Preview ]"
       ScanOnGetObject:
         default: "ScanOnGetObject [ In Preview ]"
+      ScanResultTagFormat:
+        default: ScanResultTagFormat
       ScanResultTopicDLQARN:
         default: ScanResultTopicDLQARN
       SecurityGroupIDs:
@@ -235,6 +238,17 @@ Parameters:
       This option requires that the storage stack is deployed in both the same account and the same region as the scanner stack.
       For more information, see https://cloudone.trendmicro.com/docs/file-storage-security/aws-scan-on-get-object/
     Type: String
+  ScanResultTagFormat:
+    Default: Separated tags
+    Description: |
+      The format of the scan result tags tagged on the scanned object.
+      Select "Separated tags" to add each FSS tag as a standalone tag. Select "Merged tag" to add all FSS tags in one tag. Select "No tag" to disable the tagging feature.
+      For more information, see https://cloudone.trendmicro.com/docs/file-storage-security/scan-tag-overview/#ViewTag.
+    Type: String
+    AllowedValues:
+      - Separated tags
+      - Merged tag
+      - No tag
   ScanResultTopicDLQARN:
     Default: ''
     Description: The SQS ARN for ScanResultTopic DLQ.
@@ -306,6 +320,7 @@ Resources:
         ScannerLambdaAliasARN: !GetAtt ScannerStack.Outputs.ScannerLambdaAliasARN
         ScannerSQSURL: !GetAtt ScannerStack.Outputs.ScannerQueueURL
         ScanOnGetObject: !Ref ScanOnGetObject
+        ScanResultTagFormat: !Ref ScanResultTagFormat
         ScanResultTopicDLQARN: !Ref ScanResultTopicDLQARN
         SecurityGroupIDs: !Join [',', !Ref SecurityGroupIDs]
         SNSTopicPrefix: !Ref SNSTopicPrefix

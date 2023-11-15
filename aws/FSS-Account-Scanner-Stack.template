@@ -16,6 +16,7 @@ Metadata:
           - ScannerEphemeralStorage
           - QuarantineBucket
           - ExclusiveBucketList
+          - ScanResultTagFormat
       - Label:
           default: "[ Warning: Do not modify the fields below. Modifications may cause your deployment to fail. ]"
         Parameters:
@@ -28,6 +29,8 @@ Metadata:
     ParameterLabels:
       CloudOneRegion:
         default: Trend Micro Cloud One region
+      ExclusiveBucketList:
+        default: ExclusiveBucketList
       ExternalID:
         default: ExternalID
       FSSBucketName:
@@ -40,24 +43,31 @@ Metadata:
         default: KMSKeyARNForTopicSSE
       KMSKeyARNsForBucketSSE:
         default: KMSKeyARNsForBucketSSE
-      ReportObjectKey:
-        default: ReportObjectKey
       ObjectCreatedEventFilter:
         default: ObjectCreatedEventFilter
-      ExclusiveBucketList:
-        default: ExclusiveBucketList
-      ScannerEphemeralStorage:
-        default: "ScannerEphemeralStorage [ In Preview ]"
-      TrendMicroManagementAccount:
-        default: File Storage Security management account
       QuarantineBucket:
         default: Malicious files quarantine destination
+      ReportObjectKey:
+        default: ReportObjectKey
+      ScannerEphemeralStorage:
+        default: "ScannerEphemeralStorage [ In Preview ]"
+      ScanResultTagFormat:
+        default: ScanResultTagFormat
+      TrendMicroManagementAccount:
+        default: File Storage Security management account
 
 Parameters:
   CloudOneRegion:
     Description: The region of the Trend Micro Cloud One services.
     Type: String
     Default: us-1
+  EnableCrossAccountScanning:
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: Enable cross account scanning within the same organization.
+    Type: String
   ExternalID:
     Description: "The External ID is for future use with updating Lambdas and also to address and prevent the 'confused deputy' problem."
     Type: String
@@ -96,6 +106,12 @@ Parameters:
     Default: ''
     Description: A comma-separated list of ARNs for the KMS master keys used to encrypt S3 bucket objects. Leave it blank if you haven't enabled SSE-KMS for the buckets.
     Type: CommaDelimitedList
+  QuarantineBucket:
+    Default: ''
+    Description: |
+      [Optional] The bucket to quarantine malicious files. The bucket region should be the same region as the account scanner stack.
+      Leave the bucket blank to disable quarantining
+    Type: String
   ReportObjectKey:
     Default: 'false'
     AllowedValues:
@@ -114,23 +130,21 @@ Parameters:
     Type: Number
     MinValue: 512
     MaxValue: 2048
-  EnableCrossAccountScanning:
-    Default: 'false'
-    AllowedValues:
-      - 'true'
-      - 'false'
-    Description: Enable cross account scanning within the same organization.
+  ScanResultTagFormat:
+    Default: Separated tags
+    Description: |
+      The format of the scan result tags tagged on the scanned object.
+      Select "Separated tags" to add each FSS tag as a standalone tag. Select "Merged tag" to add all FSS tags in one tag. Select "No tag" to disable the tagging feature.
+      For more information, see https://cloudone.trendmicro.com/docs/file-storage-security/scan-tag-overview/#ViewTag.
     Type: String
+    AllowedValues:
+      - Separated tags
+      - Merged tag
+      - No tag
   TrendMicroManagementAccount:
     ConstraintDescription: AWS account ID.
     Default: 415485722356
     Description: This account will be given permission to modify the stacks for upgrades and troubleshooting purposes.
-    Type: String
-  QuarantineBucket:
-    Default: ''
-    Description: |
-      [Optional] The bucket to quarantine malicious files. The bucket region should be the same region as the account scanner stack.
-      Leave the bucket blank to disable quarantining
     Type: String
 
 Conditions:
@@ -154,6 +168,11 @@ Conditions:
   IsQuarantineOrExclusiveBucketListEnabled: !Or
       - !Condition IsQuarantineEnabled
       - !Not [!Equals ['', !Select [0, !Ref ExclusiveBucketList]]]
+  IsTagEnabled:
+    !Not [!Equals ['No tag', !Ref ScanResultTagFormat]]
+  IsPostScanActionEnabled: !Or
+    - !Condition IsQuarantineEnabled
+    - !Condition IsTagEnabled
 
 Resources:
   OnS3ObjectCreatedRule:
@@ -877,6 +896,7 @@ Resources:
       KmsMasterKeyId: !If [IsTopicSSEKMSEnabled, !Ref KMSKeyARNForTopicSSE, !Ref AWS::NoValue]
   ScanResultTopicSubscription:
     Type: AWS::SNS::Subscription
+    Condition: IsPostScanActionEnabled
     Properties:
       Protocol: lambda
       Endpoint: !GetAtt PostScanActionLambdaAlias.Arn
@@ -899,23 +919,25 @@ Resources:
           stackARN: !Ref AWS::StackId
           SCAN_RESULT_TOPIC: !Ref ScanResultTopic
           QUARANTINE_BUCKET: !Ref QuarantineBucket
+          TAG_FORMAT: !Ref ScanResultTagFormat
       MemorySize: 128
       Role: !GetAtt PostScanActionExecutionRole.Arn
       Runtime: python3.8
       Timeout: 15
       DeadLetterConfig:
-        TargetArn: !GetAtt  PostScanActionDLQ.Arn
+        TargetArn: !GetAtt PostScanActionDLQ.Arn
   PostScanActionLambdaAlias:
     Type: Custom::PostScanActionLambdaAlias
     Properties:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt PostScanActionLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20211019.1
+      Modified: 20231016.1
       # Template parameters
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
       QuarantineBucket: !Ref QuarantineBucket
+      ScanResultTagFormat: !Ref ScanResultTagFormat
   PostScanActionExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -1016,6 +1038,7 @@ Resources:
             Resource: !Ref KMSKeyARNForTopicSSE
   PostScanActionInvokePermissionOfScanResultTopic:
     Type: AWS::Lambda::Permission
+    Condition: IsPostScanActionEnabled
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt PostScanActionLambdaAlias.Arn
