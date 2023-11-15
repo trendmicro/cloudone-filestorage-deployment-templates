@@ -15,6 +15,7 @@ Metadata:
           - TriggerWithObjectCreatedEvent
           - ReportObjectKey
           - ScanOnGetObject
+          - ScanResultTagFormat
       - Label:
           default: "[ Scanner stack ]"
         Parameters:
@@ -103,6 +104,8 @@ Metadata:
         default: ScannerSQSURL
       ScanOnGetObject:
         default: "ScanOnGetObject [ In Preview ]"
+      ScanResultTagFormat:
+        default: ScanResultTagFormat
       ScanResultTopicDLQARN:
         default: ScanResultTopicDLQARN
       SecurityGroupIDs:
@@ -232,6 +235,17 @@ Parameters:
       Enabling this option requires that the storage stack is deployed in the same account and same region as the scanner stack.
       For more information, see https://cloudone.trendmicro.com/docs/file-storage-security/aws-scan-on-get-object/
     Type: String
+  ScanResultTagFormat:
+    Default: Separated tags
+    Description: |
+      The format of the scan result tags tagged on the scanned object.
+      Select "Separated tags" to add each FSS tag as a standalone tag. Select "Merged tag" to add all FSS tags in one tag. Select "No tag" to disable the tagging feature.
+      For more information, see https://cloudone.trendmicro.com/docs/file-storage-security/scan-tag-overview/#ViewTag.
+    Type: String
+    AllowedValues:
+      - Separated tags
+      - Merged tag
+      - No tag
   ScanResultTopicDLQARN:
     Default: ''
     Description: The SQS ARN for ScanResultTopic DLQ.
@@ -286,11 +300,15 @@ Conditions:
     !Not [!Equals ['', !Ref KMSKeyARNForBucketSSE]]
   IsDLQSSEKMSEnabled:
     !Not [!Equals ['', !Ref KMSKeyARNForDLQSSE]]
-  IsPostScanActionTagDLQEnabled:
-    !Not [!Equals ['', !Ref PostScanActionTagDLQARN]]
+  IsPostScanActionTagDLQEnabled: !And
+    - !Condition IsPostScanActionTagEnabled
+    - !Not [!Equals ['', !Ref PostScanActionTagDLQARN]]
   IsPostScanActionTagDLQSSEKMSEnabled: !And
+    - !Condition IsPostScanActionTagEnabled
     - !Condition IsPostScanActionTagDLQEnabled
     - !Condition IsDLQSSEKMSEnabled
+  IsPostScanActionTagEnabled:
+    !Not [!Equals ['No tag', !Ref ScanResultTagFormat]]
   IsQueueSSEKMSEnabled:
     !Not [!Equals ['', !Ref KMSKeyARNForQueueSSE]]
   IsReportObjectKey:
@@ -502,6 +520,7 @@ Resources:
       KmsMasterKeyId: !If [IsTopicSSEKMSEnabled, !Ref KMSKeyARNForTopicSSE, !Ref AWS::NoValue]
   ScanResultTopicSubscription:
     Type: AWS::SNS::Subscription
+    Condition: IsPostScanActionTagEnabled
     Properties:
       Protocol: lambda
       Endpoint: !GetAtt PostScanActionTagLambdaAlias.Arn
@@ -725,6 +744,7 @@ Resources:
         Variables:
           stackARN: !Ref AWS::StackId
           HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
+          TAG_FORMAT: !Ref ScanResultTagFormat
       MemorySize: 128
       Role: !GetAtt PostScanActionTagExecutionRole.Arn
       Runtime: python3.8
@@ -740,12 +760,13 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt PostScanActionTagLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20211019.1
+      Modified: 20231016.1
       # Template parameters
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
       NetworkProxy: !Ref NetworkProxy
       SecurityGroupIDs: !Ref SecurityGroupIDs
+      ScanResultTagFormat: !Ref ScanResultTagFormat
       SubnetIDs: !Ref SubnetIDs
   PostScanActionTagExecutionRole:
     Type: AWS::IAM::Role
@@ -828,6 +849,7 @@ Resources:
             Resource: !Ref KMSKeyARNForDLQSSE
   PostScanActionTagInvokePermissionOfScanResultTopic:
     Type: AWS::Lambda::Permission
+    Condition: IsPostScanActionTagEnabled
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt PostScanActionTagLambdaAlias.Arn
