@@ -526,6 +526,9 @@
             "type": "microsoft.insights/components",
             "kind": "web",
             "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces/', variables('storageLogAnalyticsWorkspaceName'))]"
+            ],
             "apiVersion": "2020-02-02",
             "properties": {
                 "Application_Type": "web",
@@ -815,6 +818,9 @@
             "type": "microsoft.insights/components",
             "kind": "web",
             "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces/', variables('storageLogAnalyticsWorkspaceName'))]"
+            ],
             "apiVersion": "2020-02-02",
             "properties": {
                 "Application_Type": "web",
