@@ -1,5 +1,5 @@
 {
-    "Version": "2012-10-17",
+    "Version": "2012-10-13",
     "Statement": [
         {
             "Sid": "SQSQueuePermissions",
@@ -8,7 +8,8 @@
                 "sqs:DeleteQueue",
                 "sqs:GetQueueAttributes",
                 "sqs:CreateQueue",
-                "sqs:SetQueueAttributes"
+                "sqs:SetQueueAttributes",
+                "sqs:UntagQueue"
             ],
             "Effect": "Allow",
             "Resource": "arn:aws:sqs:*:*:*"
@@ -32,7 +33,9 @@
                 "logs:DeleteLogGroup",
                 "logs:PutRetentionPolicy",
                 "logs:CreateLogGroup",
-                "logs:TagResource"
+                "logs:TagResource",
+                "logs:ListTagsForResource",
+                "logs:UntagResource"
             ],
             "Effect": "Allow",
             "Resource": "arn:aws:logs:*:*:log-group:*"
@@ -50,7 +53,8 @@
                 "iam:AttachRolePolicy",
                 "iam:PutRolePolicy",
                 "iam:GetRolePolicy",
-                "iam:UpdateAssumeRolePolicy"
+                "iam:UpdateAssumeRolePolicy",
+                "iam:UntagRole"
             ],
             "Effect": "Allow",
             "Resource": "arn:aws:iam::*:role/*"
@@ -60,22 +64,17 @@
             "Action": [
                 "lambda:CreateFunction",
                 "lambda:UpdateFunctionCode",
-                "lambda:CreateAlias",
                 "lambda:InvokeFunction",
                 "lambda:GetLayerVersion",
                 "lambda:GetEventSourceMapping",
                 "lambda:GetFunction",
-                "lambda:PublishVersion",
                 "lambda:PublishLayerVersion",
-                "lambda:ListVersionsByFunction",
-                "lambda:GetFunctionConfiguration",
                 "lambda:UpdateFunctionConfiguration",
                 "lambda:CreateEventSourceMapping",
                 "lambda:UpdateEventSourceMapping",
-                "lambda:AddPermission",
                 "lambda:DeleteLayerVersion",
+                "lambda:AddPermission",
                 "lambda:DeleteFunction",
-                "lambda:DeleteAlias",
                 "lambda:DeleteEventSourceMapping",
                 "lambda:RemovePermission",
                 "lambda:ListTags",
@@ -84,44 +83,6 @@
             ],
             "Effect": "Allow",
             "Resource": "*"
-        },
-        {
-            "Sid": "EC2Permissions",
-            "Action": [
-                "ec2:DescribeVpcs",
-                "ec2:DescribeSubnets",
-                "ec2:DescribeSecurityGroups"
-            ],
-            "Effect": "Allow",
-            "Resource": "*"
-        },
-        {
-            "Sid": "S3BucketPermissions",
-            "Action": [
-                "s3:DeleteBucket"
-            ],
-            "Effect": "Allow",
-            "Resource": "arn:aws:s3:::*"
-        },
-        {
-            "Sid": "S3AccessPointPermissions",
-            "Action": [
-                "s3:CreateAccessPoint",
-                "s3:DeleteAccessPoint",
-                "s3:GetAccessPoint",
-                "s3:GetAccessPointPolicy",
-                "s3:DeleteAccessPointPolicy",
-                "s3:CreateAccessPointForObjectLambda",
-                "s3:DeleteAccessPointForObjectLambda",
-                "s3:GetAccessPointForObjectLambda",
-                "s3:GetAccessPointConfigurationForObjectLambda",
-                "s3:GetAccessPointPolicyStatusForObjectLambda"
-            ],
-            "Effect": "Allow",
-            "Resource": [
-                "arn:aws:s3:*:*:accesspoint/*",
-                "arn:aws:s3-object-lambda:*:*:accesspoint/*"
-            ]
         },
         {
             "Sid": "S3ObjectPermissions",
@@ -146,6 +107,32 @@
             ],
             "Effect": "Allow",
             "Resource": "arn:aws:sns:*:*:*"
+        },
+        {
+            "Sid": "EventBridgePermissions",
+            "Action": [
+                "events:PutRule",
+                "events:RemoveTargets",
+                "events:DescribeRule",
+                "events:DeleteRule",
+                "events:PutTargets",
+                "events:PutPermission",
+                "events:RemovePermission"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        },
+        {
+            "Sid": "SystemsMangerPermissions",
+            "Action": [
+                "ssm:DeleteParameter",
+                "ssm:PutParameter",
+                "ssm:AddTagsToResource",
+                "ssm:RemoveTagsFromResource",
+                "ssm:GetParameters"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
         }
     ]
 }
