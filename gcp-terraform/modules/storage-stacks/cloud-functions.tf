@@ -61,7 +61,7 @@ resource "google_cloudfunctions_function" "bucket_listener_function" {
   source_archive_object = google_storage_bucket_object.gcp_bucket_listener_zip[each.key].name
 
   entry_point = "handler"
-  runtime = "nodejs16"
+  runtime = "nodejs20"
   service_account_email = google_service_account.bucket_listener_service_account[each.key].email
   region = each.value.region
 
@@ -96,7 +96,7 @@ resource "google_cloudfunctions_function" "post_action_tag_function" {
   source_archive_object = google_storage_bucket_object.gcp_post_action_tag_source_zip[each.key].name
 
   entry_point = "main"
-  runtime = "python38"
+  runtime = "python312"
   service_account_email = google_service_account.post_action_tag_service_account[each.key].email
   region = each.value.region
 
