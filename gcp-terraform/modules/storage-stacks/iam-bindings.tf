@@ -37,7 +37,7 @@ resource "google_cloudfunctions_function_iam_binding" "bucket_listener_iam_bindi
 resource "google_storage_bucket_iam_binding" "bucket_listener_service_account_iam_binding" {
   for_each = { for storage, values in local.storage_stacks: storage => values if !values.disableScanningBucketIAMBinding }
   bucket  = each.value.scanningBucketName
-  role = "roles/storage.legacyObjectReader"
+  role = "projects/${var.projectID}/roles/${local.custom_role_prefix}trend_micro_fss_bucket_listener_storage_role"
   members = [
     "serviceAccount:${google_service_account.bucket_listener_service_account[each.key].email}"
   ]

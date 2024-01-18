@@ -182,6 +182,21 @@ resource "google_project_iam_custom_role" "trend_micro_fss_bucket_listener_role"
   }
 }
 
+resource "google_project_iam_custom_role" "trend_micro_fss_bucket_listener_storage_role" {
+  project = var.projectID
+
+  role_id     = "${local.custom_role_prefix}trend_micro_fss_bucket_listener_storage_role"
+  description = "Trend Micro File Storage Security Bucket Listener Storage Role"
+  title       = "${local.custom_role_title_prefix}trend-micro-fss-bucket-listener-storage-role"
+  permissions = [
+    "storage.objects.get"
+  ]
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 resource "google_project_iam_custom_role" "trend_micro_fss_post_action_tag_role" {
   project = var.projectID
 
