@@ -214,7 +214,7 @@ Resources:
         - !Ref AWS::NoValue
       Description: Get Lambda config before creating/updating alias on Lambda function
       Handler: index.handler
-      Runtime: python3.8
+      Runtime: python3.11
       Role: !GetAtt GetLambdaLastConfigExecutionRole.Arn
       Timeout: 30
       Environment:
@@ -358,7 +358,7 @@ Resources:
         - !Ref AWS::NoValue
       Description: Create Lambda alias on Lambda function
       Handler: index.handler
-      Runtime: python3.8
+      Runtime: python3.11
       Role: !GetAtt CreateLambdaAliasExecutionRole.Arn
       Timeout: 120
       Environment:
@@ -619,7 +619,7 @@ Resources:
           SCAN_CONFIG: '{}'
       MemorySize: 512
       Role: !GetAtt ScannerExecutionRole.Arn
-      Runtime: python3.8
+      Runtime: python3.11
       Timeout: 120
       Layers:
         - !Ref ScannerPatternLambdaLayer
@@ -634,7 +634,7 @@ Resources:
       ServiceToken: !GetAtt GetLambdaLastConfig.Arn
       LambdaARNOutputKey: ScannerLambdaARN
       LambdaAliasARNOutputKey: ScannerLambdaAliasARN
-      Modified: 20220906.1
+      Modified: 20240111.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
@@ -651,7 +651,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20220906.1
+      Modified: 20240111.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
@@ -718,7 +718,7 @@ Resources:
           HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
       MemorySize: 128
       Role: !GetAtt ScannerDeadLetterExecutionRole.Arn
-      Runtime: python3.8
+      Runtime: python3.11
       Timeout: 60
       VpcConfig:
         SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
@@ -729,7 +729,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerDeadLetterLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20210708.1
+      Modified: 20240111.1
       # Template parameters
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
