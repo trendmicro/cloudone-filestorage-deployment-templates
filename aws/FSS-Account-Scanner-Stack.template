@@ -229,7 +229,7 @@ Resources:
     Properties:
       Description: Get the AWS Organization ID of the current AWS account
       Handler: index.handler
-      Runtime: python3.8
+      Runtime: python3.11
       Role: !GetAtt GetOrganizationIDExecutionRole.Arn
       Timeout: 30
       Code:
@@ -308,14 +308,14 @@ Resources:
     Type: Custom::GetOrganizationIDForPolicy
     Properties:
       ServiceToken: !GetAtt GetOrganizationID.Arn
-      Modified: 20230606.1
+      Modified: 20240111.1
 
   GetLambdaLastConfig:
     Type: AWS::Lambda::Function
     Properties:
       Description: Get Lambda config before creating/updating alias on Lambda function
       Handler: index.handler
-      Runtime: python3.8
+      Runtime: python3.11
       Role: !GetAtt GetLambdaLastConfigExecutionRole.Arn
       Timeout: 30
       Code:
@@ -426,7 +426,7 @@ Resources:
     Properties:
       Description: Create Lambda alias on Lambda function
       Handler: index.handler
-      Runtime: python3.8
+      Runtime: python3.11
       Role: !GetAtt CreateLambdaAliasExecutionRole.Arn
       Timeout: 120
       Code:
@@ -639,7 +639,7 @@ Resources:
           FSS_API_ENDPOINT: 'https://filestorage.trend-us-1.dev-cloudone.trendmicro.com/api/'
       MemorySize: 512
       Role: !GetAtt ScannerExecutionRole.Arn
-      Runtime: python3.8
+      Runtime: python3.11
       Timeout: 120
       Layers:
         - !Ref ScannerPatternLambdaLayer
@@ -654,7 +654,7 @@ Resources:
       ParameterStoreName: !Join ['', [!Ref AWS::StackName, '-OutputsParameter-' , !Select [0, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]]]
       LambdaARNOutputKey: ScannerLambdaARN
       LambdaAliasARNOutputKey: ScannerLambdaAliasARN
-      Modified: 20220906.1
+      Modified: 20240111.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
@@ -668,7 +668,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20220906.1
+      Modified: 20240111.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
@@ -717,7 +717,7 @@ Resources:
           SCAN_RESULT_TOPIC: !Ref ScanResultTopic
       MemorySize: 128
       Role: !GetAtt ScannerDeadLetterExecutionRole.Arn
-      Runtime: python3.8
+      Runtime: python3.11
       Timeout: 60
   ScannerDeadLetterLambdaAlias:
     Type: Custom::ScannerDeadLetterLambdaAlias
@@ -725,7 +725,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerDeadLetterLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20210708.1
+      Modified: 20240111.1
       # Template parameters
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
@@ -922,7 +922,7 @@ Resources:
           TAG_FORMAT: !Ref ScanResultTagFormat
       MemorySize: 128
       Role: !GetAtt PostScanActionExecutionRole.Arn
-      Runtime: python3.8
+      Runtime: python3.11
       Timeout: 15
       DeadLetterConfig:
         TargetArn: !GetAtt PostScanActionDLQ.Arn
@@ -932,7 +932,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt PostScanActionLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20231016.1
+      Modified: 20240111.1
       # Template parameters
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
@@ -1095,7 +1095,7 @@ Resources:
           stackARN: !Ref AWS::StackId
       MemorySize: 128
       Role: !GetAtt PostScanActionDeadLetterExecutionRole.Arn
-      Runtime: python3.8
+      Runtime: python3.11
       Timeout: 60
   PostScanActionDeadLetterLambdaAlias:
     Type: Custom::ScannerDeadLetterLambdaAlias
@@ -1103,7 +1103,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt PostScanActionDeadLetterLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20210708.1
+      Modified: 20240111.1
       # Template parameters
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
@@ -1352,7 +1352,7 @@ Resources:
     Properties:
       Description: Transform bucket name list to bucket ARN list
       Handler: index.handler
-      Runtime: python3.8
+      Runtime: python3.11
       Role: !GetAtt TransformToBucketARNExecutionRole.Arn
       Timeout: 30
       Code:
