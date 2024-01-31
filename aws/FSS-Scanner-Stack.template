@@ -790,6 +790,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - sqs:ReceiveMessage
+                  - sqs:SendMessage
                   - sqs:DeleteMessage
                   - sqs:GetQueueAttributes
                   - sqs:ChangeMessageVisibility
@@ -819,6 +820,7 @@ Resources:
           - Effect: Allow
             Action:
               - kms:Decrypt
+              - kms:GenerateDataKey
             Resource: !Ref KMSKeyARNForQueueSSE
   ScannerExecutionRoleKMSDecryptPolicyForSNS:
     Type: AWS::IAM::Policy
