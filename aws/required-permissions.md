@@ -48,7 +48,7 @@ Check out the templates directly for more information.
 | `cloudformation:GetTemplate` | Action | Allows Cloud One File Storage Security to get the stack template |
 | `iam:GetRolePolicy` | Action | Allows Cloud One File Storage Security to get the management role policies |
 | `kms:Decrypt` | Action | **Optional.** Decrypts messages from encrypted `ScannerQueue` or Data key for scan result encryption |
-| `kms:GenerateDataKey` | Action | **Optional.** Generates a Data key to encrypt scan result messages sent to `ScanResultTopic` |
+| `kms:GenerateDataKey` | Action | **Optional.** Generates a Data key to encrypt scan result messages sent to `ScanResultTopic` or scan messages sent to the `ScannerQueue` |
 | `lambda:CreateAlias` | Action | Allows Cloud One File Storage Security to create an alias for Lambda functions created by Cloud One File Storage Security |
 | `lambda:DeleteAlias` | Action | Allows Cloud One File Storage Security to delete the alias of Lambda functions created by Cloud One File Storage Security |
 | `lambda:GetAlias` | Action | Allows Cloud One File Storage Security to describe the alias of Lambda functions created by Cloud One File Storage Security |
@@ -77,6 +77,7 @@ Check out the templates directly for more information.
 | `sqs:GetQueueAttributes` | Action | Describes the attributes of the `ScannerQueue` and `ScannerDLQ` and allow Cloud One File Storage Security to get the attributes of the `ScannerQueue` and `ScannerDLQ` |
 | `sqs:ListDeadLetterSourceQueues` | Action | Allows Cloud One File Storage Security to list the `ScannerDLQ` source queues |
 | `sqs:ReceiveMessage` | Action | Receives messages from the `ScannerQueue` and `ScannerDLQ` |
+| `sqs:SendMessage` | Action | Sends messages to the `ScannerQueue` |
 | `sqs:SetQueueAttributes` | Action | Allows Cloud One File Storage Security to set the attributes of the `ScannerQueue` and `ScannerDLQ` |
 | [AWSLambdaVPCAccessExecutionRole](https://console.aws.amazon.com/iam/home#/policies/arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole$jsonEditor?) | Managed Policy | **Optional.** Provides minimum permissions for a Lambda function to execute while accessing a resource within a VPC - create, describe, delete network interfaces and write permissions to CloudWatch Logs |
 | `s3-object-lambda:WriteGetObjectResponse` | Action | **Optional.** Writes the response of the GetObject API to the S3 Object Lambda |
