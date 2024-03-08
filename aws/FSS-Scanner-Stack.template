@@ -220,9 +220,12 @@ Resources:
       Environment:
         Variables:
           HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
-      VpcConfig:
-        SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
-        SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
+      VpcConfig: !If
+        - IsVPCEnabled
+        -
+          SubnetIds: !Ref SubnetIDs
+          SecurityGroupIds: !Ref SecurityGroupIDs
+        - !Ref AWS::NoValue
       Code:
         ZipFile: |
           import boto3
@@ -364,9 +367,12 @@ Resources:
       Environment:
         Variables:
           HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
-      VpcConfig:
-        SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
-        SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
+      VpcConfig: !If
+        - IsVPCEnabled
+        -
+          SubnetIds: !Ref SubnetIDs
+          SecurityGroupIds: !Ref SecurityGroupIDs
+        - !Ref AWS::NoValue
       Code:
         ZipFile: |
           import boto3
@@ -623,9 +629,12 @@ Resources:
       Timeout: 120
       Layers:
         - !Ref ScannerPatternLambdaLayer
-      VpcConfig:
-        SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
-        SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
+      VpcConfig: !If
+        - IsVPCEnabled
+        -
+          SubnetIds: !Ref SubnetIDs
+          SecurityGroupIds: !Ref SecurityGroupIDs
+        - !Ref AWS::NoValue
       EphemeralStorage:
         Size: !Ref ScannerEphemeralStorage
   ScannerLambdaLastConfig:
@@ -634,7 +643,7 @@ Resources:
       ServiceToken: !GetAtt GetLambdaLastConfig.Arn
       LambdaARNOutputKey: ScannerLambdaARN
       LambdaAliasARNOutputKey: ScannerLambdaAliasARN
-      Modified: 20240111.1
+      Modified: 20240306.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
@@ -651,7 +660,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20240111.1
+      Modified: 20240306.1
       # Template parameters
       CloudOneRegion: !Ref CloudOneRegion
       FSSBucketName: !Ref FSSBucketName
@@ -720,16 +729,19 @@ Resources:
       Role: !GetAtt ScannerDeadLetterExecutionRole.Arn
       Runtime: python3.11
       Timeout: 60
-      VpcConfig:
-        SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
-        SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
+      VpcConfig: !If
+        - IsVPCEnabled
+        -
+          SubnetIds: !Ref SubnetIDs
+          SecurityGroupIds: !Ref SecurityGroupIDs
+        - !Ref AWS::NoValue
   ScannerDeadLetterLambdaAlias:
     Type: Custom::ScannerDeadLetterLambdaAlias
     Properties:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt ScannerDeadLetterLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20240111.1
+      Modified: 20240306.1
       # Template parameters
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
