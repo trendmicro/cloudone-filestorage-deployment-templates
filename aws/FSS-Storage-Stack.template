@@ -344,9 +344,12 @@ Resources:
       Environment:
         Variables:
           HTTPS_PROXY: !If [IsProxyEnabled, !Ref NetworkProxy, !Ref AWS::NoValue]
-      VpcConfig:
-        SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
-        SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
+      VpcConfig: !If
+        - IsVPCEnabled
+        -
+          SubnetIds: !Ref SubnetIDs
+          SecurityGroupIds: !Ref SecurityGroupIDs
+        - !Ref AWS::NoValue
       Code:
         ZipFile: |
           import boto3
@@ -566,9 +569,12 @@ Resources:
       Role: !GetAtt BucketListenerExecutionRole.Arn
       Runtime: python3.11
       Timeout: 15
-      VpcConfig:
-        SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
-        SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
+      VpcConfig: !If
+        - IsVPCEnabled
+        -
+          SubnetIds: !Ref SubnetIDs
+          SecurityGroupIds: !Ref SecurityGroupIDs
+        - !Ref AWS::NoValue
       DeadLetterConfig:
         TargetArn: !If [IsBucketListenerDLQEnabled, !Ref BucketListenerDLQARN, !Ref AWS::NoValue]
   BucketListenerLambdaAlias:
@@ -577,7 +583,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt BucketListenerLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20240111.1
+      Modified: 20240306.1
       # Template parameters
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
@@ -749,9 +755,12 @@ Resources:
       Role: !GetAtt PostScanActionTagExecutionRole.Arn
       Runtime: python3.11
       Timeout: 15
-      VpcConfig:
-        SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
-        SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
+      VpcConfig: !If
+        - IsVPCEnabled
+        -
+          SubnetIds: !Ref SubnetIDs
+          SecurityGroupIds: !Ref SecurityGroupIDs
+        - !Ref AWS::NoValue
       DeadLetterConfig:
         TargetArn: !If [IsPostScanActionTagDLQEnabled, !Ref PostScanActionTagDLQARN, !Ref AWS::NoValue]
   PostScanActionTagLambdaAlias:
@@ -760,7 +769,7 @@ Resources:
       ServiceToken: !GetAtt CreateLambdaAliasLambda.Arn
       FunctionName: !GetAtt PostScanActionTagLambda.Arn
       Name: TM-FSS-MANAGED
-      Modified: 20240111.1
+      Modified: 20240306.1
       # Template parameters
       FSSBucketName: !Ref FSSBucketName
       FSSKeyPrefix: !Ref FSSKeyPrefix
@@ -985,9 +994,12 @@ Resources:
       Role: !GetAtt SetupBucketNotificationExecutionRole.Arn
       Runtime: python3.11
       Timeout: 50
-      VpcConfig:
-        SubnetIds: !If [IsVPCEnabled, !Ref SubnetIDs, !Ref AWS::NoValue]
-        SecurityGroupIds: !If [IsVPCEnabled, !Ref SecurityGroupIDs, !Ref AWS::NoValue]
+      VpcConfig: !If
+        - IsVPCEnabled
+        -
+          SubnetIds: !Ref SubnetIDs
+          SecurityGroupIds: !Ref SecurityGroupIDs
+        - !Ref AWS::NoValue
       Code:
         ZipFile: |
           import os
