@@ -53,7 +53,7 @@ def create_storage_stack_resources(context):
             'entryPoint': 'handler',
             'sourceArchiveUrl': f'gs://{properties["artifactBucket"]}/gcp-listener.zip',
             'serviceAccountEmail': f'$(ref.{prefix}-bucket-listener-service-account.email)',
-            'runtime': 'nodejs16',
+            'runtime': 'nodejs20',
             'eventTrigger': {
                 'eventType': 'google.storage.object.finalize',
                 'resource': f"projects/{project_id}/buckets/{properties['scanningBucket']}",
