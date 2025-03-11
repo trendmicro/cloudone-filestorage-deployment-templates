@@ -820,6 +820,7 @@ Resources:
                   - s3:GetObject
                   - s3:GetObjectTagging
                   - s3:PutObjectTagging
+                  - s3:ListBucket
                 Resource: !Sub arn:${AWS::Partition}:s3:::${S3BucketToScan}/*
   PostScanActionTagPolicyForDLQ:
     Type: AWS::IAM::Policy
