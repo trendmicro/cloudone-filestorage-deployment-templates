@@ -922,6 +922,7 @@ Resources:
                   - lambda:UpdateFunctionConfiguration
                   - lambda:GetFunctionConfiguration
                   - lambda:PublishVersion
+                  - lambda:DeleteFunction # For outdated version deletion
                   - lambda:ListVersionsByFunction
                   - lambda:CreateAlias
                   - lambda:UpdateAlias
