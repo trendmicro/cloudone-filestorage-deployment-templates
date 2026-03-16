@@ -36,6 +36,9 @@ def create_service_account_resources(context):
             'resource': project_id,
             'role': role.get_role_name_ref(project_id, storage_stack_roles.BUCKET_LISTENER_ROLE),
             'member': f"serviceAccount:$(ref.{bucket_listener_service_account['name']}.email)"
+        },
+        'metadata': {
+            'dependsOn': [bucket_listener_service_account['name']]
         }
     }
 
