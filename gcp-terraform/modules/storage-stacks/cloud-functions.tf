@@ -61,7 +61,7 @@ resource "google_cloudfunctions_function" "bucket_listener_function" {
   source_archive_object = google_storage_bucket_object.gcp_bucket_listener_zip[each.key].name
 
   entry_point = "handler"
-  runtime = "nodejs20"
+  runtime = "nodejs22"
   service_account_email = google_service_account.bucket_listener_service_account[each.key].email
   region = each.value.region
 
