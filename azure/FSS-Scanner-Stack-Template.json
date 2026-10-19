@@ -106,6 +106,17 @@
             "metadata": {
                 "description": "<b>[To Be Deprecated][VNet Only]</b><br />The parameter will be replaced by <b>VNETRestrictedAccessForAzureMonitorResources</b> after 2024/10/31. Before it's fully deprecated, configuring either one to true means to restrict public network access to Application Insights and Azure Monitor resources.<br />Indicates whether to restrict public access to Application Insights. If set to true, Application Insights can only be accessed through Azure Monitor Private Link Scope. If you don't add the Application Insight to the Azure Monitor Private Link Scope, you won't be able to ingest or query data. For more information on how to configure Private Link for Application Insights, see <a href='https://cloudone.trendmicro.com/docs/file-storage-security/azure-vnet-deployment/'>Restrict access to Application Insights'</a>. If VNet is not required, choose false."
             }
+        },
+        "StorageAccountKind": {
+            "type": "string",
+            "defaultValue": "Storage",
+            "allowedValues": [
+                "Storage",
+                "StorageV2"
+            ],
+            "metadata": {
+                "description": "The kind of storage account that hosts the scanner function app content. Choose 'StorageV2' to create general purpose v2 accounts. This setting only takes effect when the deployment is not integrated with the VNet solution."
+            }
         }
     },
     "variables": {
@@ -169,7 +180,7 @@
         "withVNet": "[not(empty(parameters('VNETResourceID')))]",
         "privateEndpointSubnetID": "[concat(parameters('VNETResourceID'), '/subnets/', parameters('VNETPrivateEndpointsSubnetName'))]",
         "serviceBusTier": "[if(variables('withVNet'), 'Premium', 'Basic')]",
-        "storageAccountType": "[if(variables('withVNet'), 'StorageV2', 'Storage')]",
+        "storageAccountType": "[if(variables('withVNet'), 'StorageV2', parameters('StorageAccountKind'))]",
         "publicNetworkAccess": "[if(variables('withVNet'), 'Disabled', 'Enabled')]",
         "filePrivateZoneGroupName": "filePrivateDnsZoneGroup",
         "blobPrivateZoneGroupName": "blobPrivateDnsZoneGroup",
