@@ -195,6 +195,17 @@
             "metadata": {
                 "description": "Warning: this field is only used when creating a resource group. Changing it when updating will cause your deployment to fail.<br />The function app's service plan for Azure functions is in the storage stack. Choose 'EP1' to use the premium hosting plan to boost performance. This setting only takes effect when the deployment is not integrated with the VNet solution."
             }
+        },
+        "StorageAccountKind": {
+            "type": "string",
+            "defaultValue": "Storage",
+            "allowedValues": [
+                "Storage",
+                "StorageV2"
+            ],
+            "metadata": {
+                "description": "The kind of the storage accounts that host function app contents. Choose 'StorageV2' to create general purpose v2 accounts. This setting only takes effect when the deployment is not integrated with the VNet solution."
+            }
         }
     },
     "variables": {
@@ -276,6 +287,9 @@
                     },
                     "VNETRestrictedAccessForApplicationInsights": {
                         "value": "[parameters('VNETRestrictedAccessForApplicationInsights')]"
+                    },
+                    "StorageAccountKind": {
+                        "value": "[parameters('StorageAccountKind')]"
                     }
                 }
             }
@@ -363,6 +377,9 @@
                     },
                     "StorageStackFunctionAppServicePlan": {
                         "value": "[parameters('StorageStackFunctionAppServicePlan')]"
+                    },
+                    "StorageAccountKind": {
+                        "value": "[parameters('StorageAccountKind')]"
                     }
                 }
             }
